@@ -14,11 +14,12 @@
     $gradient = $colors[$color] ?? $colors['indigo'];
 @endphp
 
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow duration-200">
+<div
+    class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-5 hover:shadow-md transition-all duration-200">
     <div class="flex items-center justify-between">
         <div>
-            <p class="text-sm font-medium text-gray-500">{{ $label }}</p>
-            <p class="mt-1 text-2xl font-bold text-gray-900">{{ $value }}</p>
+            <p class="text-sm font-medium text-gray-500 dark:text-slate-400">{{ $label }}</p>
+            <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-slate-100">{{ $value }}</p>
             @if($trend)
                 <p class="mt-1 text-xs {{ $trend > 0 ? 'text-emerald-600' : 'text-rose-600' }}">
                     {{ $trend > 0 ? '↑' : '↓' }} {{ abs($trend) }}%
