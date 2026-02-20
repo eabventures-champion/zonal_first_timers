@@ -6,6 +6,28 @@
     .dark body {
         @apply bg-slate-950 text-slate-200;
     }
+
+    /* Global Dark Mode Fixes */
+    .dark input:not([type="checkbox"]):not([type="radio"]),
+    .dark select,
+    .dark textarea {
+        @apply bg-slate-900 border-slate-700 text-slate-200 ring-offset-slate-950 !important;
+    }
+
+    .dark input::placeholder {
+        @apply text-slate-500 !important;
+    }
+
+    .dark label {
+        @apply text-slate-300 font-medium !important;
+    }
+
+    .dark h1,
+    .dark h2,
+    .dark h3,
+    .dark h4 {
+        @apply text-slate-100 !important;
+    }
 }
 
 .dark .bg-white {
@@ -29,13 +51,25 @@
 }
 
 .dark .text-gray-500 {
-    @apply text-slate-400 !important;
+    @apply text-slate-500 !important;
 }
 
-.dark .border-gray-100, .dark .border-gray-200 {
+.dark .text-gray-400 {
+    @apply text-slate-500 !important;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300 {
     @apply border-slate-800 !important;
 }
 
-.dark .bg-gray-50 {
-    @apply bg-slate-900 !important;
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+    @apply bg-slate-950 !important;
+}
+
+/* Fix for Select dropdown options in some browsers */
+.dark option {
+    @apply bg-slate-900 text-slate-200 !important;
 }

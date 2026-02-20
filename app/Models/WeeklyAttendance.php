@@ -12,8 +12,11 @@ class WeeklyAttendance extends Model
 
     protected $fillable = [
         'first_timer_id',
+        'member_id',
         'church_id',
         'week_number',
+        'month',
+        'year',
         'service_date',
         'attended',
         'notes',
@@ -33,6 +36,11 @@ class WeeklyAttendance extends Model
     public function firstTimer(): BelongsTo
     {
         return $this->belongsTo(FirstTimer::class);
+    }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class);
     }
 
     public function church(): BelongsTo

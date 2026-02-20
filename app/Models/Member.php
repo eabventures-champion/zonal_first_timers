@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class FirstTimer extends Model
+class Member extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -91,11 +91,6 @@ class FirstTimer extends Model
         return $query->where('church_id', $churchId);
     }
 
-    public function scopeByStatus($query, string $status)
-    {
-        return $query->where('status', $status);
-    }
-
     // ── Accessors ──────────────────────────────────────────
 
     public function getFoundationProgressAttribute(): float
@@ -118,11 +113,6 @@ class FirstTimer extends Model
         return round(($attended / $total) * 100, 1);
     }
 
-    public function getIsReadOnlyAttribute(): bool
-    {
-        return $this->status === 'Retained';
-    }
-
     public function getAttendanceDatesAttribute(): array
     {
         return $this->weeklyAttendances()
@@ -131,25 +121,5 @@ class FirstTimer extends Model
             ->pluck('service_date')
             ->map(fn($date) => $date->format('M d, Y'))
             ->toArray();
-    }
-
-    public function getCurrentFoundationLevelAttribute(): string
-    {
-        if ($this->status === 'Retained') {
-            return 'Completed';
-        }
-
-        $latestAttendance = $this->foundationAttendances()
-            ->where('completed', true)
-            ->with('foundationClass')
-            ->get()
-            ->sortByDesc(fn($a) => $a->foundationClass->class_number)
-            ->first();
-
-        if (!$latestAttendance) {
-            return 'Not Started';
-        }
-
-        return $latestAttendance->foundationClass->name;
     }
 }

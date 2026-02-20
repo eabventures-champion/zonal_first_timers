@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\FirstTimer;
 use App\Models\FoundationAttendance;
 use App\Models\FoundationClass;
+use App\Models\ChurchCategory;
+use App\Models\ChurchGroup;
 use Illuminate\Support\Facades\Auth;
 
 class FoundationSchoolService
@@ -56,7 +58,7 @@ class FoundationSchoolService
 
         if ($completedClasses >= $totalClasses && $totalClasses > 0) {
             $firstTimer->update([
-                'status' => 'Member',
+                'status' => 'Retained',
                 'updated_by' => Auth::id(),
             ]);
             return true;
@@ -94,5 +96,38 @@ class FoundationSchoolService
         }
 
         return compact('completed', 'inProgress', 'notStarted');
+    }
+
+    public function getGroupedProgressData(?string $search = null)
+    {
+        $query = ChurchCategory::with([
+            'groups.churches.firstTimers' => function ($q) use ($search) {
+                $q->whereIn('status', ['New', 'In Progress']);
+                if ($search) {
+                    $q->where(function ($sq) use ($search) {
+                        $sq->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
+                }
+                $q->latest();
+            }
+        ]);
+
+        $categories = $query->get();
+
+        return $categories->map(function ($category) {
+            $totalInCategory = 0;
+            $category->groups->each(function ($group) use (&$totalInCategory) {
+                $totalInGroup = 0;
+                $group->churches->each(function ($church) use (&$totalInGroup) {
+                    $church->first_timers_count = $church->firstTimers->count();
+                    $totalInGroup += $church->first_timers_count;
+                });
+                $group->first_timers_count = $totalInGroup;
+                $totalInCategory += $totalInGroup;
+            });
+            $category->first_timers_count = $totalInCategory;
+            return $category;
+        })->filter(fn($c) => $c->first_timers_count > 0)->values();
     }
 }

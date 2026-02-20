@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\FirstTimer;
+use App\Models\Member;
 use App\Models\Church;
 use App\Models\FoundationAttendance;
 use App\Models\FoundationClass;
+use App\Models\WeeklyAttendance;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,36 +17,36 @@ class FirstTimerService
 {
     public function getForChurch($churchId, array $filters = [])
     {
-        $query = FirstTimer::where('church_id', $churchId)
-            ->with(['retainingOfficer', 'church']);
-
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        if (!empty($filters['search'])) {
-            $query->where(function ($q) use ($filters) {
-                $q->where('full_name', 'like', "%{$filters['search']}%")
-                    ->orWhere('email', 'like', "%{$filters['search']}%")
-                    ->orWhere('primary_contact', 'like', "%{$filters['search']}%");
-            });
-        }
-
-        if (!empty($filters['date_from'])) {
-            $query->where('date_of_visit', '>=', $filters['date_from']);
-        }
-
-        if (!empty($filters['date_to'])) {
-            $query->where('date_of_visit', '<=', $filters['date_to']);
-        }
-
-        return $query->latest('date_of_visit')->paginate(20);
+        $filters['church_id'] = $churchId;
+        return $this->getAll($filters);
     }
 
     public function getAll(array $filters = [])
     {
-        $query = FirstTimer::with(['church.group.category', 'retainingOfficer']);
+        $query = FirstTimer::with([
+            'church.group.category',
+            'retainingOfficer',
+            'weeklyAttendances' => fn($q) => $q->where('attended', true)->orderByDesc('service_date'),
+            'foundationAttendances.foundationClass'
+        ]);
 
+        return $this->applyFilters($query, $filters);
+    }
+
+    public function getMembers(array $filters = [])
+    {
+        $query = Member::with([
+            'church.group.category',
+            'retainingOfficer',
+            'weeklyAttendances' => fn($q) => $q->where('attended', true)->orderByDesc('service_date'),
+            'foundationAttendances.foundationClass'
+        ]);
+
+        return $this->applyFilters($query, $filters);
+    }
+
+    private function applyFilters($query, array $filters = [])
+    {
         if (!empty($filters['church_id'])) {
             $query->where('church_id', $filters['church_id']);
         }
@@ -82,16 +84,49 @@ class FirstTimerService
             $data['retaining_officer_id'] = $church?->retaining_officer_id;
         }
 
-        return FirstTimer::create($data);
+        // Fallback for Bringer Details using Retaining Officer's info
+        if (!empty($data['retaining_officer_id']) && (empty($data['bringer_name']) || empty($data['bringer_contact']) || empty($data['bringer_fellowship']))) {
+            $officer = \App\Models\User::with('church')->find($data['retaining_officer_id']);
+            if ($officer) {
+                if (empty($data['bringer_name'])) {
+                    $data['bringer_name'] = $officer->name;
+                }
+                if (empty($data['bringer_contact'])) {
+                    $data['bringer_contact'] = $officer->phone;
+                }
+                if (empty($data['bringer_fellowship'])) {
+                    $data['bringer_fellowship'] = $officer->church?->name;
+                }
+            }
+        }
+
+        $firstTimer = FirstTimer::create($data);
+
+        // Auto-record initial attendance for the date of visit
+        $this->recordInitialAttendance($firstTimer);
+
+        return $firstTimer;
+    }
+
+    private function recordInitialAttendance(FirstTimer $firstTimer): void
+    {
+        WeeklyAttendance::updateOrCreate(
+            [
+                'first_timer_id' => $firstTimer->id,
+                'church_id' => $firstTimer->church_id,
+                'week_number' => 1, // Defaulting to week 1 for the visit
+            ],
+            [
+                'service_date' => $firstTimer->date_of_visit,
+                'attended' => true,
+                'notes' => 'Initial visit attendance',
+                'recorded_by' => Auth::id() ?? $firstTimer->created_by,
+            ]
+        );
     }
 
     public function update(FirstTimer $firstTimer, array $data): FirstTimer
     {
-        // Block updates if the first timer is already a Member (read-only)
-        if ($firstTimer->status === 'Member') {
-            throw new \Exception('Cannot update a member record. It is read-only.');
-        }
-
         $data['updated_by'] = Auth::id();
         $firstTimer->update($data);
         return $firstTimer->fresh();
@@ -123,11 +158,12 @@ class FirstTimerService
                 $data['status'] = $data['status'] ?? 'New';
                 $data['created_by'] = Auth::id();
 
-                // Auto-assign retaining officer from church
                 $church = Church::find($churchId);
                 $data['retaining_officer_id'] = $church?->retaining_officer_id;
 
-                FirstTimer::create($data);
+                $firstTimer = FirstTimer::create($data);
+                $this->recordInitialAttendance($firstTimer);
+
                 $results['success']++;
             } catch (\Exception $e) {
                 $results['errors'][] = "Row {$row}: {$e->getMessage()}";
@@ -138,12 +174,91 @@ class FirstTimerService
         return $results;
     }
 
-    public function convertToMember(FirstTimer $firstTimer): FirstTimer
+    public function convertToMember(FirstTimer $firstTimer): Member
     {
-        $firstTimer->update([
-            'status' => 'Member',
-            'updated_by' => Auth::id(),
-        ]);
-        return $firstTimer->fresh();
+        return DB::transaction(function () use ($firstTimer) {
+            $data = $firstTimer->toArray();
+
+            // Set status to Retained and ensure timestamps are set
+            $data['status'] = 'Retained';
+            $data['membership_approved_at'] = now();
+            $data['updated_by'] = Auth::id();
+
+            // Create member record
+            $member = Member::create($data);
+
+            // Migrate Weekly Attendances
+            $firstTimer->weeklyAttendances()->update([
+                'member_id' => $member->id,
+                'first_timer_id' => null
+            ]);
+
+            // Migrate Foundation Attendances
+            $firstTimer->foundationAttendances()->update([
+                'member_id' => $member->id,
+                'first_timer_id' => null
+            ]);
+
+            // Delete first timer record
+            $firstTimer->delete();
+
+            return $member;
+        });
+    }
+
+    public function syncMembershipStatus(FirstTimer $firstTimer): void
+    {
+        $attendedCount = $firstTimer->weeklyAttendances()->where('attended', true)->count();
+
+        if ($attendedCount >= 6) {
+            $firstTimer->update([
+                'membership_requested_at' => $firstTimer->membership_requested_at ?? now(),
+                'status' => 'In Progress'
+            ]);
+        } elseif ($attendedCount >= 3) {
+            $firstTimer->update(['status' => 'In Progress']);
+        } else {
+            $firstTimer->update(['status' => 'New']);
+        }
+    }
+
+    public function getPendingApprovals(): Collection
+    {
+        return FirstTimer::whereNotNull('membership_requested_at')
+            ->whereNull('membership_approved_at')
+            ->with([
+                'church',
+                'retainingOfficer',
+                'weeklyAttendances' => fn($q) => $q->where('attended', true)->orderByDesc('service_date'),
+                'foundationAttendances.foundationClass'
+            ])
+            ->orderBy('membership_requested_at')
+            ->get();
+    }
+
+    public function approveMembership(FirstTimer $firstTimer): Member
+    {
+        return $this->convertToMember($firstTimer);
+    }
+
+    public function bulkSyncMembershipStatus(?int $churchId = null): int
+    {
+        $query = FirstTimer::where('status', '!=', 'Retained')
+            ->whereNull('membership_requested_at');
+
+        if ($churchId) {
+            $query->where('church_id', $churchId);
+        }
+
+        $count = 0;
+        $query->chunk(100, function ($firstTimers) use (&$count) {
+            foreach ($firstTimers as $ft) {
+                /** @var \App\Models\FirstTimer $ft */
+                $this->syncMembershipStatus($ft);
+                $count++;
+            }
+        });
+
+        return $count;
     }
 }

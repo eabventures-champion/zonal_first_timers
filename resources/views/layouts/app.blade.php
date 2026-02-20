@@ -12,6 +12,7 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <script>
         // On page load or when changing themes, best to add inline in `head` to avoid FOUC

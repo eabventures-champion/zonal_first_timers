@@ -5,7 +5,85 @@
 @section('content')
     <div class="max-w-3xl">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <form method="POST" action="{{ route('admin.first-timers.update', $firstTimer) }}">
+            <form method="POST" action="{{ route('admin.first-timers.update', $firstTimer) }}"
+                x-data="{
+                    categories: {{ Js::from($categories) }},
+                    selectedCategory: '{{ $firstTimer->church->group->category->id ?? '' }}',
+                    selectedGroup: '{{ $firstTimer->church->group->id ?? '' }}',
+                    selectedChurch: '{{ $firstTimer->church_id }}',
+                    selectedOfficer: '{{ $firstTimer->retaining_officer_id }}',
+                    groups: [],
+                    churches: [],
+                    
+                    // Contact Validation
+                    primaryContact: '{{ old('primary_contact', $firstTimer->primary_contact) }}',
+                    contactError: '',
+                    isValidating: false,
+                    excludeId: '{{ $firstTimer->id }}',
+
+                    init() {
+                        this.updateGroups(true);
+                    },
+
+                    updateGroups(initial = false) {
+                        const category = this.categories.find(c => c.id == this.selectedCategory);
+                        this.groups = category ? category.groups : [];
+                        if (!initial) {
+                            this.selectedGroup = '';
+                            this.churches = [];
+                            this.selectedChurch = '';
+                            this.selectedOfficer = '';
+                        } else {
+                            this.updateChurches(true);
+                        }
+                    },
+                    
+                    updateChurches(initial = false) {
+                        const group = this.groups.find(g => g.id == this.selectedGroup);
+                        this.churches = group ? group.churches : [];
+                        if (!initial) {
+                            this.selectedChurch = '';
+                            this.selectedOfficer = '';
+                        }
+                    },
+
+                    updateOfficer() {
+                        const church = this.churches.find(c => c.id == this.selectedChurch);
+                        if (church && church.retaining_officer_id) {
+                            this.selectedOfficer = church.retaining_officer_id;
+                        } else {
+                            this.selectedOfficer = '';
+                        }
+                    },
+
+                    async checkContact() {
+                        if (this.primaryContact.length < 5) {
+                            this.contactError = '';
+                            return;
+                        }
+                        
+                        this.isValidating = true;
+                        try {
+                            const response = await fetch('{{ route('admin.first-timers.check-contact') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ 
+                                    contact: this.primaryContact,
+                                    exclude_id: this.excludeId
+                                })
+                            });
+                            const data = await response.json();
+                            this.contactError = data.exists ? data.message : '';
+                        } catch (e) {
+                            console.error('Validation failed', e);
+                        } finally {
+                            this.isValidating = false;
+                        }
+                    }
+                }">
                 @csrf @method('PUT')
 
                 <h3 class="text-sm font-semibold text-gray-700 mb-4 pb-2 border-b">Personal Information</h3>
@@ -18,18 +96,19 @@
                         @error('full_name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Email <span
-                                class="text-red-500">*</span></label>
-                        <input type="email" name="email" value="{{ old('email', $firstTimer->email) }}" required
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" name="email" value="{{ old('email', $firstTimer->email) }}"
                             class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
                         @error('email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Primary Contact <span
                                 class="text-red-500">*</span></label>
-                        <input type="text" name="primary_contact"
-                            value="{{ old('primary_contact', $firstTimer->primary_contact) }}" required
-                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <input type="text" name="primary_contact" required x-model="primaryContact"
+                            @input.debounce.500ms="checkContact()"
+                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            :class="contactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''">
+                        <p x-show="contactError" x-text="contactError" class="mt-1 text-xs text-red-600" style="display: none;"></p>
                         @error('primary_contact') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
@@ -50,10 +129,29 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                        <input type="date" name="date_of_birth"
-                            value="{{ old('date_of_birth', $firstTimer->date_of_birth?->format('Y-m-d')) }}"
-                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth (Day & Month)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select name="dob_day"
+                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">Day</option>
+                                @for ($i = 1; $i <= 31; $i++)
+                                    @php $dayVal = str_pad($i, 2, '0', STR_PAD_LEFT); @endphp
+                                    <option value="{{ $dayVal }}" 
+                                        {{ old('dob_day', $firstTimer->date_of_birth?->format('d')) == $dayVal ? 'selected' : '' }}>
+                                        {{ $i }}
+                                    </option>
+                                @endfor
+                            </select>
+                            <select name="dob_month"
+                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">Month</option>
+                                @foreach (['01' => 'Jan', '02' => 'Feb', '03' => 'Mar', '04' => 'Apr', '05' => 'May', '06' => 'Jun', '07' => 'Jul', '08' => 'Aug', '09' => 'Sep', '10' => 'Oct', '11' => 'Nov', '12' => 'Dec'] as $val => $label)
+                                    <option value="{{ $val }}" {{ old('dob_month', $firstTimer->date_of_birth?->format('m')) == $val ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Marital Status</label>
@@ -81,14 +179,37 @@
 
                 <h3 class="text-sm font-semibold text-gray-700 mb-4 pb-2 border-b">Church & Visit Details</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Church <span
-                                class="text-red-500">*</span></label>
-                        <select name="church_id" required
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Category <span class="text-red-500">*</span></label>
+                        <select x-model="selectedCategory" @change="updateGroups()"
                             class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            @foreach($churches as $church)
-                                <option value="{{ $church->id }}" {{ old('church_id', $firstTimer->church_id) == $church->id ? 'selected' : '' }}>{{ $church->name }}</option>
-                            @endforeach
+                            <option value="">Select Category</option>
+                            <template x-for="category in categories" :key="category.id">
+                                <option :value="category.id" x-text="category.name" :selected="category.id == selectedCategory"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Group <span class="text-red-500">*</span></label>
+                        <select x-model="selectedGroup" @change="updateChurches()" :disabled="!selectedCategory"
+                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <option value="">Select Group</option>
+                            <template x-for="group in groups" :key="group.id">
+                                <option :value="group.id" x-text="group.name" :selected="group.id == selectedGroup"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Church <span class="text-red-500">*</span></label>
+                        <select name="church_id" x-model="selectedChurch" required :disabled="!selectedGroup" @change="updateOfficer()"
+                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <option value="">Select Church</option>
+                            <template x-for="church in churches" :key="church.id">
+                                <option :value="church.id" x-text="church.name" :selected="church.id == selectedChurch"></option>
+                            </template>
                         </select>
                     </div>
                     <div>
@@ -105,8 +226,8 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Retaining Officer</label>
-                        <select name="retaining_officer_id"
-                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <select name="retaining_officer_id" x-model="selectedOfficer" :disabled="!selectedChurch"
+                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-400">
                             <option value="">Auto-assign</option>
                             @foreach($officers as $officer)
                                 <option value="{{ $officer->id }}" {{ old('retaining_officer_id', $firstTimer->retaining_officer_id) == $officer->id ? 'selected' : '' }}>{{ $officer->name }}

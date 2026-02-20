@@ -16,7 +16,7 @@
                     <h3 class="text-sm font-semibold text-gray-700">Personal Information</h3>
                     @php $sc = ['New' => 'bg-amber-100 text-amber-700', 'In Progress' => 'bg-blue-100 text-blue-700', 'Member' => 'bg-emerald-100 text-emerald-700']; @endphp
                     <span
-                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $sc[$firstTimer->status] ?? 'bg-gray-100' }}">{{ $firstTimer->status }}</span>
+                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $sc[$firstTimer->status] ?? 'bg-gray-100 dark:bg-slate-800' }}">{{ $firstTimer->status }}</span>
                 </div>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
@@ -77,13 +77,13 @@
                 <h3 class="text-sm font-semibold text-gray-700 mb-4">Foundation Progress</h3>
                 <div class="space-y-3">
                     @foreach($foundationProgress as $item)
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                             <div
-                                class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
-                                        {{ $item['completed'] ? 'bg-emerald-500 text-white' : ($item['attended'] ? 'bg-amber-400 text-white' : 'bg-gray-200 text-gray-400') }}">
+                                class="w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-xs font-bold
+                                        {{ $item['completed'] ? 'bg-emerald-500 text-white' : ($item['attended'] ? 'bg-amber-400 text-white' : 'bg-gray-200 dark:bg-slate-800 text-gray-400') }}">
                                 {{ $item['completed'] ? '✓' : $item['class']->class_number }}
                             </div>
-                            <p class="text-sm {{ $item['completed'] ? 'text-emerald-700 font-medium' : 'text-gray-700' }}">
+                            <p class="text-sm {{ $item['completed'] ? 'text-emerald-700 dark:text-emerald-400 font-medium' : 'text-gray-700 dark:text-slate-300' }}">
                                 {{ $item['class']->name }}</p>
                         </div>
                     @endforeach
@@ -93,12 +93,12 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h3 class="text-sm font-semibold text-gray-700 mb-4">Weekly Attendance</h3>
                 @if($firstTimer->weeklyAttendances->count())
-                    <div class="space-y-2">
+                    <div class="space-y-1">
                         @foreach($firstTimer->weeklyAttendances->sortBy('week_number') as $wa)
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-gray-600">Week {{ $wa->week_number }}</span>
+                            <div class="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                <span class="text-gray-600 dark:text-slate-400">Week {{ $wa->week_number }}</span>
                                 <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $wa->attended ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {{ $wa->attended ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400' }}">
                                     {{ $wa->attended ? 'Present' : 'Absent' }}
                                 </span>
                             </div>

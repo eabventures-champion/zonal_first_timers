@@ -6,10 +6,12 @@ use App\Models\Church;
 use App\Models\ChurchCategory;
 use App\Models\ChurchGroup;
 use App\Models\FirstTimer;
+use App\Models\Member;
 use App\Models\FoundationClass;
 use App\Models\FoundationAttendance;
 use App\Models\WeeklyAttendance;
 use App\Models\User;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 
 class DashboardService
@@ -26,8 +28,12 @@ class DashboardService
             'total_first_timers' => FirstTimer::count(),
             'new_first_timers' => FirstTimer::where('status', 'New')->count(),
             'in_progress' => FirstTimer::where('status', 'In Progress')->count(),
-            'total_members' => FirstTimer::where('status', 'Member')->count(),
+            'total_members' => Member::count(),
             'total_retaining_officers' => User::role('Retaining Officer')->count(),
+            'pending_approvals' => FirstTimer::whereNotNull('membership_requested_at')
+                ->whereNull('membership_approved_at')
+                ->count(),
+            'monthly_target' => (int) Setting::get('monthly_registration_target', 50),
         ];
     }
 
@@ -36,36 +42,127 @@ class DashboardService
      */
     public function getGenderDistribution(?int $churchId = null): array
     {
-        $query = FirstTimer::query();
         if ($churchId) {
-            $query->where('church_id', $churchId);
+            $counts = FirstTimer::where('church_id', $churchId)
+                ->select('gender', DB::raw('count(*) as count'))
+                ->groupBy('gender')
+                ->pluck('count', 'gender')
+                ->toArray();
+
+            $total = array_sum($counts);
+            return [
+                'Church Overview' => [
+                    'data' => $counts,
+                    'total' => $total
+                ]
+            ];
         }
 
-        return $query->select('gender', DB::raw('count(*) as count'))
+        // Global view - breakdown by category
+        $distribution = [];
+
+        // 1. Overall Distribution
+        $overallCounts = FirstTimer::select('gender', DB::raw('count(*) as count'))
             ->groupBy('gender')
             ->pluck('count', 'gender')
             ->toArray();
+        $overallTotal = array_sum($overallCounts);
+
+        if ($overallTotal > 0) {
+            $distribution['Overall Total'] = [
+                'data' => $overallCounts,
+                'total' => $overallTotal
+            ];
+        }
+
+        // 2. Per Category Distribution
+        $categories = ChurchCategory::withCount('churches')->get();
+
+        foreach ($categories as $category) {
+            $categoryCounts = FirstTimer::whereHas('church.group', function ($q) use ($category) {
+                $q->where('church_category_id', $category->id);
+            })
+                ->select('gender', DB::raw('count(*) as count'))
+                ->groupBy('gender')
+                ->pluck('count', 'gender')
+                ->toArray();
+
+            $categoryTotal = array_sum($categoryCounts);
+
+            if ($categoryTotal > 0) {
+                $distribution[$category->name] = [
+                    'data' => $categoryCounts,
+                    'total' => $categoryTotal
+                ];
+            }
+        }
+
+        return $distribution;
     }
 
     /**
-     * Get monthly trend (first timers per month)
+     * Get monthly trend (first timers per month) breakdown by church categories
      */
-    public function getMonthlyTrend(?int $churchId = null, int $months = 6): array
+    public function getMonthlyTrend(?int $churchId = null, string $period = 'last_6_months'): array
     {
-        $query = FirstTimer::select(
-            DB::raw("DATE_FORMAT(date_of_visit, '%Y-%m') as month"),
-            DB::raw('count(*) as count')
-        );
+        $query = FirstTimer::query()
+            ->join('churches', 'first_timers.church_id', '=', 'churches.id')
+            ->join('church_groups', 'churches.church_group_id', '=', 'church_groups.id')
+            ->join('church_categories', 'church_groups.church_category_id', '=', 'church_categories.id')
+            ->select(
+                DB::raw("DATE_FORMAT(date_of_visit, '%Y-%m') as month"),
+                'church_categories.name as category_name',
+                DB::raw('count(*) as count')
+            );
 
         if ($churchId) {
-            $query->where('church_id', $churchId);
+            $query->where('first_timers.church_id', $churchId);
         }
 
-        return $query->where('date_of_visit', '>=', now()->subMonths($months))
-            ->groupBy('month')
+        switch ($period) {
+            case 'this_year':
+                $query->whereYear('date_of_visit', now()->year);
+                break;
+            case 'last_year':
+                $query->whereYear('date_of_visit', now()->subYear()->year);
+                break;
+            case 'last_6_months':
+            default:
+                $query->where('date_of_visit', '>=', now()->subMonths(6));
+                break;
+        }
+
+        $results = $query->groupBy('month', 'category_name')
             ->orderBy('month')
-            ->pluck('count', 'month')
-            ->toArray();
+            ->get();
+
+        // Get all months in range
+        $months = $results->pluck('month')->unique()->sort()->values()->toArray();
+
+        // Get all unique categories from results
+        $categories = $results->pluck('category_name')->unique()->toArray();
+
+        $series = [];
+        foreach ($categories as $catName) {
+            $data = [];
+            foreach ($months as $month) {
+                $match = $results->where('month', $month)->where('category_name', $catName)->first();
+                $data[] = $match ? $match->count : 0;
+            }
+            $series[] = [
+                'name' => $catName,
+                'data' => $data
+            ];
+        }
+
+        // Map month keys to short names (Nov, Dec...)
+        $monthNames = array_map(fn($m) => date('M', strtotime($m . '-01')), $months);
+
+        return [
+            'labels' => $monthNames,
+            'series' => $series,
+            'months' => $months // raw months for target mapping
+        ];
     }
 
     /**
@@ -76,7 +173,7 @@ class DashboardService
         $totalFirstTimers = FirstTimer::where('church_id', $churchId)->count();
         $newCount = FirstTimer::where('church_id', $churchId)->where('status', 'New')->count();
         $inProgressCount = FirstTimer::where('church_id', $churchId)->where('status', 'In Progress')->count();
-        $memberCount = FirstTimer::where('church_id', $churchId)->where('status', 'Member')->count();
+        $memberCount = Member::where('church_id', $churchId)->count();
 
         $retentionRate = $totalFirstTimers > 0
             ? round(($memberCount / $totalFirstTimers) * 100, 1)
@@ -115,27 +212,48 @@ class DashboardService
      */
     public function getChurchPerformance(): array
     {
-        return Church::with(['group.category', 'retainingOfficer'])
-            ->withStats()
-            ->get()
-            ->map(function ($church) {
-                $retentionRate = $church->first_timers_count > 0
-                    ? round(($church->members_count / $church->first_timers_count) * 100, 1)
-                    : 0;
+        $categories = ChurchCategory::with([
+            'groups.churches.retainingOfficer',
+            'groups.churches' => function ($q) {
+                $q->withStats();
+            }
+        ])->get();
+
+        return $categories->map(function ($category) {
+            $categoryGroups = $category->groups->map(function ($group) {
+                $churches = $group->churches->map(function ($church) {
+                    $retentionRate = $church->first_timers_count > 0
+                        ? round(($church->members_count / $church->first_timers_count) * 100, 1)
+                        : 0;
+
+                    return [
+                        'id' => $church->id,
+                        'name' => $church->name,
+                        'retaining_officer' => $church->retainingOfficer->name ?? 'Unassigned',
+                        'total_first_timers' => $church->first_timers_count,
+                        'new' => $church->new_first_timers_count,
+                        'in_progress' => $church->in_progress_count,
+                        'members' => $church->members_count,
+                        'retention_rate' => $retentionRate,
+                    ];
+                })->sortByDesc('retention_rate')->values();
 
                 return [
-                    'id' => $church->id,
-                    'name' => $church->name,
-                    'category' => $church->group->category->name ?? 'N/A',
-                    'group' => $church->group->name ?? 'N/A',
-                    'retaining_officer' => $church->retainingOfficer->name ?? 'Unassigned',
-                    'total_first_timers' => $church->first_timers_count,
-                    'new' => $church->new_first_timers_count,
-                    'in_progress' => $church->in_progress_count,
-                    'members' => $church->members_count,
-                    'retention_rate' => $retentionRate,
+                    'id' => $group->id,
+                    'name' => $group->name,
+                    'churches' => $churches,
+                    'total_retention' => round($churches->avg('retention_rate') ?? 0),
                 ];
-            })->toArray();
+            })->filter(fn($g) => $g['churches']->isNotEmpty())->values();
+
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+                'groups' => $categoryGroups,
+                'total_churches' => $categoryGroups->sum(fn($g) => $g['churches']->count()),
+                'total_retention' => round($categoryGroups->avg('total_retention') ?? 0),
+            ];
+        })->filter(fn($c) => $c['groups']->isNotEmpty())->values()->toArray();
     }
 
     /**
@@ -154,5 +272,20 @@ class DashboardService
             ->orderBy('week_number')
             ->get()
             ->toArray();
+    }
+    /**
+     * Get upcoming birthdays (current month)
+     */
+    public function getUpcomingBirthdays(?int $churchId = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = FirstTimer::query()
+            ->whereMonth('date_of_birth', now()->month)
+            ->orderByRaw('DAY(date_of_birth)');
+
+        if ($churchId) {
+            $query->where('church_id', $churchId);
+        }
+
+        return $query->limit(30)->get();
     }
 }

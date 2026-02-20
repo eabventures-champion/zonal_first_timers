@@ -38,9 +38,14 @@ class Church extends Model
         return $this->hasMany(FirstTimer::class);
     }
 
-    public function members(): HasMany
+    public function staff(): HasMany
     {
         return $this->hasMany(User::class, 'church_id');
+    }
+
+    public function members(): HasMany
+    {
+        return $this->hasMany(Member::class);
     }
 
     public function weeklyAttendances(): HasMany
@@ -66,7 +71,7 @@ class Church extends Model
             'firstTimers',
             'firstTimers as new_first_timers_count' => fn($q) => $q->where('status', 'New'),
             'firstTimers as in_progress_count' => fn($q) => $q->where('status', 'In Progress'),
-            'firstTimers as members_count' => fn($q) => $q->where('status', 'Member'),
+            'members as members_count'
         ]);
     }
 }

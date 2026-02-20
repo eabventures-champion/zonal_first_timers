@@ -31,9 +31,14 @@ class FirstTimerController extends Controller
 
     public function create()
     {
-        $churches = Church::with('retainingOfficer')->get();
+        $categories = \App\Models\ChurchCategory::with([
+            'groups.churches' => function ($q) {
+                $q->with('retainingOfficer')->orderBy('name');
+            }
+        ])->orderBy('name')->get();
+
         $officers = User::role('Retaining Officer')->get();
-        return view('admin.first-timers.create', compact('churches', 'officers'));
+        return view('admin.first-timers.create', compact('categories', 'officers'));
     }
 
     public function store(StoreFirstTimerRequest $request)
@@ -52,14 +57,14 @@ class FirstTimerController extends Controller
 
     public function edit(FirstTimer $firstTimer)
     {
-        if ($firstTimer->status === 'Member') {
-            return redirect()->route('admin.first-timers.show', $firstTimer)
-                ->with('error', 'Member records are read-only.');
-        }
+        $categories = \App\Models\ChurchCategory::with([
+            'groups.churches' => function ($q) {
+                $q->with('retainingOfficer')->orderBy('name');
+            }
+        ])->orderBy('name')->get();
 
-        $churches = Church::with('retainingOfficer')->get();
         $officers = User::role('Retaining Officer')->get();
-        return view('admin.first-timers.edit', compact('firstTimer', 'churches', 'officers'));
+        return view('admin.first-timers.edit', compact('firstTimer', 'categories', 'officers'));
     }
 
     public function update(UpdateFirstTimerRequest $request, FirstTimer $firstTimer)
@@ -103,5 +108,21 @@ class FirstTimerController extends Controller
         return redirect()->route('admin.first-timers.index')
             ->with('success', $message)
             ->with('import_errors', $results['errors']);
+    }
+
+    public function checkContact(Request $request)
+    {
+        $query = FirstTimer::where('primary_contact', $request->contact);
+
+        if ($request->exclude_id) {
+            $query->where('id', '!=', $request->exclude_id);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json([
+            'exists' => $exists,
+            'message' => $exists ? 'This phone number is already registered.' : ''
+        ]);
     }
 }

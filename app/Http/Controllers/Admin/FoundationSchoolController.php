@@ -14,10 +14,14 @@ class FoundationSchoolController extends Controller
     {
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->query('search');
         $classes = $this->service->getAllClasses();
-        return view('admin.foundation-school.index', compact('classes'));
+        $groupedData = $this->service->getGroupedProgressData($search);
+        $totalInProgress = $groupedData->sum('first_timers_count');
+
+        return view('admin.foundation-school.index', compact('classes', 'groupedData', 'totalInProgress', 'search'));
     }
 
     public function show(FirstTimer $firstTimer)
@@ -47,5 +51,20 @@ class FoundationSchoolController extends Controller
         }
 
         return back()->with('success', $message);
+    }
+    public function updateClass(Request $request, FoundationClass $class)
+    {
+        if (!auth()->user()->hasRole('Super Admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $class->update($request->only(['name', 'description']));
+
+        return back()->with('success', 'Class updated successfully.');
     }
 }

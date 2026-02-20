@@ -13,8 +13,11 @@ class UpdateChurchCategoryRequest extends FormRequest
 
     public function rules(): array
     {
+        $category = $this->route('church_category');
+        $id = is_object($category) ? $category->id : $category;
+
         return [
-            'name' => 'required|string|max:255|unique:church_categories,name,' . $this->route('church_category'),
+            'name' => 'required|string|max:255|unique:church_categories,name,' . $id,
             'description' => 'nullable|string|max:1000',
         ];
     }

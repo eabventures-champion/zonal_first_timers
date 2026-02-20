@@ -12,6 +12,7 @@ class FoundationAttendance extends Model
 
     protected $fillable = [
         'first_timer_id',
+        'member_id',
         'foundation_class_id',
         'attended',
         'completed',
@@ -32,6 +33,11 @@ class FoundationAttendance extends Model
     public function firstTimer(): BelongsTo
     {
         return $this->belongsTo(FirstTimer::class);
+    }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class);
     }
 
     public function foundationClass(): BelongsTo

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class ChurchCategory extends Model
 {
@@ -24,6 +25,11 @@ class ChurchCategory extends Model
     public function groups(): HasMany
     {
         return $this->hasMany(ChurchGroup::class);
+    }
+
+    public function churches(): HasManyThrough
+    {
+        return $this->hasManyThrough(Church::class, ChurchGroup::class);
     }
 
     public function creator(): BelongsTo
