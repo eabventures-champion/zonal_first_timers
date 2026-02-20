@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', $firstTimer->full_name)
-@section('page-title', $firstTimer->full_name)
+@section('title', $member->full_name)
+@section('page-title', $member->full_name)
 
 @section('content')
     <div class="mb-4">
-        <a href="{{ route('admin.first-timers.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">← Back to
-            First Timers</a>
+        <a href="{{ route('admin.members.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">← Back to
+            Members</a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -15,46 +15,39 @@
             <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">Personal Information</h3>
-                    @php
-                        $sc = [
-                            'New' => 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-500',
-                            'Developing' => 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
-                            'Retained' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
-                        ];
-                    @endphp
                     <span
-                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $sc[$firstTimer->status] ?? 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300' }}">{{ $firstTimer->status }}</span>
+                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">{{ $member->status }}</span>
                 </div>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Email</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $firstTimer->email }}</dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->email ?? '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Primary Contact</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $firstTimer->primary_contact }}</dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->primary_contact }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Gender</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $firstTimer->gender }}</dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->gender }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Marital Status</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $firstTimer->marital_status ?? '—' }}</dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->marital_status ?? '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Date of Birth</dt>
                         <dd class="font-medium text-gray-900 dark:text-white">
-                            {{ $firstTimer->date_of_birth?->format('M d, Y') ?? '—' }}
+                            {{ $member->date_of_birth?->format('M d, Y') ?? '—' }}
                         </dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Occupation</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $firstTimer->occupation ?? '—' }}</dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->occupation ?? '—' }}</dd>
                     </div>
                     <div class="sm:col-span-2">
                         <dt class="text-gray-500 dark:text-slate-500">Address</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $firstTimer->residential_address }}</dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->residential_address }}</dd>
                     </div>
                 </dl>
             </div>
@@ -65,29 +58,30 @@
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Church</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $firstTimer->church->name ?? '—' }}</dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->church->name ?? '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Date of Visit</dt>
                         <dd class="font-medium text-gray-900 dark:text-white">
-                            {{ $firstTimer->date_of_visit?->format('M d, Y') }}</dd>
+                            {{ $member->date_of_visit?->format('M d, Y') }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Church Event</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $firstTimer->church_event ?? '—' }}</dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->church_event ?? '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Retaining Officer</dt>
                         <dd class="font-medium text-gray-900 dark:text-white">
-                            {{ $firstTimer->retainingOfficer->name ?? '—' }}</dd>
+                            {{ $member->retainingOfficer->name ?? '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 dark:text-slate-500">Membership Approved</dt>
+                        <dd class="font-medium text-gray-900 dark:text-white">
+                            {{ $member->membership_approved_at?->format('M d, Y') ?? '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Brought By</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $firstTimer->bringer_name ?? '—' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-500 dark:text-slate-500">Bringer Contact</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $firstTimer->bringer_contact ?? '—' }}</dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->bringer_name ?? '—' }}</dd>
                     </div>
                 </dl>
             </div>
@@ -97,20 +91,20 @@
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4">Spiritual Information</h3>
                 <div class="flex gap-4 mb-4">
                     <span
-                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium {{ $firstTimer->born_again ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400' }}">
-                        {{ $firstTimer->born_again ? '✓' : '✗' }} Born Again
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium {{ $member->born_again ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400' }}">
+                        {{ $member->born_again ? '✓' : '✗' }} Born Again
                     </span>
                     <span
-                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium {{ $firstTimer->water_baptism ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400' }}">
-                        {{ $firstTimer->water_baptism ? '✓' : '✗' }} Water Baptism
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium {{ $member->water_baptism ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400' }}">
+                        {{ $member->water_baptism ? '✓' : '✗' }} Water Baptism
                     </span>
                 </div>
-                @if($firstTimer->prayer_requests)
+                @if($member->prayer_requests)
                     <div>
                         <p class="text-sm text-gray-500 dark:text-slate-500 mb-1">Prayer Requests</p>
                         <p
                             class="text-sm text-gray-900 dark:text-slate-200 bg-gray-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700/50">
-                            {{ $firstTimer->prayer_requests }}</p>
+                            {{ $member->prayer_requests }}</p>
                     </div>
                 @endif
             </div>
@@ -119,16 +113,14 @@
         {{-- Sidebar --}}
         <div class="space-y-6">
             {{-- Actions --}}
-            @if($firstTimer->status !== 'Retained')
-                <div
-                    class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-4 space-y-2">
-                    <a href="{{ route('admin.first-timers.edit', $firstTimer) }}"
-                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition shadow-sm shadow-indigo-500/20">Edit</a>
-                    <a href="{{ route('admin.foundation-school.show', $firstTimer) }}"
-                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 text-sm font-medium rounded-lg transition">Foundation
-                        School</a>
-                </div>
-            @endif
+            <div
+                class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-4 space-y-2">
+                <a href="{{ route('admin.members.edit', $member) }}"
+                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition shadow-sm shadow-indigo-500/20">Edit</a>
+                <a href="{{ route('admin.foundation-school.show', ['id' => $member->id, 'member' => 1]) }}"
+                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 text-sm font-medium rounded-lg transition">Foundation
+                    School</a>
+            </div>
 
             {{-- Foundation Progress --}}
             <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
@@ -156,9 +148,9 @@
             {{-- Weekly Attendance --}}
             <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4">Weekly Attendance</h3>
-                @if($firstTimer->weeklyAttendances->count())
+                @if($member->weeklyAttendances->count())
                     <div class="space-y-1">
-                        @foreach($firstTimer->weeklyAttendances->sortByDesc('week_number') as $wa)
+                        @foreach($member->weeklyAttendances->sortByDesc('week_number') as $wa)
                             <div
                                 class="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                                 <span class="text-gray-600 dark:text-slate-400 font-medium">Week {{ $wa->week_number }}</span>

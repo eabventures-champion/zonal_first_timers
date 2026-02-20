@@ -27,6 +27,7 @@ class AttendanceController extends Controller
                     $q->where('month', $month)->where('year', $year);
                 }
             ])
+            ->withCount(['weeklyAttendances as total_attended' => fn($q) => $q->where('attended', true)])
             ->orderBy('full_name')
             ->get();
 
@@ -37,6 +38,7 @@ class AttendanceController extends Controller
             }
             return [
                 'name' => $ft->full_name,
+                'total_attended' => $ft->total_attended,
                 'weeks' => $weeks,
             ];
         })->toArray();

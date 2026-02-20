@@ -51,7 +51,7 @@ class UpdateFirstTimerRequest extends FormRequest
             'prayer_requests' => ['nullable', 'string', 'max:2000'],
             'date_of_visit' => ['required', 'date'],
             'church_event' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'in:New,In Progress,Member'],
+            'status' => ['nullable', 'in:New,Developing,Retained'],
             'retaining_officer_id' => ['nullable', 'exists:users,id'],
         ];
     }

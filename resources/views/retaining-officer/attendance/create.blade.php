@@ -45,8 +45,8 @@
                                 <span class="text-sm font-medium text-gray-900 dark:text-slate-200">{{ $ft->full_name }}</span>
                                 @php $sc = [
                                     'New' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400', 
-                                    'In Progress' => 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400', 
-                                    'Member' => 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                                    'Developing' => 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400', 
+                                    'Retained' => 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
                                 ]; @endphp
                                 <span
                                     class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $sc[$ft->status] ?? '' }}">{{ $ft->status }}</span>

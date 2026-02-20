@@ -124,7 +124,7 @@ class DemoDataSeeder extends Seeder
         $lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Davis', 'Wilson'];
         $genders = ['Male', 'Female'];
         $statuses = ['Single', 'Married', 'Divorced', 'Widowed'];
-        $ftStatuses = ['New', 'In Progress', 'Member'];
+        $ftStatuses = ['New', 'Developing', 'Retained'];
 
         for ($i = 0; $i < rand(5, 8); $i++) {
             $firstName = $firstNames[array_rand($firstNames)];

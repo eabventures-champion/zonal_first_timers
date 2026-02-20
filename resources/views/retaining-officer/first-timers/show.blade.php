@@ -14,7 +14,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-gray-700">Personal Information</h3>
-                    @php $sc = ['New' => 'bg-amber-100 text-amber-700', 'In Progress' => 'bg-blue-100 text-blue-700', 'Member' => 'bg-emerald-100 text-emerald-700']; @endphp
+                    @php $sc = ['New' => 'bg-amber-100 text-amber-700', 'Developing' => 'bg-blue-100 text-blue-700', 'Retained' => 'bg-emerald-100 text-emerald-700']; @endphp
                     <span
                         class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $sc[$firstTimer->status] ?? 'bg-gray-100 dark:bg-slate-800' }}">{{ $firstTimer->status }}</span>
                 </div>
@@ -65,7 +65,7 @@
 
         {{-- Sidebar --}}
         <div class="space-y-6">
-            @if($firstTimer->status !== 'Member')
+            @if($firstTimer->status !== 'Retained')
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-2">
                     <a href="{{ route('ro.foundation-school.show', $firstTimer) }}"
                         class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">Foundation

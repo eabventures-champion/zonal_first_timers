@@ -118,6 +118,27 @@ class FirstTimer extends Model
         return round(($attended / $total) * 100, 1);
     }
 
+    public function getStatusAttribute($value): string
+    {
+        // Use pre-calculated attribute if available (eager loaded via withCount)
+        // Check for 'total_attended' (custom alias) or default 'weekly_attendances_count'
+        $attendedCount = $this->attributes['total_attended']
+            ?? $this->attributes['weekly_attendances_count']
+            ?? null;
+
+        if ($attendedCount === null) {
+            $attendedCount = $this->weeklyAttendances()->where('attended', true)->count();
+        }
+
+        if ($attendedCount >= 6) {
+            return 'Retained';
+        } elseif ($attendedCount >= 2) {
+            return 'Developing';
+        }
+
+        return 'New';
+    }
+
     public function getIsReadOnlyAttribute(): bool
     {
         return $this->status === 'Retained';
@@ -151,5 +172,20 @@ class FirstTimer extends Model
         }
 
         return $latestAttendance->foundationClass->name;
+    }
+
+    public function getFoundationSchoolStatusAttribute(): string
+    {
+        $totalClasses = \App\Models\FoundationClass::count();
+        $completedClasses = $this->foundationAttendances->where('completed', true)->count();
+
+        if ($totalClasses === 0)
+            return 'not yet';
+        if ($completedClasses >= $totalClasses)
+            return 'completed';
+        if ($completedClasses > 0)
+            return 'in-progress';
+
+        return 'not yet';
     }
 }

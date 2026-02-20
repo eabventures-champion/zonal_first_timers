@@ -21,31 +21,31 @@ class FirstTimerService
         return $this->getAll($filters);
     }
 
-    public function getAll(array $filters = [])
+    public function getAll(array $filters = [], bool $paginate = true)
     {
         $query = FirstTimer::with([
             'church.group.category',
             'retainingOfficer',
             'weeklyAttendances' => fn($q) => $q->where('attended', true)->orderByDesc('service_date'),
             'foundationAttendances.foundationClass'
-        ]);
+        ])->withCount(['weeklyAttendances as total_attended' => fn($q) => $q->where('attended', true)]);
 
-        return $this->applyFilters($query, $filters);
+        return $this->applyFilters($query, $filters, $paginate);
     }
 
-    public function getMembers(array $filters = [])
+    public function getMembers(array $filters = [], bool $paginate = true)
     {
         $query = Member::with([
             'church.group.category',
             'retainingOfficer',
             'weeklyAttendances' => fn($q) => $q->where('attended', true)->orderByDesc('service_date'),
             'foundationAttendances.foundationClass'
-        ]);
+        ])->withCount(['weeklyAttendances as total_attended' => fn($q) => $q->where('attended', true)]);
 
-        return $this->applyFilters($query, $filters);
+        return $this->applyFilters($query, $filters, $paginate);
     }
 
-    private function applyFilters($query, array $filters = [])
+    private function applyFilters($query, array $filters = [], bool $paginate = true)
     {
         if (!empty($filters['church_id'])) {
             $query->where('church_id', $filters['church_id']);
@@ -71,7 +71,9 @@ class FirstTimerService
             $query->where('date_of_visit', '<=', $filters['date_to']);
         }
 
-        return $query->latest('date_of_visit')->paginate(20);
+        $query->latest('date_of_visit');
+
+        return $paginate ? $query->paginate(20) : $query->get();
     }
 
     public function create(array $data): FirstTimer
@@ -212,11 +214,16 @@ class FirstTimerService
 
         if ($attendedCount >= 6) {
             $firstTimer->update([
+                'status' => 'Retained',
                 'membership_requested_at' => $firstTimer->membership_requested_at ?? now(),
-                'status' => 'In Progress'
+                'membership_approved_at' => $firstTimer->membership_approved_at ?? now(),
+                'updated_by' => Auth::id(),
             ]);
-        } elseif ($attendedCount >= 3) {
-            $firstTimer->update(['status' => 'In Progress']);
+
+            // Auto-convert to Member move them to dedicated table
+            $this->convertToMember($firstTimer);
+        } elseif ($attendedCount >= 2) {
+            $firstTimer->update(['status' => 'Developing']);
         } else {
             $firstTimer->update(['status' => 'New']);
         }

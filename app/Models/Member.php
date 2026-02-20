@@ -122,4 +122,18 @@ class Member extends Model
             ->map(fn($date) => $date->format('M d, Y'))
             ->toArray();
     }
+    public function getFoundationSchoolStatusAttribute(): string
+    {
+        $totalClasses = \App\Models\FoundationClass::count();
+        $completedClasses = $this->foundationAttendances->where('completed', true)->count();
+
+        if ($totalClasses === 0)
+            return 'not yet';
+        if ($completedClasses >= $totalClasses)
+            return 'completed';
+        if ($completedClasses > 0)
+            return 'in-progress';
+
+        return 'not yet';
+    }
 }

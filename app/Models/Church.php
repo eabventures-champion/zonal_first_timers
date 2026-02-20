@@ -70,7 +70,7 @@ class Church extends Model
         return $query->withCount([
             'firstTimers',
             'firstTimers as new_first_timers_count' => fn($q) => $q->where('status', 'New'),
-            'firstTimers as in_progress_count' => fn($q) => $q->where('status', 'In Progress'),
+            'firstTimers as developing_count' => fn($q) => $q->where('status', 'Developing'),
             'members as members_count'
         ]);
     }

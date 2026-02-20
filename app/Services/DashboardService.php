@@ -27,7 +27,7 @@ class DashboardService
             'total_groups' => ChurchGroup::count(),
             'total_first_timers' => FirstTimer::count(),
             'new_first_timers' => FirstTimer::where('status', 'New')->count(),
-            'in_progress' => FirstTimer::where('status', 'In Progress')->count(),
+            'developing' => FirstTimer::where('status', 'Developing')->count(),
             'total_members' => Member::count(),
             'total_retaining_officers' => User::role('Retaining Officer')->count(),
             'pending_approvals' => FirstTimer::whereNotNull('membership_requested_at')
@@ -172,7 +172,7 @@ class DashboardService
     {
         $totalFirstTimers = FirstTimer::where('church_id', $churchId)->count();
         $newCount = FirstTimer::where('church_id', $churchId)->where('status', 'New')->count();
-        $inProgressCount = FirstTimer::where('church_id', $churchId)->where('status', 'In Progress')->count();
+        $developingCount = FirstTimer::where('church_id', $churchId)->where('status', 'Developing')->count();
         $memberCount = Member::where('church_id', $churchId)->count();
 
         $retentionRate = $totalFirstTimers > 0
@@ -199,7 +199,7 @@ class DashboardService
         return [
             'total_first_timers' => $totalFirstTimers,
             'new_first_timers' => $newCount,
-            'in_progress' => $inProgressCount,
+            'developing' => $developingCount,
             'total_members' => $memberCount,
             'retention_rate' => $retentionRate,
             'foundation_completion_rate' => $foundationRate,
@@ -232,7 +232,7 @@ class DashboardService
                         'retaining_officer' => $church->retainingOfficer->name ?? 'Unassigned',
                         'total_first_timers' => $church->first_timers_count,
                         'new' => $church->new_first_timers_count,
-                        'in_progress' => $church->in_progress_count,
+                        'developing' => $church->developing_count,
                         'members' => $church->members_count,
                         'retention_rate' => $retentionRate,
                     ];

@@ -24,7 +24,12 @@
                     @forelse($firstTimers as $ft)
                         <tr class="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                             <td class="px-6 py-3">
-                                <div class="font-medium text-gray-900 dark:text-white">{{ $ft->full_name }}</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium text-gray-900 dark:text-white">{{ $ft->full_name }}</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                                        {{ $ft->total_attended }} {{ Str::plural('Service', $ft->total_attended) }}
+                                    </span>
+                                </div>
                                 <div class="text-xs text-gray-400 dark:text-slate-500">{{ $ft->email }}</div>
                             </td>
                             <td class="px-6 py-3 text-gray-500 dark:text-slate-400">{{ $ft->primary_contact }}</td>
@@ -32,10 +37,10 @@
                             </td>
                             <td class="px-6 py-3 text-center">
                                 @php 
-                                                                    $sc = [
+                                    $sc = [
                                         'New' => 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-500',
-                                        'In Progress' => 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
-                                        'Member' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
+                                        'Developing' => 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
+                                        'Retained' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
                                     ]; 
                                 @endphp
                                 <span

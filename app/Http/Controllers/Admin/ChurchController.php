@@ -21,8 +21,8 @@ class ChurchController extends Controller
 
     public function index()
     {
-        $churches = $this->service->getAllChurches();
-        return view('admin.churches.index', compact('churches'));
+        $groups = $this->service->getAllGroupsWithChurches();
+        return view('admin.churches.index', compact('groups'));
     }
 
     public function create()

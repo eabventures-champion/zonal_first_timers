@@ -33,6 +33,9 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
 
     // First Timers & Members
     Route::get('members', [Admin\MemberController::class, 'index'])->name('members.index');
+    Route::get('members/{member}', [Admin\MemberController::class, 'show'])->name('members.show');
+    Route::get('members/{member}/edit', [Admin\MemberController::class, 'edit'])->name('members.edit');
+    Route::put('members/{member}', [Admin\MemberController::class, 'update'])->name('members.update');
     Route::post('first-timers/check-contact', [Admin\FirstTimerController::class, 'checkContact'])->name('first-timers.check-contact');
     Route::get('first-timers/import', [Admin\FirstTimerController::class, 'importForm'])->name('first-timers.import');
     Route::post('first-timers/import', [Admin\FirstTimerController::class, 'import'])->name('first-timers.import.store');
@@ -41,8 +44,8 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
     // Foundation School
     Route::get('foundation-school', [Admin\FoundationSchoolController::class, 'index'])->name('foundation-school.index');
     Route::put('foundation-school/classes/{class}', [Admin\FoundationSchoolController::class, 'updateClass'])->name('foundation-school.classes.update');
-    Route::get('foundation-school/{firstTimer}', [Admin\FoundationSchoolController::class, 'show'])->name('foundation-school.show');
-    Route::post('foundation-school/{firstTimer}/attendance', [Admin\FoundationSchoolController::class, 'recordAttendance'])->name('foundation-school.attendance');
+    Route::get('foundation-school/{id}', [Admin\FoundationSchoolController::class, 'show'])->name('foundation-school.show');
+    Route::post('foundation-school/{id}/attendance', [Admin\FoundationSchoolController::class, 'recordAttendance'])->name('foundation-school.attendance');
 
     // Membership Approvals
     Route::get('membership-approvals', [Admin\MembershipApprovalController::class, 'index'])->name('membership-approvals.index');
@@ -60,13 +63,14 @@ Route::middleware(['auth', 'role:Retaining Officer'])->prefix('retaining-officer
 
     // First Timers & Members (scoped)
     Route::get('members', [\App\Http\Controllers\RO\MemberController::class, 'index'])->name('members.index');
+    Route::get('members/{member}', [\App\Http\Controllers\RO\MemberController::class, 'show'])->name('members.show');
     Route::get('first-timers', [RetainingOfficer\FirstTimerController::class, 'index'])->name('first-timers.index');
     Route::get('first-timers/{firstTimer}', [RetainingOfficer\FirstTimerController::class, 'show'])->name('first-timers.show');
 
     // Foundation School (scoped)
     Route::get('foundation-school', [RetainingOfficer\FoundationSchoolController::class, 'index'])->name('foundation-school.index');
-    Route::get('foundation-school/{firstTimer}', [RetainingOfficer\FoundationSchoolController::class, 'show'])->name('foundation-school.show');
-    Route::post('foundation-school/{firstTimer}/attendance', [RetainingOfficer\FoundationSchoolController::class, 'recordAttendance'])->name('foundation-school.attendance');
+    Route::get('foundation-school/{id}', [RetainingOfficer\FoundationSchoolController::class, 'show'])->name('foundation-school.show');
+    Route::post('foundation-school/{id}/attendance', [RetainingOfficer\FoundationSchoolController::class, 'recordAttendance'])->name('foundation-school.attendance');
 
     // Weekly Attendance
     Route::get('attendance', [RetainingOfficer\AttendanceController::class, 'index'])->name('attendance.index');

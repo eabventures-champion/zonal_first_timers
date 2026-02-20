@@ -33,7 +33,7 @@ class FirstTimerController extends Controller
         }
 
         $firstTimer->load(['church', 'retainingOfficer', 'weeklyAttendances', 'foundationAttendances.foundationClass']);
-        $foundationProgress = $this->foundationService->getProgressForFirstTimer($firstTimer);
+        $foundationProgress = $this->foundationService->getStudentProgress($firstTimer);
 
         return view('retaining-officer.first-timers.show', compact('firstTimer', 'foundationProgress'));
     }

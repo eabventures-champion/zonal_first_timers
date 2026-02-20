@@ -48,7 +48,12 @@
                     @forelse($attendanceData as $data)
                         <tr class="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                             <td class="px-6 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                                {{ $data['name'] }}</td>
+                                {{ $data['name'] }}
+                                <span
+                                    class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                                    {{ $data['total_attended'] }} {{ Str::plural('Service', $data['total_attended']) }}
+                                </span>
+                            </td>
                             @for($w = 1; $w <= 5; $w++)
                                 <td class="px-3 py-3 text-center">
                                     @if(isset($data['weeks'][$w]))

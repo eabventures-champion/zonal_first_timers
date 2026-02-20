@@ -32,11 +32,11 @@
         <x-stats-card label="Total Churches" :value="$stats['total_churches']" color="indigo" />
         <x-stats-card label="Total First Timers" :value="$stats['total_first_timers']" color="sky" />
         <x-stats-card label="New First Timers" :value="$stats['new_first_timers']" color="amber" />
-        <x-stats-card label="Converted Members" :value="$stats['total_members']" color="emerald" />
+        <x-stats-card label="Retained as Members" :value="$stats['total_members']" color="emerald" />
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <x-stats-card label="In Progress" :value="$stats['in_progress']" color="violet" />
+        <x-stats-card label="Developing" :value="$stats['developing']" color="violet" />
         <x-stats-card label="Categories" :value="$stats['total_categories']" color="orange" />
         <x-stats-card label="Groups" :value="$stats['total_groups']" color="teal" />
         <x-stats-card label="Retaining Officers" :value="$stats['total_retaining_officers']" color="rose" />
@@ -485,7 +485,7 @@
                                                     <th class="px-4 py-2 font-medium">Officer</th>
                                                     <th class="px-4 py-2 text-center font-medium">Total</th>
                                                     <th class="px-4 py-2 text-center font-medium">New</th>
-                                                    <th class="px-4 py-2 text-center font-medium">In Progress</th>
+                                                    <th class="px-4 py-2 text-center font-medium">Developing</th>
                                                     <th class="px-4 py-2 text-center font-medium">Members</th>
                                                     <th class="px-4 py-2 text-center font-medium">Retention</th>
                                                 </tr>
@@ -510,7 +510,7 @@
                                                         </td>
                                                         <td class="px-4 py-2.5 text-center">
                                                             <span
-                                                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{ $church['in_progress'] }}</span>
+                                                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{ $church['developing'] }}</span>
                                                         </td>
                                                         <td class="px-4 py-2.5 text-center">
                                                             <span

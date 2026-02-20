@@ -24,9 +24,15 @@ class FirstTimerController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only(['church_id', 'status', 'search', 'date_from', 'date_to']);
-        $firstTimers = $this->service->getAll($filters);
+        $firstTimers = $this->service->getAll($filters, false); // Fetch all for grouped view
         $churches = Church::all();
-        return view('admin.first-timers.index', compact('firstTimers', 'churches', 'filters'));
+
+        // Group by group name for structured view
+        $groupedFirstTimers = $firstTimers->groupBy(function ($ft) {
+            return $ft->church->group->name ?? 'Unassigned Groups';
+        });
+
+        return view('admin.first-timers.index', compact('groupedFirstTimers', 'churches', 'filters'));
     }
 
     public function create()
@@ -51,7 +57,7 @@ class FirstTimerController extends Controller
     public function show(FirstTimer $firstTimer)
     {
         $firstTimer->load(['church.group.category', 'retainingOfficer', 'weeklyAttendances', 'foundationAttendances.foundationClass']);
-        $foundationProgress = $this->foundationService->getProgressForFirstTimer($firstTimer);
+        $foundationProgress = $this->foundationService->getStudentProgress($firstTimer);
         return view('admin.first-timers.show', compact('firstTimer', 'foundationProgress'));
     }
 

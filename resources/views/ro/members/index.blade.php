@@ -28,10 +28,10 @@
 
     {{-- Table --}}
     <div x-data="{ 
-            showHistory: false, 
-            historyName: '', 
-            historyDates: [] 
-        }"
+                                showHistory: false, 
+                                historyName: '', 
+                                historyDates: [] 
+                            }"
         class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
@@ -49,7 +49,13 @@
                     @forelse($members as $m)
                         <tr class="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                             <td class="px-6 py-3">
-                                <div class="font-medium text-gray-900 dark:text-white">{{ $m->full_name }}</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium text-gray-900 dark:text-white">{{ $m->full_name }}</span>
+                                    <span
+                                        class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                                        {{ $m->total_attended }} {{ Str::plural('Service', $m->total_attended) }}
+                                    </span>
+                                </div>
                                 <div class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">
                                     {{ $m->status }}
                                 </div>
@@ -62,7 +68,7 @@
                                 <button type="button"
                                     @click="historyName = '{{ $m->full_name }}'; historyDates = {{ json_encode($m->attendance_dates) }}; showHistory = true"
                                     class="inline-flex items-center gap-1.5 px-2 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition cursor-pointer">
-                                    <span class="text-xs font-bold">{{ count($m->attendance_dates) }}</span>
+                                    <span class="text-xs font-bold">{{ $m->total_attended }}</span>
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -70,16 +76,24 @@
                                 </button>
                             </td>
                             <td class="px-6 py-3 text-center">
+                                @php
+                                    $fsColors = [
+                                        'not yet' => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400',
+                                        'in-progress' => 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
+                                        'completed' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
+                                    ];
+                                    $fsStatus = $m->foundation_school_status;
+                                @endphp
                                 <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400">
-                                    {{ $m->current_foundation_level }}
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase {{ $fsColors[$fsStatus] ?? 'bg-gray-50 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400' }}">
+                                    {{ $fsStatus }}
                                 </span>
                             </td>
                             <td class="px-6 py-3 text-center text-gray-500 dark:text-slate-400 text-xs">
                                 {{ $m->membership_approved_at?->format('M d, Y') ?? '—' }}
                             </td>
                             <td class="px-6 py-3 text-right">
-                                <a href="{{ route('ro.first-timers.show', $m) }}"
+                                <a href="{{ route('ro.members.show', $m) }}"
                                     class="text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300 text-xs font-medium">View</a>
                             </td>
                         </tr>

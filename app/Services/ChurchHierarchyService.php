@@ -61,6 +61,16 @@ class ChurchHierarchyService
         return $group->fresh();
     }
 
+    public function getAllGroupsWithChurches()
+    {
+        return ChurchGroup::with([
+            'churches' => function ($q) {
+                $q->with(['retainingOfficer'])->withStats();
+            },
+            'category'
+        ])->get();
+    }
+
     public function deleteGroup(ChurchGroup $group): void
     {
         $group->delete();
