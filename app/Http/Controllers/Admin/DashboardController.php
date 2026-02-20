@@ -19,7 +19,7 @@ class DashboardController extends Controller
         $genderDistribution = $this->service->getGenderDistribution();
         $monthlyTrend = $this->service->getMonthlyTrend(null, $period);
         $churchPerformance = $this->service->getChurchPerformance();
-        $upcomingBirthdays = $this->service->getUpcomingBirthdays();
+        $upcomingBirthdays = $this->service->getUpcomingBirthdaysGrouped();
 
         return view('admin.dashboard', compact(
             'stats',

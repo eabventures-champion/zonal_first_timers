@@ -231,21 +231,28 @@ class FirstTimerService
 
     public function getPendingApprovals(): Collection
     {
-        return FirstTimer::whereNotNull('membership_requested_at')
-            ->whereNull('membership_approved_at')
+        return Member::whereNull('acknowledged_at')
             ->with([
                 'church',
                 'retainingOfficer',
                 'weeklyAttendances' => fn($q) => $q->where('attended', true)->orderByDesc('service_date'),
                 'foundationAttendances.foundationClass'
             ])
-            ->orderBy('membership_requested_at')
+            ->orderBy('membership_approved_at')
             ->get();
     }
 
-    public function approveMembership(FirstTimer $firstTimer): Member
+    public function acknowledgeMembership(Member $member): Member
     {
-        return $this->convertToMember($firstTimer);
+        $member->update(['acknowledged_at' => now()]);
+        return $member;
+    }
+
+    public function bulkAcknowledge(array $memberIds): int
+    {
+        return Member::whereIn('id', $memberIds)
+            ->whereNull('acknowledged_at')
+            ->update(['acknowledged_at' => now()]);
     }
 
     public function bulkSyncMembershipStatus(?int $churchId = null): int

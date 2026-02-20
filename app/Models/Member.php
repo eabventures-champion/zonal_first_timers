@@ -35,6 +35,7 @@ class Member extends Model
         'status',
         'membership_requested_at',
         'membership_approved_at',
+        'acknowledged_at',
         'retaining_officer_id',
         'created_by',
         'updated_by',
@@ -47,6 +48,7 @@ class Member extends Model
             'date_of_visit' => 'date',
             'membership_requested_at' => 'datetime',
             'membership_approved_at' => 'datetime',
+            'acknowledged_at' => 'datetime',
             'born_again' => 'boolean',
             'water_baptism' => 'boolean',
         ];
@@ -135,5 +137,21 @@ class Member extends Model
             return 'in-progress';
 
         return 'not yet';
+    }
+
+    public function getCurrentFoundationLevelAttribute(): string
+    {
+        $latestAttendance = $this->foundationAttendances()
+            ->where('completed', true)
+            ->with('foundationClass')
+            ->get()
+            ->sortByDesc(fn($a) => $a->foundationClass->class_number)
+            ->first();
+
+        if (!$latestAttendance) {
+            return 'Not Started';
+        }
+
+        return $latestAttendance->foundationClass->name;
     }
 }

@@ -88,7 +88,7 @@
 
             {{-- Spiritual --}}
             <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4">Spiritual Information</h3>
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4">Credentials</h3>
                 <div class="flex gap-4 mb-4">
                     <span
                         class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium {{ $member->born_again ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400' }}">
@@ -148,10 +148,16 @@
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4">Weekly Attendance</h3>
                 @if($member->weeklyAttendances->count())
                     <div class="space-y-1">
-                        @foreach($member->weeklyAttendances->sortByDesc('week_number') as $wa)
+                        @foreach($member->weeklyAttendances->sort(function($a, $b) {
+                            if (($a->year ?? 0) != ($b->year ?? 0)) return ($b->year ?? 0) <=> ($a->year ?? 0);
+                            if (($a->month ?? 0) != ($b->month ?? 0)) return ($b->month ?? 0) <=> ($a->month ?? 0);
+                            return ($b->week_number ?? 0) <=> ($a->week_number ?? 0);
+                        }) as $wa)
                             <div
                                 class="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                                <span class="text-gray-600 dark:text-slate-400 font-medium">Week {{ $wa->week_number }}</span>
+                                <span class="text-gray-600 dark:text-slate-400 font-medium">
+                                    {{ date('M Y', mktime(0, 0, 0, $wa->month ?? 1, 1)) }} - Week {{ $wa->week_number }}
+                                </span>
                                 <span
                                     class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $wa->attended ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400' }}">
                                     {{ $wa->attended ? 'Present' : 'Absent' }}

@@ -4,7 +4,7 @@
 
 @section('content')
     @if($stats['pending_approvals'] > 0)
-        <div
+        <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 5000)" x-show="show" x-transition
             class="mb-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4 flex items-center justify-between animate-pulse">
             <div class="flex items-center gap-3">
                 <div
@@ -15,9 +15,9 @@
                     </svg>
                 </div>
                 <div>
-                    <h4 class="text-sm font-bold text-amber-800 dark:text-amber-200">Pending Membership Approvals</h4>
+                    <h4 class="text-sm font-bold text-amber-800 dark:text-amber-200">New Membership Notifications</h4>
                     <p class="text-xs text-amber-700 dark:text-amber-400">There are {{ $stats['pending_approvals'] }} first
-                        timers ready for migration to Member status.</p>
+                        timers who have automatically become members.</p>
                 </div>
             </div>
             <a href="{{ route('admin.membership-approvals.index') }}"
@@ -77,43 +77,166 @@
 
 
 
-        {{-- Upcoming Birthdays --}}
+        {{-- Upcoming Birthdays —— Grouped by Church Group --}}
         <div
-            class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6 flex flex-col h-full">
-            <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4">Birthdays (This Month)</h3>
-            <div class="space-y-4 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
-                @forelse($upcomingBirthdays as $birthday)
-                    @php
-                        $isPast = $birthday->date_of_birth->day < now()->day;
-                    @endphp
-                    <div
-                        class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors {{ $isPast ? 'opacity-50' : '' }}">
-                        <div
-                            class="w-10 h-10 shrink-0 rounded-full {{ $isPast ? 'bg-gray-100 dark:bg-slate-800 text-gray-400' : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400' }} flex items-center justify-center font-bold text-xs relative">
-                            {{ $birthday->date_of_birth->format('d') }}
-                            @if($isPast)
-                                <span class="absolute -top-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5">
-                                    <svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </span>
-                            @endif
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-sm font-medium text-gray-900 dark:text-slate-200 truncate">
-                                {{ $birthday->full_name }}
-                                <span
-                                    class="text-[10px] text-gray-400 dark:text-slate-500 ml-1 font-normal">({{ $birthday->primary_contact }})</span>
-                            </p>
-                            <p class="text-xs text-gray-500 dark:text-slate-400">
-                                {{ $birthday->date_of_birth->format('M') }} {{ $isPast ? '(Passed)' : '' }}
-                            </p>
+            class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col h-full"
+            x-data="{
+                showModal: false,
+                selected: null,
+                open(person) { this.selected = person; this.showModal = true; },
+                close() { this.showModal = false; this.selected = null; }
+            }">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">🎂 Birthday Reminders</h3>
+                <span class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">This Month & Next 30 Days</span>
+            </div>
+
+            <div class="max-h-[320px] overflow-y-auto custom-scrollbar">
+                @forelse($upcomingBirthdays as $groupName => $people)
+                    <div x-data="{ expanded: false }" class="border-b border-gray-50 dark:border-slate-800 last:border-b-0">
+                        {{-- Group Header --}}
+                        <button @click="expanded = !expanded"
+                            class="w-full flex items-center justify-between px-5 py-2.5 bg-gray-50/70 dark:bg-slate-800/40 hover:bg-gray-100 dark:hover:bg-slate-800/70 transition-colors">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-3 h-3 text-gray-400 transition-transform" :class="expanded ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                                <span class="text-xs font-bold text-gray-700 dark:text-slate-300 tracking-tight">{{ $groupName }}</span>
+                            </div>
+                            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">{{ $people->count() }}</span>
+                        </button>
+
+                        {{-- Birthday Entries --}}
+                        <div x-show="expanded" x-collapse class="divide-y divide-gray-50 dark:divide-slate-800/50">
+                            @foreach($people as $person)
+                                <div @click="open({
+                                        full_name: '{{ addslashes($person->full_name) }}',
+                                        date_of_birth: '{{ \Carbon\Carbon::parse($person->date_of_birth)->format('F d, Y') }}',
+                                        primary_contact: '{{ addslashes($person->primary_contact ?? 'N/A') }}',
+                                        type: '{{ $person->type }}',
+                                        status: '{{ addslashes($person->status ?? '') }}',
+                                        church_name: '{{ addslashes($person->church_name) }}',
+                                        group_name: '{{ addslashes($person->group_name) }}',
+                                        days_until: {{ $person->days_until }},
+                                        already_passed: {{ $person->already_passed ? 'true' : 'false' }}
+                                    })"
+                                    class="flex items-center justify-between px-5 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer {{ $person->already_passed ? 'opacity-50' : '' }}">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm
+                                            {{ $person->days_until === 0 ? 'bg-pink-100 dark:bg-pink-500/10' : ($person->already_passed ? 'bg-gray-100 dark:bg-slate-800' : 'bg-indigo-50 dark:bg-indigo-500/10') }}">
+                                            {{ $person->days_until === 0 ? '🎉' : '🎂' }}
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ $person->full_name }}</p>
+                                            <p class="text-[11px] text-gray-500 dark:text-slate-400">
+                                                {{ \Carbon\Carbon::parse($person->date_of_birth)->format('M d') }} ·
+                                                <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $person->type }}</span>
+                                                · {{ $person->church_name }}
+                                                @if($person->primary_contact)
+                                                    · <span class="text-gray-600 dark:text-slate-300">{{ $person->primary_contact }}</span>
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                    @if($person->already_passed)
+                                        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+                                            {{ abs($person->days_until) }} {{ abs($person->days_until) === 1 ? 'day' : 'days' }} ago
+                                        </span>
+                                    @elseif($person->days_until === 0)
+                                        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-100 text-pink-700 dark:bg-pink-500/10 dark:text-pink-400">
+                                            Today! 🎉
+                                        </span>
+                                    @elseif($person->days_until === 1)
+                                        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+                                            Tomorrow
+                                        </span>
+                                    @elseif($person->days_until <= 7)
+                                        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
+                                            {{ $person->days_until }} days
+                                        </span>
+                                    @else
+                                        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+                                            {{ $person->days_until }} days
+                                        </span>
+                                    @endif
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 @empty
-                    <p class="text-sm text-gray-400 dark:text-slate-600 text-center py-4">No upcoming birthdays.</p>
+                    <div class="px-6 py-8 text-center text-gray-400 dark:text-slate-500 text-sm">No upcoming birthdays in the next 30 days.</div>
                 @endforelse
             </div>
+
+            {{-- Detail Modal --}}
+            <template x-if="showModal">
+                <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="close()">
+                    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="close()"></div>
+                    <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 w-full max-w-sm p-6 animate-in zoom-in-95 duration-200"
+                         @click.away="close()">
+                        {{-- Close Button --}}
+                        <button @click="close()" class="absolute top-3 right-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        {{-- Header --}}
+                        <div class="text-center mb-5">
+                            <div class="w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl mb-3"
+                                 :class="selected.days_until === 0 ? 'bg-pink-100 dark:bg-pink-500/10' : 'bg-indigo-50 dark:bg-indigo-500/10'">
+                                <span x-text="selected.days_until === 0 ? '🎉' : '🎂'"></span>
+                            </div>
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white" x-text="selected.full_name"></h3>
+                            <p class="text-xs text-gray-400 dark:text-slate-500 mt-0.5" x-text="selected.date_of_birth"></p>
+                        </div>
+
+                        {{-- Details Grid --}}
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+                                <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Phone</span>
+                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200" x-text="selected.primary_contact"></span>
+                            </div>
+                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+                                <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Church</span>
+                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200" x-text="selected.church_name"></span>
+                            </div>
+                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+                                <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Group</span>
+                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200" x-text="selected.group_name"></span>
+                            </div>
+                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+                                <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Type</span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                      :class="selected.type === 'Member' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'"
+                                      x-text="selected.type"></span>
+                            </div>
+                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+                                <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Status</span>
+                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200" x-text="selected.status"></span>
+                            </div>
+                            <div class="flex items-center justify-between py-2">
+                                <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Birthday</span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                      :class="selected.already_passed ? 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400' : (selected.days_until === 0 ? 'bg-pink-100 text-pink-700 dark:bg-pink-500/10 dark:text-pink-400' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400')">
+                                    <template x-if="selected.already_passed">
+                                        <span x-text="Math.abs(selected.days_until) + (Math.abs(selected.days_until) === 1 ? ' day ago' : ' days ago')"></span>
+                                    </template>
+                                    <template x-if="!selected.already_passed && selected.days_until === 0">
+                                        <span>Today! 🎉</span>
+                                    </template>
+                                    <template x-if="!selected.already_passed && selected.days_until === 1">
+                                        <span>Tomorrow</span>
+                                    </template>
+                                    <template x-if="!selected.already_passed && selected.days_until > 1">
+                                        <span x-text="selected.days_until + ' days away'"></span>
+                                    </template>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
         </div>
     </div>
 
@@ -483,9 +606,9 @@
                                                     class="text-left text-[11px] text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                                                     <th class="px-4 py-2 font-medium">Church</th>
                                                     <th class="px-4 py-2 font-medium">Officer</th>
-                                                    <th class="px-4 py-2 text-center font-medium">Total</th>
-                                                    <th class="px-4 py-2 text-center font-medium">New</th>
-                                                    <th class="px-4 py-2 text-center font-medium">Developing</th>
+                                                    <th class="px-4 py-2 text-center font-medium">(FIRST TIMERS) Total</th>
+                                                    <th class="px-4 py-2 text-center font-medium">(FIRST TIMERS) New</th>
+                                                    <th class="px-4 py-2 text-center font-medium">(FIRST TIMERS) Developing</th>
                                                     <th class="px-4 py-2 text-center font-medium">Members</th>
                                                     <th class="px-4 py-2 text-center font-medium">Retention</th>
                                                 </tr>

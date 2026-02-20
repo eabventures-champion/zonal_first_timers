@@ -16,14 +16,25 @@ class MembershipApprovalController extends Controller
 
     public function index()
     {
-        $pendingApprovals = $this->service->getPendingApprovals();
-        return view('admin.membership-approvals.index', compact('pendingApprovals'));
+        $notifications = $this->service->getPendingApprovals();
+        return view('admin.membership-approvals.index', compact('notifications'));
     }
 
-    public function approve(FirstTimer $firstTimer)
+    public function approve(\App\Models\Member $member)
     {
-        $this->service->approveMembership($firstTimer);
-        return back()->with('success', "{$firstTimer->full_name} has been approved as a member.");
+        $this->service->acknowledgeMembership($member);
+        return back()->with('success', "Notification for {$member->full_name} has been acknowledged.");
+    }
+
+    public function bulkAcknowledge(Request $request)
+    {
+        $memberIds = $request->input('ids', []);
+        if (empty($memberIds)) {
+            return back()->with('error', 'Please select at least one notification to acknowledge.');
+        }
+
+        $count = $this->service->bulkAcknowledge($memberIds);
+        return back()->with('success', "Acknowledged {$count} notifications successfully.");
     }
 
     public function bulkSync()

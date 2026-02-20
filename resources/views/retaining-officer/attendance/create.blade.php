@@ -10,12 +10,23 @@
 
     <div class="max-w-3xl">
         <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
-            <form method="POST" action="{{ route('ro.attendance.store') }}">
+            <form method="POST" action="{{ route('ro.attendance.store') }}"
+                x-data="{
+                    submitAttendance(e) {
+                        const checked = document.querySelectorAll('input[name^=\'attended\']:checked').length;
+                        if (checked === 0) {
+                            alert('Mark attendance for first timer');
+                            return;
+                        }
+                        e.target.submit();
+                    }
+                }"
+                @submit.prevent="submitAttendance($event)">
                 @csrf
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Week Number <span
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Week Number <span
                                 class="text-red-500">*</span></label>
                         <select name="week_number" required
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500">
@@ -26,12 +37,28 @@
                         @error('week_number') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date <span
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Month <span
                                 class="text-red-500">*</span></label>
-                        <input type="date" name="attendance_date" value="{{ old('attendance_date', date('Y-m-d')) }}"
-                            required
+                        <select name="month" required
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('attendance_date') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            @for($m = 1; $m <= 12; $m++)
+                                <option value="{{ $m }}" {{ old('month', date('n')) == $m ? 'selected' : '' }}>
+                                    {{ date('F', mktime(0, 0, 0, $m, 1)) }}
+                                </option>
+                            @endfor
+                        </select>
+                        @error('month') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Year <span
+                                class="text-red-500">*</span></label>
+                        <select name="year" required
+                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            @for($y = date('Y'); $y >= date('Y') - 1; $y--)
+                                <option value="{{ $y }}" {{ old('year', date('Y')) == $y ? 'selected' : '' }}>{{ $y }}</option>
+                            @endfor
+                        </select>
+                        @error('year') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
 

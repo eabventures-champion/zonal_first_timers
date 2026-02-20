@@ -90,7 +90,7 @@
                                     <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Church</th>
                                     <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Attendance
                                     </th>
-                                    <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">FS Status
+                                    <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Foundation School Status
                                     </th>
                                     <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Approved On
                                     </th>

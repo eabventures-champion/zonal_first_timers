@@ -43,7 +43,7 @@
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-sm font-semibold text-gray-700 mb-4">Spiritual Info</h3>
+                <h3 class="text-sm font-semibold text-gray-700 mb-4">Credentials</h3>
                 <div class="flex gap-4 mb-4">
                     <span
                         class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium {{ $firstTimer->born_again ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500' }}">
@@ -94,9 +94,15 @@
                 <h3 class="text-sm font-semibold text-gray-700 mb-4">Weekly Attendance</h3>
                 @if($firstTimer->weeklyAttendances->count())
                     <div class="space-y-1">
-                        @foreach($firstTimer->weeklyAttendances->sortBy('week_number') as $wa)
+                        @foreach($firstTimer->weeklyAttendances->sort(function($a, $b) {
+                            if (($a->year ?? 0) != ($b->year ?? 0)) return ($b->year ?? 0) <=> ($a->year ?? 0);
+                            if (($a->month ?? 0) != ($b->month ?? 0)) return ($b->month ?? 0) <=> ($a->month ?? 0);
+                            return ($b->week_number ?? 0) <=> ($a->week_number ?? 0);
+                        }) as $wa)
                             <div class="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                                <span class="text-gray-600 dark:text-slate-400">Week {{ $wa->week_number }}</span>
+                                <span class="text-gray-600 dark:text-slate-400 font-medium">
+                                    {{ date('M Y', mktime(0, 0, 0, $wa->month ?? 1, 1)) }} - Week {{ $wa->week_number }}
+                                </span>
                                 <span
                                     class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {{ $wa->attended ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400' }}">
                                     {{ $wa->attended ? 'Present' : 'Absent' }}

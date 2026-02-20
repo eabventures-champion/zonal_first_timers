@@ -30,9 +30,7 @@ class DashboardService
             'developing' => FirstTimer::where('status', 'Developing')->count(),
             'total_members' => Member::count(),
             'total_retaining_officers' => User::role('Retaining Officer')->count(),
-            'pending_approvals' => FirstTimer::whereNotNull('membership_requested_at')
-                ->whereNull('membership_approved_at')
-                ->count(),
+            'pending_approvals' => Member::whereNull('acknowledged_at')->count(),
             'monthly_target' => (int) Setting::get('monthly_registration_target', 50),
         ];
     }
@@ -287,5 +285,72 @@ class DashboardService
         }
 
         return $query->limit(30)->get();
+    }
+
+    /**
+     * Get upcoming birthdays grouped by church group (for admin dashboard)
+     * Returns birthdays from this month + next 30 days, categorized by group.
+     */
+    public function getUpcomingBirthdaysGrouped(): \Illuminate\Support\Collection
+    {
+        $today = \Carbon\Carbon::today();
+
+        // Gather first timers with church.group
+        $firstTimers = FirstTimer::with('church.group')
+            ->whereNotNull('date_of_birth')
+            ->get()
+            ->map(fn($p) => (object) [
+                'id' => $p->id,
+                'full_name' => $p->full_name,
+                'date_of_birth' => $p->date_of_birth,
+                'primary_contact' => $p->primary_contact,
+                'type' => 'First Timer',
+                'status' => $p->status,
+                'church_name' => $p->church->name ?? 'N/A',
+                'group_name' => $p->church->group->name ?? 'Ungrouped',
+            ]);
+
+        // Gather members with church.group
+        $members = Member::with('church.group')
+            ->whereNotNull('date_of_birth')
+            ->get()
+            ->map(fn($p) => (object) [
+                'id' => $p->id,
+                'full_name' => $p->full_name,
+                'date_of_birth' => $p->date_of_birth,
+                'primary_contact' => $p->primary_contact,
+                'type' => 'Member',
+                'status' => $p->status ?? 'Retained',
+                'church_name' => $p->church->name ?? 'N/A',
+                'group_name' => $p->church->group->name ?? 'Ungrouped',
+            ]);
+
+        // Combine + compute days_until
+        $all = $firstTimers->concat($members)
+            ->map(function ($person) use ($today) {
+                $dob = \Carbon\Carbon::parse($person->date_of_birth);
+                $birthday = $dob->copy()->year($today->year);
+
+                $diff = $today->diffInDays($birthday, false);
+
+                $isCurrentMonth = $birthday->month === $today->month && $birthday->year === $today->year;
+
+                if ($diff < 0 && !$isCurrentMonth) {
+                    $birthday->addYear();
+                    $diff = $today->diffInDays($birthday, false);
+                }
+
+                $person->days_until = (int) $diff;
+                $person->birthday_date = $birthday;
+                $person->already_passed = $diff < 0;
+                return $person;
+            })
+            ->filter(fn($p) => $p->days_until <= 30 && $p->days_until >= -31)
+            ->filter(fn($p) => $p->already_passed || $p->days_until <= 30)
+            ->sortBy('days_until')
+            ->values();
+
+        // Group by group_name
+        return $all->groupBy('group_name')->map(fn($items) => $items->values());
     }
 }

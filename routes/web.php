@@ -49,7 +49,8 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
 
     // Membership Approvals
     Route::get('membership-approvals', [Admin\MembershipApprovalController::class, 'index'])->name('membership-approvals.index');
-    Route::post('membership-approvals/{firstTimer}/approve', [Admin\MembershipApprovalController::class, 'approve'])->name('membership-approvals.approve');
+    Route::post('membership-approvals/{member}/approve', [Admin\MembershipApprovalController::class, 'approve'])->name('membership-approvals.approve');
+    Route::post('membership-approvals/bulk-acknowledge', [Admin\MembershipApprovalController::class, 'bulkAcknowledge'])->name('membership-approvals.bulk-acknowledge');
     Route::post('membership-approvals/bulk-sync', [Admin\MembershipApprovalController::class, 'bulkSync'])->name('membership-approvals.bulk-sync');
 
     // User Management (Super Admin only via controller)
@@ -76,6 +77,7 @@ Route::middleware(['auth', 'role:Retaining Officer'])->prefix('retaining-officer
     Route::get('attendance', [RetainingOfficer\AttendanceController::class, 'index'])->name('attendance.index');
     Route::get('attendance/create', [RetainingOfficer\AttendanceController::class, 'create'])->name('attendance.create');
     Route::post('attendance', [RetainingOfficer\AttendanceController::class, 'store'])->name('attendance.store');
+    Route::post('attendance/toggle', [RetainingOfficer\AttendanceController::class, 'toggle'])->name('attendance.toggle');
 });
 
 // ── Profile (Breeze default) ─────────────────────────────

@@ -237,7 +237,7 @@
                     </div>
                 </div>
 
-                <h3 class="text-sm font-semibold text-gray-700 mb-4 pb-2 border-b">Who Brought Them / Spiritual Info</h3>
+                <h3 class="text-sm font-semibold text-gray-700 mb-4 pb-2 border-b">Who Brought Them / Credentials</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Bringer Name</label>

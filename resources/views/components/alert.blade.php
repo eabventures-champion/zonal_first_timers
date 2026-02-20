@@ -15,7 +15,7 @@
     ];
 @endphp
 
-<div x-data="{ show: true }" x-show="show" x-transition
+<div x-data="{ show: true }" x-init="setTimeout(() => show = false, 5000)" x-show="show" x-transition
     class="mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 py-3 rounded-lg border {{ $styles[$type] ?? $styles['info'] }} flex items-center gap-3">
     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor"
         viewBox="0 0 24 24">{!! $icons[$type] ?? $icons['info'] !!}</svg>

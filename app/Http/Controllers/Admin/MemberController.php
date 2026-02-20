@@ -41,6 +41,7 @@ class MemberController extends Controller
 
     public function edit(Member $member)
     {
+        $member->load('church.group.category');
         $categories = \App\Models\ChurchCategory::with([
             'groups.churches' => function ($q) {
                 $q->with('retainingOfficer')->orderBy('name');
@@ -53,20 +54,22 @@ class MemberController extends Controller
 
     public function update(Request $request, Member $member)
     {
-        $member->update($request->only([
-            'full_name',
-            'primary_contact',
-            'alternate_contact',
-            'gender',
-            'date_of_birth',
-            'age',
-            'residential_address',
-            'occupation',
-            'marital_status',
-            'email',
-            'church_id',
-            'retaining_officer_id',
-        ]));
+        $data = $request->except(['_token', '_method', 'dob_day', 'dob_month']);
+
+        // Handle booleans for checkboxes (unchecked checkboxes aren't sent in the request)
+        $data['born_again'] = $request->boolean('born_again');
+        $data['water_baptism'] = $request->boolean('water_baptism');
+
+        if ($request->filled('dob_day') && $request->filled('dob_month')) {
+            $data['date_of_birth'] = "2000-{$request->dob_month}-{$request->dob_day}";
+        }
+
+        \Log::info("Updating member ID {$member->id}", [
+            'raw_request' => $request->all(),
+            'processed_data' => $data
+        ]);
+
+        $member->update($data);
 
         return redirect()->route('admin.members.index')
             ->with('success', 'Member updated successfully.');
