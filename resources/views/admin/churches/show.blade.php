@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', $church->name)
 @section('page-title', $church->name)
+@section('back-link', route('admin.churches.index'))
 
 @section('content')
     {{-- Church Info --}}
@@ -18,8 +19,12 @@
                     <dd class="font-medium text-gray-900 dark:text-white">{{ $church->group->name ?? '—' }}</dd>
                 </div>
                 <div>
-                    <dt class="text-gray-500 dark:text-slate-500">Address</dt>
-                    <dd class="font-medium text-gray-900 dark:text-white">{{ $church->address ?? '—' }}</dd>
+                    <dt class="text-gray-500 dark:text-slate-500">Name of leader</dt>
+                    <dd class="font-medium text-gray-900 dark:text-white">{{ $church->leader_name ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-gray-500 dark:text-slate-500">Contact of leader</dt>
+                    <dd class="font-medium text-gray-900 dark:text-white">{{ $church->leader_contact ?? '—' }}</dd>
                 </div>
                 <div>
                     <dt class="text-gray-500 dark:text-slate-500">Retaining Officer</dt>

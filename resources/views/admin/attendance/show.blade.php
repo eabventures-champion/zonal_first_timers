@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Attendance: ' . $church->name)
 @section('page-title', 'Attendance: ' . $church->name)
+@section('back-link', route('admin.attendance.index'))
 
 @section('content')
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">

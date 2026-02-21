@@ -73,7 +73,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span x-show="!sidebarMinimized">Membership Approvals</span>
+        <span x-show="!sidebarMinimized">Membership Notifications</span>
     </a>
 
     <a href="{{ route('admin.foundation-school.index') }}"

@@ -16,7 +16,8 @@ class StoreChurchGroupRequest extends FormRequest
         return [
             'church_category_id' => 'required|exists:church_categories,id',
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
+            'pastor_name' => 'nullable|string|max:255',
+            'pastor_contact' => 'nullable|string|max:255',
         ];
     }
 }

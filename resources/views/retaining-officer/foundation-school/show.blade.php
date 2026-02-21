@@ -1,12 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Foundation School: ' . $firstTimer->full_name)
 @section('page-title', 'Foundation School Progress')
+@section('back-link', route('ro.foundation-school.index'))
 
 @section('content')
-    <div class="mb-4">
-        <a href="{{ route('ro.foundation-school.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">← Back to
-            Foundation School</a>
-    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Student Info --}}
@@ -60,7 +57,7 @@
                         <div class="flex items-center gap-3">
                             <div
                                 class="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold
-                                                                                                {{ $item['completed'] ? 'bg-emerald-500 text-white' : ($item['attended'] ? 'bg-amber-400 text-white' : 'bg-gray-200 dark:bg-slate-800 text-gray-500 dark:text-slate-500') }}">
+                                                                                                        {{ $item['completed'] ? 'bg-emerald-500 text-white' : ($item['attended'] ? 'bg-amber-400 text-white' : 'bg-gray-200 dark:bg-slate-800 text-gray-500 dark:text-slate-500') }}">
                                 {{ $item['completed'] ? '✓' : $item['class']->class_number }}
                             </div>
                             <div>

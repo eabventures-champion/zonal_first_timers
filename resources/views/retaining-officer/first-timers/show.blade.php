@@ -1,12 +1,9 @@
 @extends('layouts.app')
 @section('title', $firstTimer->full_name)
 @section('page-title', $firstTimer->full_name)
+@section('back-link', route('ro.first-timers.index'))
 
 @section('content')
-    <div class="mb-4">
-        <a href="{{ route('ro.first-timers.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">← Back to First
-            Timers</a>
-    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Main Info --}}

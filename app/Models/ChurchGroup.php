@@ -16,7 +16,8 @@ class ChurchGroup extends Model
     protected $fillable = [
         'church_category_id',
         'name',
-        'description',
+        'pastor_name',
+        'pastor_contact',
         'created_by',
         'updated_by',
     ];

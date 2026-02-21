@@ -15,7 +15,8 @@ class Church extends Model
     protected $fillable = [
         'church_group_id',
         'name',
-        'address',
+        'leader_name',
+        'leader_contact',
         'retaining_officer_id',
         'created_by',
         'updated_by',

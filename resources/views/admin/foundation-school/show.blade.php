@@ -1,12 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Foundation School: ' . $firstTimer->full_name)
 @section('page-title', 'Foundation School Progress')
+@section('back-link', route('admin.foundation-school.index'))
 
 @section('content')
-    <div class="mb-4">
-        <a href="{{ route('admin.foundation-school.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">← Back
-            to Foundation School</a>
-    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Student Info --}}
@@ -63,16 +60,16 @@
                         <div class="flex items-center gap-4">
                             <div
                                 class="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-bold shadow-sm
-                                                                        {{ $item['completed'] ? 'bg-emerald-500 text-white' : ($item['attended'] ? 'bg-amber-400 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-500') }}">
+                                                                                {{ $item['completed'] ? 'bg-emerald-500 text-white' : ($item['attended'] ? 'bg-amber-400 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-500') }}">
                                 {{ $item['completed'] ? '✓' : $item['class']->class_number }}
                             </div>
                             <div>
                                 <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $item['class']->name }}</p>
                                 <p class="text-[10px] uppercase font-bold tracking-wider mt-0.5
-                                                                    @if($item['completed']) text-emerald-600 dark:text-emerald-400 
-                                                                    @elseif($item['attended']) text-amber-600 dark:text-amber-400 
-                                                                    @else text-gray-400 dark:text-slate-500
-                                                                    @endif">
+                                                                            @if($item['completed']) text-emerald-600 dark:text-emerald-400 
+                                                                            @elseif($item['attended']) text-amber-600 dark:text-amber-400 
+                                                                            @else text-gray-400 dark:text-slate-500
+                                                                            @endif">
                                     @if($item['completed']) Completed
                                     @elseif($item['attended']) Attended — Pending Completion
                                     @else Not Started

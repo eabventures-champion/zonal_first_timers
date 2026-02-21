@@ -1,12 +1,9 @@
 @extends('layouts.app')
 @section('title', $member->full_name)
 @section('page-title', $member->full_name)
+@section('back-link', route('admin.members.index'))
 
 @section('content')
-    <div class="mb-4">
-        <a href="{{ route('admin.members.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">← Back to
-            Members</a>
-    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Main Info --}}

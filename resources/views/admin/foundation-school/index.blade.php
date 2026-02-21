@@ -88,7 +88,7 @@
 
                     <div>
                         <x-input-label for="edit_number" value="Class Number" />
-                        <x-text-input id="edit_number" name="class_number" type="number" class="mt-1 block w-full"
+                        <x-text-input id="edit_number" name="class_number" type="text" class="mt-1 block w-full"
                             x-model="selectedClass.class_number" required />
                     </div>
 
@@ -130,8 +130,8 @@
 
                     <div>
                         <x-input-label for="add_number" value="Class Number" />
-                        <x-text-input id="add_number" name="class_number" type="number" class="mt-1 block w-full"
-                            placeholder="e.g., 1" required />
+                        <x-text-input id="add_number" name="class_number" type="text" class="mt-1 block w-full"
+                            placeholder="e.g., 4A" required />
                     </div>
 
                     <div>

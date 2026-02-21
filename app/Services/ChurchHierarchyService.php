@@ -13,7 +13,7 @@ class ChurchHierarchyService
 
     public function getAllCategories()
     {
-        return ChurchCategory::withCount('groups')->latest()->get();
+        return ChurchCategory::with(['groups'])->withCount('groups')->latest()->get();
     }
 
     public function createCategory(array $data): ChurchCategory
@@ -38,7 +38,7 @@ class ChurchHierarchyService
 
     public function getAllGroups()
     {
-        return ChurchGroup::with('category')->withCount('churches')->latest()->get();
+        return ChurchGroup::with(['category', 'churches.retainingOfficer'])->withCount('churches')->latest()->get();
     }
 
     public function getGroupsByCategory($categoryId)
@@ -105,6 +105,11 @@ class ChurchHierarchyService
         $data['updated_by'] = Auth::id();
         $church->update($data);
         return $church->fresh();
+    }
+
+    public function getAllCategoriesWithHierarchy()
+    {
+        return ChurchCategory::with(['groups.churches'])->get();
     }
 
     public function deleteChurch(Church $church): void

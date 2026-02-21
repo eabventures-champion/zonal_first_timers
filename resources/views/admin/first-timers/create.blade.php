@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Register First Timer')
 @section('page-title', 'Register First Timer')
+@section('back-link', route('admin.first-timers.index'))
 
 @section('content')
     <div class="max-w-3xl">

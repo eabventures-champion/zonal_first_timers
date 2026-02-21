@@ -83,7 +83,7 @@
                         <th class="px-6 py-4">New Member</th>
                         <th class="px-6 py-4">Church / Officer</th>
                         <th class="px-6 py-4 text-center">Attendance</th>
-                        <th class="px-6 py-4 text-center">FS Level</th>
+                        <th class="px-6 py-4 text-center">Foundation School Level</th>
                         <th class="px-6 py-4">Became Member</th>
                         <th class="px-6 py-4 text-right">Actions</th>
                     </tr>

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Edit Member')
 @section('page-title', 'Edit: ' . $member->full_name)
+@section('back-link', route('admin.members.show', $member))
 
 @section('content')
     <div class="max-w-3xl">

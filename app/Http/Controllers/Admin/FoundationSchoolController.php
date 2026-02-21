@@ -70,7 +70,7 @@ class FoundationSchoolController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'class_number' => 'required|integer|unique:foundation_classes,class_number',
+            'class_number' => 'required|string|max:50|unique:foundation_classes,class_number',
             'description' => 'nullable|string',
         ]);
 
@@ -87,7 +87,7 @@ class FoundationSchoolController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'class_number' => 'required|integer|unique:foundation_classes,class_number,' . $class->id,
+            'class_number' => 'required|string|max:50|unique:foundation_classes,class_number,' . $class->id,
             'description' => 'nullable|string',
         ]);
 

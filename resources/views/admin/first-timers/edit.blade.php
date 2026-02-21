@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Edit First Timer')
 @section('page-title', 'Edit: ' . $firstTimer->full_name)
+@section('back-link', route('admin.first-timers.show', $firstTimer))
 
 @section('content')
     <div class="max-w-3xl">

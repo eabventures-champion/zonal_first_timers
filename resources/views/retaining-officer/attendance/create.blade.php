@@ -1,12 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Record Attendance')
 @section('page-title', 'Record Weekly Attendance')
+@section('back-link', route('ro.attendance.index'))
 
 @section('content')
-    <div class="mb-4">
-        <a href="{{ route('ro.attendance.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">← Back to
-            Attendance</a>
-    </div>
 
     <div class="max-w-3xl">
         <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">

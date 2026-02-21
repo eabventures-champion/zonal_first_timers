@@ -15,7 +15,8 @@ class ChurchCategory extends Model
 
     protected $fillable = [
         'name',
-        'description',
+        'zonal_pastor_name',
+        'zonal_pastor_contact',
         'created_by',
         'updated_by',
     ];

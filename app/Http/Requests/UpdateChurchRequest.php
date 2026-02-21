@@ -16,7 +16,8 @@ class UpdateChurchRequest extends FormRequest
         return [
             'church_group_id' => 'required|exists:church_groups,id',
             'name' => 'required|string|max:255',
-            'address' => 'nullable|string|max:1000',
+            'leader_name' => 'nullable|string|max:255',
+            'leader_contact' => 'nullable|string|max:255',
             'retaining_officer_id' => 'nullable|exists:users,id',
         ];
     }

@@ -11,6 +11,11 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private \App\Services\ChurchHierarchyService $hierarchyService
+    ) {
+    }
+
     public function index()
     {
         $users = User::with(['roles', 'church'])->latest()->paginate(20);
@@ -20,15 +25,15 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::all();
-        $churches = Church::all();
-        return view('admin.users.create', compact('roles', 'churches'));
+        $categories = $this->hierarchyService->getAllCategoriesWithHierarchy();
+        return view('admin.users.create', compact('roles', 'categories'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'nullable|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|exists:roles,name',
             'church_id' => 'nullable|exists:churches,id',
@@ -45,6 +50,11 @@ class UserController extends Controller
 
         $user->assignRole($request->role);
 
+        // Sync church RO if user is a Retaining Officer
+        if ($request->role === 'Retaining Officer' && $request->church_id) {
+            Church::where('id', $request->church_id)->update(['retaining_officer_id' => $user->id]);
+        }
+
         return redirect()->route('admin.users.index')
             ->with('success', 'User created successfully.');
     }
@@ -52,15 +62,21 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $roles = Role::all();
-        $churches = Church::all();
-        return view('admin.users.edit', compact('user', 'roles', 'churches'));
+        $categories = $this->hierarchyService->getAllCategoriesWithHierarchy();
+
+        // Find current hierarchy for pre-selection
+        $currentChurch = $user->church?->load('group');
+        $currentGroupId = $currentChurch?->church_group_id;
+        $currentCategoryId = $currentChurch?->group?->church_category_id;
+
+        return view('admin.users.edit', compact('user', 'roles', 'categories', 'currentGroupId', 'currentCategoryId'));
     }
 
     public function update(Request $request, User $user)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'nullable|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
             'role' => 'required|exists:roles,name',
             'church_id' => 'nullable|exists:churches,id',
@@ -79,6 +95,19 @@ class UserController extends Controller
         }
 
         $user->syncRoles([$request->role]);
+
+        // Sync church RO
+        if ($request->role === 'Retaining Officer') {
+            // First clear any existing assignment for this user to ensure consistency
+            Church::where('retaining_officer_id', $user->id)->update(['retaining_officer_id' => null]);
+
+            if ($request->church_id) {
+                Church::where('id', $request->church_id)->update(['retaining_officer_id' => $user->id]);
+            }
+        } else {
+            // If role changed from RO, clear previous assignment
+            Church::where('retaining_officer_id', $user->id)->update(['retaining_officer_id' => null]);
+        }
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully.');

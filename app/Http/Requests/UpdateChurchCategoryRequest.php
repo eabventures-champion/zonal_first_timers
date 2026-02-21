@@ -18,7 +18,8 @@ class UpdateChurchCategoryRequest extends FormRequest
 
         return [
             'name' => 'required|string|max:255|unique:church_categories,name,' . $id,
-            'description' => 'nullable|string|max:1000',
+            'zonal_pastor_name' => 'nullable|string|max:255',
+            'zonal_pastor_contact' => 'nullable|string|max:255',
         ];
     }
 }

@@ -16,11 +16,23 @@
                     @error('name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="mb-6">
-                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea name="description" id="description" rows="3"
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">{{ old('description', $churchCategory->description) }}</textarea>
-                    @error('description') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <label for="zonal_pastor_name" class="block text-sm font-medium text-gray-700 mb-1">Name of Zonal
+                            Pastor</label>
+                        <input type="text" name="zonal_pastor_name" id="zonal_pastor_name"
+                            value="{{ old('zonal_pastor_name', $churchCategory->zonal_pastor_name) }}"
+                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        @error('zonal_pastor_name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label for="zonal_pastor_contact" class="block text-sm font-medium text-gray-700 mb-1">Contact of
+                            Zonal Pastor</label>
+                        <input type="text" name="zonal_pastor_contact" id="zonal_pastor_contact"
+                            value="{{ old('zonal_pastor_contact', $churchCategory->zonal_pastor_contact) }}"
+                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        @error('zonal_pastor_contact') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-3">
