@@ -68,4 +68,13 @@ class User extends Authenticatable
     {
         return $this->hasRole('Retaining Officer');
     }
+
+    public function isOtherChurchRO(): bool
+    {
+        if (!$this->isRetainingOfficer() || !$this->church_id) {
+            return false;
+        }
+
+        return $this->church->group->category->name === 'Other Churches';
+    }
 }

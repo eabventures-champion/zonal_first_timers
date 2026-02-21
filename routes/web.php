@@ -17,8 +17,17 @@ Route::get('/dashboard', function () {
         return redirect()->route('ro.dashboard');
     }
 
+    if ($user->hasRole('Member')) {
+        return redirect()->route('member.dashboard');
+    }
+
     return redirect()->route('admin.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+// ── Member Routes ────────────────────────────────────────
+Route::middleware(['auth', 'role:Member'])->prefix('member')->name('member.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Member\DashboardController::class, 'index'])->name('dashboard');
+});
 
 // ── Admin Routes ─────────────────────────────────────────
 Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -43,7 +52,9 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
 
     // Foundation School
     Route::get('foundation-school', [Admin\FoundationSchoolController::class, 'index'])->name('foundation-school.index');
+    Route::post('foundation-school/classes', [Admin\FoundationSchoolController::class, 'storeClass'])->name('foundation-school.classes.store');
     Route::put('foundation-school/classes/{class}', [Admin\FoundationSchoolController::class, 'updateClass'])->name('foundation-school.classes.update');
+    Route::delete('foundation-school/classes/{class}', [Admin\FoundationSchoolController::class, 'destroyClass'])->name('foundation-school.classes.destroy');
     Route::get('foundation-school/{id}', [Admin\FoundationSchoolController::class, 'show'])->name('foundation-school.show');
     Route::post('foundation-school/{id}/attendance', [Admin\FoundationSchoolController::class, 'recordAttendance'])->name('foundation-school.attendance');
 
@@ -55,6 +66,11 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
 
     // User Management (Super Admin only via controller)
     Route::resource('users', Admin\UserController::class)->except(['show']);
+
+    // Weekly Attendance
+    Route::get('attendance', [Admin\AttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('attendance/churches/{church}', [Admin\AttendanceController::class, 'show'])->name('attendance.show');
+    Route::post('attendance/toggle', [Admin\AttendanceController::class, 'toggle'])->name('attendance.toggle');
 });
 
 // ── Retaining Officer Routes ─────────────────────────────

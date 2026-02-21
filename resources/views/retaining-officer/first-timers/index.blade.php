@@ -3,8 +3,28 @@
 @section('page-title', 'My First Timers')
 
 @section('content')
-    <div class="mb-6">
-        <p class="text-sm text-gray-500">First-time visitors assigned to your church</p>
+    <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <p class="text-sm text-gray-500">First-time visitors assigned to your church</p>
+        </div>
+        @if(auth()->user()->isOtherChurchRO())
+            <div class="flex items-center gap-3">
+                <a href="{{ route('ro.first-timers.import.form') }}"
+                   class="inline-flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 text-xs font-bold rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition shadow-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Import CSV
+                </a>
+                <a href="{{ route('ro.first-timers.create') }}"
+                   class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Register First Timer
+                </a>
+            </div>
+        @endif
     </div>
 
     <div

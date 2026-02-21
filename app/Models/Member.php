@@ -37,6 +37,8 @@ class Member extends Model
         'membership_approved_at',
         'acknowledged_at',
         'retaining_officer_id',
+        'user_id',
+        'migrated_at',
         'created_by',
         'updated_by',
     ];
@@ -64,6 +66,11 @@ class Member extends Model
     public function retainingOfficer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'retaining_officer_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function foundationAttendances(): HasMany

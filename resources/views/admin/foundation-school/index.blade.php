@@ -14,6 +14,15 @@
             <div>
                 <p class="text-sm text-gray-500">Foundation School classes and progression tracking</p>
             </div>
+            @if(auth()->user()->hasRole('Super Admin'))
+                <button @click="$dispatch('open-modal', 'add-class-modal')"
+                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    New Class
+                </button>
+            @endif
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -21,13 +30,25 @@
                 <div
                     class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-5 hover:shadow-md transition-shadow relative group">
                     @if(auth()->user()->hasRole('Super Admin'))
-                        <button @click="openEdit({{ json_encode($class) }})"
-                            class="absolute top-4 right-4 p-1.5 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                        </button>
+                        <div class="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button @click="openEdit({{ json_encode($class) }})"
+                                class="p-1.5 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                title="Edit Class">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                            <form action="{{ route('admin.foundation-school.classes.destroy', $class) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this class?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="p-1.5 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Delete Class">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
                     @endif
 
                     <div class="flex items-center gap-3 mb-3">
@@ -66,6 +87,12 @@
                     </div>
 
                     <div>
+                        <x-input-label for="edit_number" value="Class Number" />
+                        <x-text-input id="edit_number" name="class_number" type="number" class="mt-1 block w-full"
+                            x-model="selectedClass.class_number" required />
+                    </div>
+
+                    <div>
                         <x-input-label for="edit_description" value="Description" />
                         <textarea id="edit_description" name="description"
                             class="mt-1 block w-full border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm"
@@ -80,6 +107,48 @@
 
                     <x-primary-button>
                         Save Changes
+                    </x-primary-button>
+                </div>
+            </form>
+        </x-modal>
+
+        {{-- Add Class Modal --}}
+        <x-modal name="add-class-modal" focusable>
+            <form action="{{ route('admin.foundation-school.classes.store') }}" method="POST" class="p-6">
+                @csrf
+
+                <h2 class="text-lg font-medium text-gray-900 dark:text-slate-100 mb-4">
+                    Add New Foundation School Class
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <x-input-label for="add_name" value="Class Title" />
+                        <x-text-input id="add_name" name="name" type="text" class="mt-1 block w-full"
+                            placeholder="e.g., Class 1 - New Life" required />
+                    </div>
+
+                    <div>
+                        <x-input-label for="add_number" value="Class Number" />
+                        <x-text-input id="add_number" name="class_number" type="number" class="mt-1 block w-full"
+                            placeholder="e.g., 1" required />
+                    </div>
+
+                    <div>
+                        <x-input-label for="add_description" value="Description" />
+                        <textarea id="add_description" name="description"
+                            class="mt-1 block w-full border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm"
+                            rows="3" placeholder="Brief summary of the class content..."></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <x-secondary-button x-on:click="$dispatch('close')">
+                        Cancel
+                    </x-secondary-button>
+
+                    <x-primary-button>
+                        Add Class
                     </x-primary-button>
                 </div>
             </form>

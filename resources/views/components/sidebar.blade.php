@@ -85,6 +85,15 @@
         <span x-show="!sidebarMinimized">Foundation School</span>
     </a>
 
+    <a href="{{ route('admin.attendance.index') }}"
+        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 {{ request()->routeIs('admin.attendance.*') ? 'active' : '' }}">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+        <span x-show="!sidebarMinimized">Weekly Attendance</span>
+    </a>
+
     @if($isSuperAdmin)
         <a href="{{ route('admin.users.index') }}"
             class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
@@ -118,6 +127,17 @@
         </svg>
         <span x-show="!sidebarMinimized">First Timers</span>
     </a>
+
+    @if(auth()->user()->isOtherChurchRO())
+        <a href="{{ route('ro.first-timers.create') }}"
+            class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 {{ request()->routeIs('ro.first-timers.create') ? 'active' : '' }}">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            <span x-show="!sidebarMinimized">Add First Timer</span>
+        </a>
+    @endif
 
     <a href="{{ route('ro.members.index') }}"
         class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 {{ request()->routeIs('ro.members.*') ? 'active' : '' }}">

@@ -54,5 +54,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage-foundation-school',
             'view-dashboards',
         ]);
+
+        $member = Role::firstOrCreate(['name' => 'Member']);
+        $member->givePermissionTo([
+            'view-dashboards',
+        ]);
     }
 }

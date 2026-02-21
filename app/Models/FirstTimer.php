@@ -36,6 +36,7 @@ class FirstTimer extends Model
         'membership_requested_at',
         'membership_approved_at',
         'retaining_officer_id',
+        'user_id',
         'created_by',
         'updated_by',
     ];
@@ -62,6 +63,11 @@ class FirstTimer extends Model
     public function retainingOfficer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'retaining_officer_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function foundationAttendances(): HasMany

@@ -62,6 +62,23 @@ class FoundationSchoolController extends Controller
 
         return back()->with('success', 'Attendance recorded successfully.');
     }
+    public function storeClass(Request $request)
+    {
+        if (!auth()->user()->hasRole('Super Admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'class_number' => 'required|integer|unique:foundation_classes,class_number',
+            'description' => 'nullable|string',
+        ]);
+
+        FoundationClass::create($request->only(['name', 'class_number', 'description']));
+
+        return back()->with('success', 'New class added successfully.');
+    }
+
     public function updateClass(Request $request, FoundationClass $class)
     {
         if (!auth()->user()->hasRole('Super Admin')) {
@@ -70,11 +87,28 @@ class FoundationSchoolController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
+            'class_number' => 'required|integer|unique:foundation_classes,class_number,' . $class->id,
             'description' => 'nullable|string',
         ]);
 
-        $class->update($request->only(['name', 'description']));
+        $class->update($request->only(['name', 'class_number', 'description']));
 
         return back()->with('success', 'Class updated successfully.');
+    }
+
+    public function destroyClass(FoundationClass $class)
+    {
+        if (!auth()->user()->hasRole('Super Admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Check if there are attendances linked to this class
+        if ($class->attendances()->exists()) {
+            return back()->with('error', 'Cannot delete class as it has attendance records.');
+        }
+
+        $class->delete();
+
+        return back()->with('success', 'Class deleted successfully.');
     }
 }

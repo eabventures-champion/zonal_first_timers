@@ -12,6 +12,8 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class FirstTimerService
 {
@@ -104,6 +106,18 @@ class FirstTimerService
 
         $firstTimer = FirstTimer::create($data);
 
+        // Create User account for the First Timer
+        $user = User::create([
+            'name' => $firstTimer->full_name,
+            'email' => $firstTimer->email ?? ($firstTimer->primary_contact . '@church.com'), // Email is unique, so use contact as fallback if needed
+            'phone' => $firstTimer->primary_contact,
+            'password' => $firstTimer->primary_contact, // Default password is phone number
+            'church_id' => $firstTimer->church_id,
+        ]);
+        $user->assignRole('Member');
+
+        $firstTimer->update(['user_id' => $user->id]);
+
         // Auto-record initial attendance for the date of visit
         $this->recordInitialAttendance($firstTimer);
 
@@ -181,10 +195,12 @@ class FirstTimerService
         return DB::transaction(function () use ($firstTimer) {
             $data = $firstTimer->toArray();
 
-            // Set status to Retained and ensure timestamps are set
+            // Ensure timestamps are set and status is Retained
             $data['status'] = 'Retained';
             $data['membership_approved_at'] = now();
+            $data['migrated_at'] = now();
             $data['updated_by'] = Auth::id();
+            $data['user_id'] = $firstTimer->user_id;
 
             // Create member record
             $member = Member::create($data);
