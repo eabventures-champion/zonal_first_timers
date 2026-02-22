@@ -37,11 +37,28 @@ class AttendanceController extends Controller
             }
         }
 
-        // Fetch first timers
-        $firstTimers = FirstTimer::where('church_id', $churchId)
-            ->where(function ($query) use ($month, $year) {
-                $query->whereMonth('date_of_visit', $month)
-                    ->whereYear('date_of_visit', $year)
+        $monthStart = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $monthEnd = $monthStart->copy()->endOfMonth();
+
+        // 1. Fetch current newcomers (in first_timers table)
+        // We show ALL newcomers for this church so they can backfill/record anytime
+        $newcomers = FirstTimer::where('church_id', $churchId)
+            ->with([
+                'weeklyAttendances' => function ($q) use ($month, $year) {
+                    $q->where('month', $month)->where('year', $year);
+                }
+            ])
+            ->withCount(['weeklyAttendances as total_attended' => fn($q) => $q->where('attended', true)])
+            ->get();
+
+        // 2. Fetch members who were newcomers in the selected month
+        $membersAsNewcomers = \App\Models\Member::where('church_id', $churchId)
+            ->where(function ($query) use ($monthStart, $monthEnd, $month, $year) {
+                $query->where('date_of_visit', '<=', $monthEnd)
+                    ->where(function ($q) use ($monthStart) {
+                        $q->whereNull('membership_approved_at')
+                            ->orWhere('membership_approved_at', '>=', $monthStart);
+                    })
                     ->orWhereHas('weeklyAttendances', function ($q) use ($month, $year) {
                         $q->where('month', $month)->where('year', $year);
                     });
@@ -52,23 +69,27 @@ class AttendanceController extends Controller
                 }
             ])
             ->withCount(['weeklyAttendances as total_attended' => fn($q) => $q->where('attended', true)])
-            ->orderByDesc('date_of_visit')
             ->get();
 
-        $groupedAttendance = $firstTimers->groupBy(function ($ft) {
-            return $ft->date_of_visit->format('F Y');
+        // 3. Merge and format
+        $allEligible = $newcomers->concat($membersAsNewcomers);
+
+        $groupedAttendance = $allEligible->sortByDesc('date_of_visit')->groupBy(function ($person) {
+            return \Carbon\Carbon::parse($person->date_of_visit)->format('F Y');
         })->map(function ($group) {
-            return $group->map(function ($ft) {
+            return $group->map(function ($person) {
                 $weeks = [];
-                foreach ($ft->weeklyAttendances as $wa) {
+                foreach ($person->weeklyAttendances as $wa) {
                     $weeks[$wa->week_number] = $wa->attended;
                 }
                 return [
-                    'id' => $ft->id,
-                    'name' => $ft->full_name,
-                    'total_attended' => $ft->total_attended,
+                    'id' => $person->id,
+                    'name' => $person->full_name,
+                    'is_member' => ($person instanceof \App\Models\Member),
+                    'is_readonly' => ($person instanceof \App\Models\Member || $person->total_attended >= 6),
+                    'total_attended' => $person->total_attended,
                     'weeks' => $weeks,
-                    'join_date' => $ft->date_of_visit->format('M d, Y'),
+                    'join_date' => \Carbon\Carbon::parse($person->date_of_visit)->format('M d, Y'),
                 ];
             });
         });
@@ -80,7 +101,8 @@ class AttendanceController extends Controller
     {
         $churchId = auth()->user()->church_id;
         $val = $request->validate([
-            'first_timer_id' => 'required|exists:first_timers,id',
+            'id' => 'required',
+            'is_member' => 'required|boolean',
             'month' => 'required|integer',
             'year' => 'required|integer',
             'week_number' => 'required|integer',
@@ -88,28 +110,59 @@ class AttendanceController extends Controller
             'attended' => 'required|boolean',
         ]);
 
+        if ($val['is_member']) {
+            $member = \App\Models\Member::where('church_id', $churchId)->findOrFail($val['id']);
+            $firstTimerId = null;
+            $memberId = $member->id;
+
+            if ($member->weeklyAttendances()->where('attended', true)->count() >= 6) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Attendance recording is locked for this person.'
+                ], 403);
+            }
+
+            $personForResponse = $member;
+        } else {
+            $firstTimer = FirstTimer::where('church_id', $churchId)->findOrFail($val['id']);
+            $firstTimerId = $firstTimer->id;
+            $memberId = null;
+
+            if ($firstTimer->weeklyAttendances()->where('attended', true)->count() >= 6) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Attendance recording is locked for this person.'
+                ], 403);
+            }
+
+            $personForResponse = $firstTimer;
+        }
+
         $attendance = WeeklyAttendance::updateOrCreate(
             [
-                'first_timer_id' => $val['first_timer_id'],
-                'church_id' => $churchId,
                 'month' => $val['month'],
                 'year' => $val['year'],
                 'week_number' => $val['week_number'],
+                'first_timer_id' => $firstTimerId,
+                'member_id' => $memberId,
             ],
             [
+                'church_id' => $churchId,
                 'service_date' => $val['service_date'],
                 'attended' => $val['attended'],
                 'recorded_by' => auth()->id(),
             ]
         );
 
-        $ft = FirstTimer::find($val['first_timer_id']);
-        $this->firstTimerService->syncMembershipStatus($ft);
+        if (!$val['is_member']) {
+            $ftModel = FirstTimer::findOrFail($firstTimerId);
+            $this->firstTimerService->syncMembershipStatus($ftModel);
+        }
 
         return response()->json([
             'success' => true,
-            'total_attended' => $ft->weeklyAttendances()->where('attended', true)->count(),
-            'status' => $ft->status
+            'total_attended' => $personForResponse->weeklyAttendances()->where('attended', true)->count(),
+            'status' => $val['is_member'] ? 'Retained' : $personForResponse->status
         ]);
     }
 

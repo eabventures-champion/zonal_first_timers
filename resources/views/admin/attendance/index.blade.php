@@ -8,15 +8,15 @@
     </div>
 
     <div x-data="{ 
-                    expandedGroups: new Set(),
-                    toggleGroup(name) {
-                        if (this.expandedGroups.has(name)) {
-                            this.expandedGroups.delete(name);
-                        } else {
-                            this.expandedGroups.add(name);
+                        expandedGroups: new Set(),
+                        toggleGroup(name) {
+                            if (this.expandedGroups.has(name)) {
+                                this.expandedGroups.delete(name);
+                            } else {
+                                this.expandedGroups.add(name);
+                            }
                         }
-                    }
-                }" class="space-y-8">
+                    }" class="space-y-8">
         @forelse($groups as $group)
             <div class="space-y-3">
                 <div class="flex items-center gap-2 px-1 text-left">
@@ -57,8 +57,8 @@
                                     <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
                                         <td class="px-6 py-4">
                                             <div class="font-semibold text-gray-900 dark:text-white">{{ $church->name }}</div>
-                                            <div class="text-xs text-gray-400 dark:text-slate-500">
-                                                {{ $church->address ?? 'No address' }}
+                                            <div class="text-xs text-gray-400 dark:text-slate-500 font-medium">
+                                                {{ $church->leader_name ?? 'No leader assigned' }}
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 text-gray-500 dark:text-slate-400">

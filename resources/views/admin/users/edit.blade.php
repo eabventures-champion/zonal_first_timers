@@ -52,37 +52,39 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                        <input type="text" name="phone" value="{{ old('phone', $user->phone) }}"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" required
                             class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        @error('phone') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
                 <div x-data="{ 
-                                categories: {{ Js::from($categories) }},
-                                selectedCategory: '{{ old('category_id', $currentCategoryId ?? '') }}',
-                                selectedGroup: '{{ old('group_id', $currentGroupId ?? '') }}',
-                                selectedChurch: '{{ old('church_id', $user->church_id ?? '') }}',
+                                    categories: {{ Js::from($categories) }},
+                                    selectedCategory: '{{ old('category_id', $currentCategoryId ?? '') }}',
+                                    selectedGroup: '{{ old('group_id', $currentGroupId ?? '') }}',
+                                    selectedChurch: '{{ old('church_id', $user->church_id ?? '') }}',
 
-                                init() {
-                                    // Ensure IDs are strings for consistent comparison with x-model
-                                    if (this.selectedCategory) this.selectedCategory = String(this.selectedCategory);
-                                    if (this.selectedGroup) this.selectedGroup = String(this.selectedGroup);
-                                    if (this.selectedChurch) this.selectedChurch = String(this.selectedChurch);
-                                },
+                                    init() {
+                                        // Ensure IDs are strings for consistent comparison with x-model
+                                        if (this.selectedCategory) this.selectedCategory = String(this.selectedCategory);
+                                        if (this.selectedGroup) this.selectedGroup = String(this.selectedGroup);
+                                        if (this.selectedChurch) this.selectedChurch = String(this.selectedChurch);
+                                    },
 
-                                get groups() {
-                                    if (!this.selectedCategory) return [];
-                                    const cat = this.categories.find(c => String(c.id) === String(this.selectedCategory));
-                                    return cat ? cat.groups : [];
-                                },
+                                    get groups() {
+                                        if (!this.selectedCategory) return [];
+                                        const cat = this.categories.find(c => String(c.id) === String(this.selectedCategory));
+                                        return cat ? cat.groups : [];
+                                    },
 
-                                get churches() {
-                                    if (!this.selectedGroup) return [];
-                                    const group = this.groups.find(g => String(g.id) === String(this.selectedGroup));
-                                    return group ? group.churches : [];
-                                }
-                            }" class="space-y-4 mb-6">
+                                    get churches() {
+                                        if (!this.selectedGroup) return [];
+                                        const group = this.groups.find(g => String(g.id) === String(this.selectedGroup));
+                                        return group ? group.churches : [];
+                                    }
+                                }" class="space-y-4 mb-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Church Category</label>

@@ -15,15 +15,15 @@
     </div>
 
     <div x-data="{ 
-                            expandedGroups: new Set(),
-                            toggleGroup(name) {
-                                if (this.expandedGroups.has(name)) {
-                                    this.expandedGroups.delete(name);
-                                } else {
-                                    this.expandedGroups.add(name);
+                                expandedGroups: new Set(),
+                                toggleGroup(name) {
+                                    if (this.expandedGroups.has(name)) {
+                                        this.expandedGroups.delete(name);
+                                    } else {
+                                        this.expandedGroups.add(name);
+                                    }
                                 }
-                            }
-                        }" class="space-y-8">
+                            }" class="space-y-8">
         @forelse($groups as $group)
             <div class="space-y-3">
                 <div class="flex items-center gap-2 px-1 text-left">
@@ -52,7 +52,7 @@
                             <thead class="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
                                 <tr>
                                     <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Church</th>
-                                    <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Officer</th>
+                                    <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Retaining Officer</th>
                                     <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">First Timers
                                     </th>
                                     <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Members</th>
@@ -76,13 +76,22 @@
                                                 @endif
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 text-gray-500 dark:text-slate-400">
+                                        <td class="px-6 py-4">
                                             <div class="flex items-center gap-2">
                                                 <div
                                                     class="w-7 h-7 rounded-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-[10px]">
                                                     {{ strtoupper(substr($church->retainingOfficer->name ?? 'U', 0, 1)) }}
                                                 </div>
-                                                <span>{{ $church->retainingOfficer->name ?? 'Unassigned' }}</span>
+                                                <div class="flex items-center gap-2">
+                                                    <span
+                                                        class="text-gray-900 dark:text-white font-medium whitespace-nowrap">{{ $church->retainingOfficer->name ?? 'Unassigned' }}</span>
+                                                    @if($church->retainingOfficer?->phone)
+                                                        <span
+                                                            class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20">
+                                                            {{ $church->retainingOfficer->phone }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 text-center">

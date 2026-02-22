@@ -29,11 +29,21 @@
         }
 
         .sidebar {
-            transition: width 0.3s ease, transform 0.3s ease;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
         .sidebar-link {
             transition: all 0.2s ease;
+            white-space: nowrap;
         }
 
         .sidebar-link:hover,
@@ -64,7 +74,7 @@
 </head>
 
 <body class="font-sans antialiased bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
-    <div class="min-h-screen flex" x-data="{ 
+    <div class="min-h-screen" x-data="{ 
         sidebarOpen: false, 
         sidebarMinimized: localStorage.getItem('sidebarMinimized') === 'true',
         darkMode: localStorage.getItem('darkMode') === 'true',
@@ -98,13 +108,13 @@
                 <div class="flex items-center gap-3">
                     <div
                         class="w-9 h-9 rounded-lg bg-indigo-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                        CF
+                        ZC
                     </div>
                     <div x-show="!sidebarMinimized" x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 -translate-x-2"
                         x-transition:enter-end="opacity-100 translate-x-0">
-                        <h1 class="text-sm font-bold tracking-wide whitespace-nowrap">Church First Timers</h1>
-                        <p class="text-[10px] text-slate-400 uppercase tracking-widest whitespace-nowrap">Management
+                        <h1 class="text-sm font-bold tracking-wide whitespace-nowrap">Zonal Church</h1>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest whitespace-nowrap">First Timers
                             System</p>
                     </div>
                 </div>
@@ -119,7 +129,7 @@
             </div>
 
             {{-- Navigation --}}
-            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <nav class="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide py-4 px-3 space-y-1">
                 @include('components.sidebar')
             </nav>
 
@@ -146,7 +156,7 @@
             @click="sidebarOpen = false"></div>
 
         {{-- ── Main Content ─────────────────────────────────── --}}
-        <div class="flex-1 min-h-screen flex flex-col transition-all duration-300"
+        <div class="min-h-screen flex flex-col transition-all duration-300"
             :class="sidebarMinimized ? 'lg:ml-20' : 'lg:ml-64'">
 
             {{-- Topbar --}}

@@ -37,7 +37,7 @@ class UserController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|exists:roles,name',
             'church_id' => 'nullable|exists:churches,id',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
         ]);
 
         $user = User::create([
@@ -80,7 +80,7 @@ class UserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
             'role' => 'required|exists:roles,name',
             'church_id' => 'nullable|exists:churches,id',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
         ]);
 
         $user->update([

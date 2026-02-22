@@ -20,6 +20,7 @@ class User extends Authenticatable
         'password',
         'church_id',
         'phone',
+        'deletion_requested_at',
     ];
 
     protected $hidden = [
@@ -32,6 +33,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'deletion_requested_at' => 'datetime',
         ];
     }
 
@@ -53,6 +55,16 @@ class User extends Authenticatable
     }
 
     // ── Helpers ────────────────────────────────────────────
+
+    public function isDeletionPending(): bool
+    {
+        return !is_null($this->deletion_requested_at);
+    }
+
+    public static function getPendingDeletionCount(): int
+    {
+        return self::whereNotNull('deletion_requested_at')->count();
+    }
 
     public function isSuperAdmin(): bool
     {

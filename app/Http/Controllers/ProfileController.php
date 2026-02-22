@@ -48,13 +48,19 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        Auth::logout();
+        $user->update([
+            'deletion_requested_at' => now(),
+        ]);
 
-        $user->delete();
+        return Redirect::route('profile.edit')->with('status', 'deletion-requested');
+    }
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+    public function cancelDeletion(Request $request): RedirectResponse
+    {
+        $request->user()->update([
+            'deletion_requested_at' => null,
+        ]);
 
-        return Redirect::to('/');
+        return Redirect::route('profile.edit')->with('status', 'deletion-cancelled');
     }
 }

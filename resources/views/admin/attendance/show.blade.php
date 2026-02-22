@@ -47,7 +47,7 @@
             month: {{ $month }},
             year: {{ $year }},
             loading: {},
-            async toggle(ftId, weekNum, serviceDate, currentAttended) {
+            async toggle(ftId, isMember, weekNum, serviceDate, currentAttended) {
                 const key = `${ftId}-${weekNum}`;
                 if (this.loading[key]) return;
                 
@@ -60,7 +60,8 @@
                             'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
                         },
                         body: JSON.stringify({
-                            first_timer_id: ftId,
+                            id: ftId,
+                            is_member: isMember,
                             month: this.month,
                             year: this.year,
                             week_number: weekNum,
@@ -129,10 +130,11 @@
                                     @endphp
                                     <td class="px-3 py-4 text-center">
                                         <button 
-                                            @click="toggle({{ $data['id'] }}, {{ $sunday['week_number'] }}, '{{ $sunday['date'] }}', {{ $attended ? 'true' : 'false' }})"
-                                            :class="loading['{{ $key }}'] ? 'opacity-50' : 'hover:scale-110'"
+                                            @if($data['is_readonly']) disabled @endif
+                                            @click="toggle({{ $data['id'] }}, {{ $data['is_member'] ? 'true' : 'false' }}, {{ $sunday['week_number'] }}, '{{ $sunday['date'] }}', {{ $attended ? 'true' : 'false' }})"
+                                            :class="loading['{{ $key }}'] || {{ $data['is_readonly'] ? 'true' : 'false' }} ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'"
                                             class="inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200 relative group/btn"
-                                            title="{{ \Carbon\Carbon::parse($sunday['date'])->format('l, M d, Y') }}">
+                                            title="{{ $data['is_readonly'] ? 'Record locked (Retained)' : \Carbon\Carbon::parse($sunday['date'])->format('l, M d, Y') }}">
                                             
                                             @if($attended)
                                                 <div class="bg-emerald-500 dark:bg-emerald-600 text-white p-1 rounded-md shadow-sm shadow-emerald-200 dark:shadow-none">

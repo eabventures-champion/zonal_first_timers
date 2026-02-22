@@ -57,28 +57,30 @@
                         @error('role') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                        <input type="text" name="phone" value="{{ old('phone') }}"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="phone" value="{{ old('phone') }}" required
                             class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        @error('phone') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
                 <div x-data="{ 
-                                categories: {{ $categories->toJson() }},
-                                selectedCategory: '{{ old('category_id') }}',
-                                selectedGroup: '{{ old('group_id') }}',
-                                selectedChurch: '{{ old('church_id') }}',
-                                get groups() {
-                                    if (!this.selectedCategory) return [];
-                                    const cat = this.categories.find(c => c.id == this.selectedCategory);
-                                    return cat ? cat.groups : [];
-                                },
-                                get churches() {
-                                    if (!this.selectedGroup) return [];
-                                    const group = this.groups.find(g => g.id == this.selectedGroup);
-                                    return group ? group.churches : [];
-                                }
-                            }" class="space-y-4 mb-6">
+                                    categories: {{ $categories->toJson() }},
+                                    selectedCategory: '{{ old('category_id') }}',
+                                    selectedGroup: '{{ old('group_id') }}',
+                                    selectedChurch: '{{ old('church_id') }}',
+                                    get groups() {
+                                        if (!this.selectedCategory) return [];
+                                        const cat = this.categories.find(c => c.id == this.selectedCategory);
+                                        return cat ? cat.groups : [];
+                                    },
+                                    get churches() {
+                                        if (!this.selectedGroup) return [];
+                                        const group = this.groups.find(g => g.id == this.selectedGroup);
+                                        return group ? group.churches : [];
+                                    }
+                                }" class="space-y-4 mb-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Church Category</label>

@@ -58,6 +58,11 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
     Route::get('foundation-school/{id}', [Admin\FoundationSchoolController::class, 'show'])->name('foundation-school.show');
     Route::post('foundation-school/{id}/attendance', [Admin\FoundationSchoolController::class, 'recordAttendance'])->name('foundation-school.attendance');
 
+    // Account Deletions
+    Route::get('account-deletions', [Admin\AccountDeletionController::class, 'index'])->name('account-deletions.index');
+    Route::post('account-deletions/{user}/approve', [Admin\AccountDeletionController::class, 'approve'])->name('account-deletions.approve');
+    Route::post('account-deletions/{user}/deny', [Admin\AccountDeletionController::class, 'deny'])->name('account-deletions.deny');
+
     // Membership Approvals
     Route::get('membership-approvals', [Admin\MembershipApprovalController::class, 'index'])->name('membership-approvals.index');
     Route::post('membership-approvals/{member}/approve', [Admin\MembershipApprovalController::class, 'approve'])->name('membership-approvals.approve');
@@ -82,6 +87,10 @@ Route::middleware(['auth', 'role:Retaining Officer'])->prefix('retaining-officer
     Route::get('members', [\App\Http\Controllers\RO\MemberController::class, 'index'])->name('members.index');
     Route::get('members/{member}', [\App\Http\Controllers\RO\MemberController::class, 'show'])->name('members.show');
     Route::get('first-timers', [RetainingOfficer\FirstTimerController::class, 'index'])->name('first-timers.index');
+    Route::get('first-timers/create', [RetainingOfficer\FirstTimerController::class, 'create'])->name('first-timers.create');
+    Route::post('first-timers', [RetainingOfficer\FirstTimerController::class, 'store'])->name('first-timers.store');
+    Route::get('first-timers/import', [RetainingOfficer\FirstTimerController::class, 'importForm'])->name('first-timers.import.form');
+    Route::post('first-timers/import', [RetainingOfficer\FirstTimerController::class, 'import'])->name('first-timers.import.store');
     Route::get('first-timers/{firstTimer}', [RetainingOfficer\FirstTimerController::class, 'show'])->name('first-timers.show');
 
     // Foundation School (scoped)
@@ -101,6 +110,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/cancel-deletion', [ProfileController::class, 'cancelDeletion'])->name('profile.cancel-deletion');
 });
 
 require __DIR__ . '/auth.php';

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class FirstTimerService
 {
@@ -126,19 +127,46 @@ class FirstTimerService
 
     private function recordInitialAttendance(FirstTimer $firstTimer): void
     {
+        if (!$firstTimer->date_of_visit) {
+            return;
+        }
+
+        $date = Carbon::parse($firstTimer->date_of_visit);
+        $weekNumber = WeeklyAttendance::getWeekNumberForDate($date);
+
         WeeklyAttendance::updateOrCreate(
             [
                 'first_timer_id' => $firstTimer->id,
                 'church_id' => $firstTimer->church_id,
-                'week_number' => 1, // Defaulting to week 1 for the visit
+                'week_number' => $weekNumber,
+                'month' => $date->month,
+                'year' => $date->year,
             ],
             [
-                'service_date' => $firstTimer->date_of_visit,
+                'service_date' => $date,
                 'attended' => true,
                 'notes' => 'Initial visit attendance',
                 'recorded_by' => Auth::id() ?? $firstTimer->created_by,
             ]
         );
+    }
+
+    private function syncDateOfVisit(FirstTimer $firstTimer): void
+    {
+        $earliestAttendance = $firstTimer->weeklyAttendances()
+            ->where('attended', true)
+            ->oldest('service_date')
+            ->first();
+
+        if ($earliestAttendance && $earliestAttendance->service_date) {
+            $attendanceDate = Carbon::parse($earliestAttendance->service_date)->startOfDay();
+            $currentVisitDate = Carbon::parse($firstTimer->date_of_visit)->startOfDay();
+
+            // If we found an earlier attendance than the current visit date, update it
+            if ($attendanceDate->lt($currentVisitDate)) {
+                $firstTimer->update(['date_of_visit' => $attendanceDate->toDateString()]);
+            }
+        }
     }
 
     public function update(FirstTimer $firstTimer, array $data): FirstTimer
@@ -226,6 +254,10 @@ class FirstTimerService
 
     public function syncMembershipStatus(FirstTimer $firstTimer): void
     {
+        \Log::info("syncMembershipStatus called for FT #{$firstTimer->id}");
+        // Sync date_of_visit with earliest attendance before status check
+        $this->syncDateOfVisit($firstTimer);
+
         $attendedCount = $firstTimer->weeklyAttendances()->where('attended', true)->count();
 
         if ($attendedCount >= 6) {

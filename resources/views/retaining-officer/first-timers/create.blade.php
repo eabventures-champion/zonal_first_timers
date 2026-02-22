@@ -6,35 +6,35 @@
     <div class="max-w-3xl">
         <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
             <form method="POST" action="{{ route('ro.first-timers.store') }}" x-data="{
-                        primaryContact: '{{ old('primary_contact') }}',
-                        contactError: '',
-                        isValidating: false,
+                            primaryContact: '{{ old('primary_contact') }}',
+                            contactError: '',
+                            isValidating: false,
 
-                        async checkContact() {
-                            if (this.primaryContact.length < 5) {
-                                this.contactError = '';
-                                return;
-                            }
+                            async checkContact() {
+                                if (this.primaryContact.length < 5) {
+                                    this.contactError = '';
+                                    return;
+                                }
 
-                            this.isValidating = true;
-                            try {
-                                const response = await fetch('{{ route('admin.first-timers.check-contact') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify({ contact: this.primaryContact })
-                                });
-                                const data = await response.json();
-                                this.contactError = data.exists ? data.message : '';
-                            } catch (e) {
-                                console.error('Validation failed', e);
-                            } finally {
-                                this.isValidating = false;
+                                this.isValidating = true;
+                                try {
+                                    const response = await fetch('{{ route('admin.first-timers.check-contact') }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify({ contact: this.primaryContact })
+                                    });
+                                    const data = await response.json();
+                                    this.contactError = data.exists ? data.message : '';
+                                } catch (e) {
+                                    console.error('Validation failed', e);
+                                } finally {
+                                    this.isValidating = false;
+                                }
                             }
-                        }
-                    }">
+                        }">
                 @csrf
 
                 <h3
@@ -93,6 +93,33 @@
                             @endforeach
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Date of
+                            Birth</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select name="dob_day"
+                                class="rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">Day</option>
+                                @foreach(range(1, 31) as $day)
+                                    <option value="{{ sprintf('%02d', $day) }}" {{ old('dob_day') == sprintf('%02d', $day) ? 'selected' : '' }}>{{ $day }}</option>
+                                @endforeach
+                            </select>
+                            <select name="dob_month"
+                                class="rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">Month</option>
+                                @foreach(range(1, 12) as $month)
+                                    <option value="{{ sprintf('%02d', $month) }}" {{ old('dob_month') == sprintf('%02d', $month) ? 'selected' : '' }}>
+                                        {{ date('F', mktime(0, 0, 0, $month, 1)) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Occupation</label>
+                        <input type="text" name="occupation" value="{{ old('occupation') }}"
+                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
                 </div>
 
                 <div class="mb-6">
@@ -101,6 +128,28 @@
                     <textarea name="residential_address" rows="2" required
                         class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('residential_address') }}</textarea>
                     @error('residential_address') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <h3
+                    class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4 pb-2 border-b dark:border-slate-800">
+                    Who Brought Them</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Bringer Name</label>
+                        <input type="text" name="bringer_name" value="{{ old('bringer_name') }}"
+                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Bringer Contact</label>
+                        <input type="text" name="bringer_contact" value="{{ old('bringer_contact') }}"
+                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Bringer Fellowship/Cell</label>
+                        <input type="text" name="bringer_fellowship" value="{{ old('bringer_fellowship') }}"
+                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            placeholder="e.g., Fellowship/Cell Name">
+                    </div>
                 </div>
 
                 <h3

@@ -16,7 +16,7 @@
                         class="text-xs text-gray-500">full_name, primary_contact, email, gender, residential_address, date_of_visit</code>
                     <p class="text-xs font-medium text-gray-600 dark:text-slate-400 mt-2 mb-1">Optional columns:</p>
                     <code
-                        class="text-xs text-gray-500">alternate_contact, occupation, marital_status, bringer_name, bringer_contact, bringer_fellowship, born_again, water_baptism, church_event, prayer_requests</code>
+                        class="text-xs text-gray-500">alternate_contact, date_of_birth, occupation, marital_status, bringer_name, bringer_contact, bringer_fellowship, born_again, water_baptism, church_event, prayer_requests</code>
                 </div>
             </div>
 
