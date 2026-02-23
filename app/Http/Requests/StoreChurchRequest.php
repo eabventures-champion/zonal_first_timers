@@ -15,10 +15,11 @@ class StoreChurchRequest extends FormRequest
     {
         return [
             'church_group_id' => 'required|exists:church_groups,id',
-            'name' => 'required|string|max:255',
-            'leader_name' => 'nullable|string|max:255',
-            'leader_contact' => 'nullable|string|max:255',
             'retaining_officer_id' => 'nullable|exists:users,id',
+            'churches' => 'required|array|min:1',
+            'churches.*.name' => 'required|string|max:255',
+            'churches.*.leader_name' => 'nullable|string|max:255',
+            'churches.*.leader_contact' => 'nullable|string|max:255',
         ];
     }
 }

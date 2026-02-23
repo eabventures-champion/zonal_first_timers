@@ -40,10 +40,14 @@
                     class="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-slate-800">
                     <h3 class="text-sm font-bold text-gray-700 dark:text-slate-300 mb-4 uppercase tracking-wider">Foundation
                         School</h3>
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-semibold text-gray-500">{{ $record->foundation_school_status }}</span>
+                    <div class="flex flex-col items-start gap-1 mb-2">
                         <span
-                            class="text-xs font-bold text-indigo-600 dark:text-indigo-400">{{ (int) $record->foundation_progress }}%</span>
+                            class="text-xs font-semibold text-gray-500 uppercase">{{ $record->foundation_school_status }}</span>
+                        @if($record->foundation_school_status === 'in-progress')
+                            <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium italic">
+                                {{ $record->current_foundation_level }}
+                            </span>
+                        @endif
                     </div>
                     <div class="w-full bg-gray-100 dark:bg-slate-800 rounded-full h-2 mb-4">
                         <div class="bg-indigo-500 h-2 rounded-full transition-all duration-1000"

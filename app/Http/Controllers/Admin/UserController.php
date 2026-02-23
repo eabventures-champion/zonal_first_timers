@@ -31,19 +31,23 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $isRO = $request->role === 'Retaining Officer';
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [$isRO ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'role' => 'required|exists:roles,name',
             'church_id' => 'nullable|exists:churches,id',
             'phone' => 'required|string|max:20',
         ]);
 
+        $password = $request->password ?: ($isRO ? $request->phone : null);
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($password),
             'church_id' => $request->church_id,
             'phone' => $request->phone,
         ]);
@@ -74,6 +78,8 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $isRO = $request->role === 'Retaining Officer';
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:users,email,' . $user->id,
@@ -92,6 +98,11 @@ class UserController extends Controller
 
         if ($request->filled('password')) {
             $user->update(['password' => Hash::make($request->password)]);
+        } elseif ($isRO && !$user->password) {
+            // If the user is an RO and currently has no password set,
+            // or if they are being assigned as an RO and no password was provided,
+            // default the password to their phone number.
+            $user->update(['password' => Hash::make($request->phone)]);
         }
 
         $user->syncRoles([$request->role]);
@@ -107,6 +118,26 @@ class UserController extends Controller
         } else {
             // If role changed from RO, clear previous assignment
             Church::where('retaining_officer_id', $user->id)->update(['retaining_officer_id' => null]);
+        }
+
+        // Sync linked FirstTimer record if one exists
+        $firstTimer = \App\Models\FirstTimer::where('user_id', $user->id)->first();
+        if ($firstTimer) {
+            $firstTimer->update([
+                'full_name' => $request->name,
+                'primary_contact' => $request->phone,
+                'church_id' => $request->church_id ?? $firstTimer->church_id,
+            ]);
+        }
+
+        // Sync linked Member record if one exists
+        $member = \App\Models\Member::where('user_id', $user->id)->first();
+        if ($member) {
+            $member->update([
+                'full_name' => $request->name,
+                'primary_contact' => $request->phone,
+                'church_id' => $request->church_id ?? $member->church_id,
+            ]);
         }
 
         return redirect()->route('admin.users.index')

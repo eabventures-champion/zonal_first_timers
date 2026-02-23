@@ -6,7 +6,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    $settings = \App\Models\HomepageSetting::all()->keyBy('key');
+    return view('welcome', compact('settings'));
 });
 
 // ── Role-based dashboard redirect ────────────────────────
@@ -19,6 +20,10 @@ Route::get('/dashboard', function () {
 
     if ($user->hasRole('Member')) {
         return redirect()->route('member.dashboard');
+    }
+
+    if ($user->hasRole('Bringer')) {
+        return redirect()->route('bringer.dashboard');
     }
 
     return redirect()->route('admin.dashboard');
@@ -35,6 +40,12 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
     Route::get('/dashboard', [Admin\DashboardController::class, 'index'])->name('dashboard');
     Route::post('dashboard/update-target', [Admin\DashboardController::class, 'updateTarget'])->name('dashboard.update-target');
 
+    // Homepage Settings (Super Admin Only)
+    Route::middleware(['role:Super Admin'])->group(function () {
+        Route::get('homepage-settings', [\App\Http\Controllers\HomepageSettingController::class, 'index'])->name('homepage-settings.index');
+        Route::post('homepage-settings', [\App\Http\Controllers\HomepageSettingController::class, 'update'])->name('homepage-settings.update');
+    });
+
     // Church Hierarchy
     Route::resource('church-categories', Admin\ChurchCategoryController::class)->except(['show']);
     Route::resource('church-groups', Admin\ChurchGroupController::class)->except(['show']);
@@ -45,7 +56,7 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
     Route::get('members/{member}', [Admin\MemberController::class, 'show'])->name('members.show');
     Route::get('members/{member}/edit', [Admin\MemberController::class, 'edit'])->name('members.edit');
     Route::put('members/{member}', [Admin\MemberController::class, 'update'])->name('members.update');
-    Route::post('first-timers/check-contact', [Admin\FirstTimerController::class, 'checkContact'])->name('first-timers.check-contact');
+    // Route::post('first-timers/check-contact', [Admin\FirstTimerController::class, 'checkContact'])->name('first-timers.check-contact'); // Moved to shared
     Route::get('first-timers/import', [Admin\FirstTimerController::class, 'importForm'])->name('first-timers.import');
     Route::post('first-timers/import', [Admin\FirstTimerController::class, 'import'])->name('first-timers.import.store');
     Route::resource('first-timers', Admin\FirstTimerController::class);
@@ -76,6 +87,21 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
     Route::get('attendance', [Admin\AttendanceController::class, 'index'])->name('attendance.index');
     Route::get('attendance/churches/{church}', [Admin\AttendanceController::class, 'show'])->name('attendance.show');
     Route::post('attendance/toggle', [Admin\AttendanceController::class, 'toggle'])->name('attendance.toggle');
+
+    // Bringers
+    Route::get('bringers', [Admin\BringerController::class, 'index'])->name('bringers.index');
+});
+
+// Shared Utility Routes (Accessible by Admin and RO)
+Route::middleware(['auth', 'role:Super Admin,Admin,Retaining Officer'])->group(function () {
+    Route::post('admin/first-timers/check-contact', [Admin\FirstTimerController::class, 'checkContact'])->name('admin.first-timers.check-contact');
+    Route::post('admin/bringers/check-contact', [Admin\BringerController::class, 'checkContact'])->name('admin.bringers.check-contact');
+    Route::get('admin/bringers/church/{church}', [Admin\BringerController::class, 'getForChurch'])->name('admin.bringers.get-for-church');
+});
+
+// ── Bringer Routes ─────────────────────────────────────────
+Route::middleware(['auth', 'role:Bringer'])->group(function () {
+    Route::get('/bringer/dashboard', [\App\Http\Controllers\Bringer\DashboardController::class, 'index'])->name('bringer.dashboard');
 });
 
 // ── Retaining Officer Routes ─────────────────────────────
@@ -103,6 +129,9 @@ Route::middleware(['auth', 'role:Retaining Officer'])->prefix('retaining-officer
     Route::get('attendance/create', [RetainingOfficer\AttendanceController::class, 'create'])->name('attendance.create');
     Route::post('attendance', [RetainingOfficer\AttendanceController::class, 'store'])->name('attendance.store');
     Route::post('attendance/toggle', [RetainingOfficer\AttendanceController::class, 'toggle'])->name('attendance.toggle');
+
+    // Bringers
+    Route::get('bringers', [Admin\BringerController::class, 'index'])->name('bringers.index');
 });
 
 // ── Profile (Breeze default) ─────────────────────────────

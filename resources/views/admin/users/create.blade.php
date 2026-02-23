@@ -25,62 +25,80 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Password <span
-                                class="text-red-500">*</span></label>
-                        <input type="password" name="password" value="password" required
-                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('password') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                <div x-data="{ role: '{{ old('role') }}' }">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Role <span
+                                    class="text-red-500">*</span></label>
+                            <select name="role" required x-model="role"
+                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">Select Role</option>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role->name }}">
+                                        {{ $role->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('role') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" name="phone" value="{{ old('phone') }}" required
+                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            @error('phone') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password <span
-                                class="text-red-500">*</span></label>
-                        <input type="password" name="password_confirmation" value="password" required
-                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
-                </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Role <span
-                                class="text-red-500">*</span></label>
-                        <select name="role" required
-                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="">Select Role</option>
-                            @foreach($roles as $role)
-                                <option value="{{ $role->name }}" {{ old('role') === $role->name ? 'selected' : '' }}>
-                                    {{ $role->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('role') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5" x-show="role !== 'Retaining Officer'">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Password <span
+                                    class="text-red-500">*</span></label>
+                            <input type="password" name="password" :required="role !== 'Retaining Officer'"
+                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            @error('password') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password <span
+                                    class="text-red-500">*</span></label>
+                            <input type="password" name="password_confirmation" :required="role !== 'Retaining Officer'"
+                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone <span
-                                class="text-red-500">*</span></label>
-                        <input type="text" name="phone" value="{{ old('phone') }}" required
-                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('phone') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+
+                    <div class="mb-5 p-3 bg-indigo-50 rounded-lg border border-indigo-100"
+                        x-show="role === 'Retaining Officer'">
+                        <div class="flex gap-3">
+                            <svg class="w-5 h-5 text-indigo-500 shrink-0" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-xs text-indigo-700">
+                                <strong>Default Password:</strong> For Retaining Officers, the user's <strong>Phone
+                                    Number</strong> will be used as their default password. They can change it after logging
+                                in.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
                 <div x-data="{ 
-                                    categories: {{ $categories->toJson() }},
-                                    selectedCategory: '{{ old('category_id') }}',
-                                    selectedGroup: '{{ old('group_id') }}',
-                                    selectedChurch: '{{ old('church_id') }}',
-                                    get groups() {
-                                        if (!this.selectedCategory) return [];
-                                        const cat = this.categories.find(c => c.id == this.selectedCategory);
-                                        return cat ? cat.groups : [];
-                                    },
-                                    get churches() {
-                                        if (!this.selectedGroup) return [];
-                                        const group = this.groups.find(g => g.id == this.selectedGroup);
-                                        return group ? group.churches : [];
-                                    }
-                                }" class="space-y-4 mb-6">
+                                        categories: {{ $categories->toJson() }},
+                                        selectedCategory: '{{ old('category_id') }}',
+                                        selectedGroup: '{{ old('group_id') }}',
+                                        selectedChurch: '{{ old('church_id') }}',
+                                        get groups() {
+                                            if (!this.selectedCategory) return [];
+                                            const cat = this.categories.find(c => c.id == this.selectedCategory);
+                                            return cat ? cat.groups : [];
+                                        },
+                                        get churches() {
+                                            if (!this.selectedGroup) return [];
+                                            const group = this.groups.find(g => g.id == this.selectedGroup);
+                                            return group ? group.churches : [];
+                                        }
+                                    }" class="space-y-4 mb-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Church Category</label>

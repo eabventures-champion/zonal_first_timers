@@ -23,5 +23,13 @@ class AppServiceProvider extends ServiceProvider
             'components.sidebar',
             \App\Http\View\Composers\SidebarComposer::class
         );
+
+        // Share homepage settings globally
+        \Illuminate\Support\Facades\View::composer('*', function ($view) {
+            $settings = \Illuminate\Support\Facades\Cache::remember('homepage_settings', 60 * 24, function () {
+                return \App\Models\HomepageSetting::all()->keyBy('key');
+            });
+            $view->with('settings', $settings);
+        });
     }
 }

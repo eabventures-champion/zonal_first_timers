@@ -27,9 +27,13 @@ class FirstTimerController extends Controller
         $firstTimers = $this->service->getAll($filters, false); // Fetch all for grouped view
         $churches = Church::all();
 
-        // Group by group name for structured view
+        // Group by category then church for structured view
         $groupedFirstTimers = $firstTimers->groupBy(function ($ft) {
-            return $ft->church->group->name ?? 'Unassigned Groups';
+            return $ft->church?->group?->category?->name ?? 'Unassigned Categories';
+        })->map(function ($categoryGroup) {
+            return $categoryGroup->groupBy(function ($ft) {
+                return $ft->church?->name ?? 'Unassigned Churches';
+            });
         });
 
         return view('admin.first-timers.index', compact('groupedFirstTimers', 'churches', 'filters'));

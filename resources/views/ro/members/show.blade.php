@@ -77,7 +77,7 @@
                             {{ $member->membership_approved_at?->format('M d, Y') ?? '—' }}</dd>
                     </div>
                     <div>
-                        <dt class="text-gray-500 dark:text-slate-500">Brought By</dt>
+                        <dt class="text-gray-500 dark:text-slate-500">Bringer</dt>
                         <dd class="font-medium text-gray-900 dark:text-white">{{ $member->bringer_name ?? '—' }}</dd>
                     </div>
                 </dl>

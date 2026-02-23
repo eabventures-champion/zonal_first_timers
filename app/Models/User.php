@@ -87,6 +87,6 @@ class User extends Authenticatable
             return false;
         }
 
-        return $this->church->group->category->name === 'Other Churches';
+        return strtoupper($this->church->group->category->name) === 'OTHER CHURCHES';
     }
 }

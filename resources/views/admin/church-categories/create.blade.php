@@ -4,33 +4,35 @@
 
 @section('content')
     <div class="max-w-2xl">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
             <form method="POST" action="{{ route('admin.church-categories.store') }}">
                 @csrf
 
                 <div class="mb-5">
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Category Name <span
-                            class="text-red-500">*</span></label>
+                    <label for="name" class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Category Name
+                        <span class="text-red-500">*</span></label>
                     <input type="text" name="name" id="name" value="{{ old('name') }}" required
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     @error('name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                     <div>
-                        <label for="zonal_pastor_name" class="block text-sm font-medium text-gray-700 mb-1">Name of Zonal
+                        <label for="zonal_pastor_name"
+                            class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Name of Zonal
                             Pastor</label>
                         <input type="text" name="zonal_pastor_name" id="zonal_pastor_name"
                             value="{{ old('zonal_pastor_name') }}"
-                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                         @error('zonal_pastor_name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label for="zonal_pastor_contact" class="block text-sm font-medium text-gray-700 mb-1">Contact of
+                        <label for="zonal_pastor_contact"
+                            class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Contact of
                             Zonal Pastor</label>
                         <input type="text" name="zonal_pastor_contact" id="zonal_pastor_contact"
                             value="{{ old('zonal_pastor_contact') }}"
-                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                         @error('zonal_pastor_contact') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -41,7 +43,7 @@
                         Create Category
                     </button>
                     <a href="{{ route('admin.church-categories.index') }}"
-                        class="text-sm text-gray-500 hover:text-gray-700">Cancel</a>
+                        class="text-sm text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300">Cancel</a>
                 </div>
             </form>
         </div>

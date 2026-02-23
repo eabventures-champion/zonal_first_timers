@@ -34,9 +34,26 @@ class ChurchController extends Controller
 
     public function store(StoreChurchRequest $request)
     {
-        $this->service->createChurch($request->validated());
+        $validated = $request->validated();
+        $churches = $validated['churches'];
+        $groupId = $validated['church_group_id'];
+        $officerId = $validated['retaining_officer_id'] ?? null;
+
+        foreach ($churches as $churchData) {
+            $this->service->createChurch([
+                'church_group_id' => $groupId,
+                'retaining_officer_id' => $officerId,
+                'name' => $churchData['name'],
+                'leader_name' => $churchData['leader_name'] ?? null,
+                'leader_contact' => $churchData['leader_contact'] ?? null,
+            ]);
+        }
+
+        $count = count($churches);
+        $message = $count > 1 ? "{$count} churches created successfully." : "Church created successfully.";
+
         return redirect()->route('admin.churches.index')
-            ->with('success', 'Church created successfully.');
+            ->with('success', $message);
     }
 
     public function show(Church $church)

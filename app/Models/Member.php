@@ -26,7 +26,6 @@ class Member extends Model
         'email',
         'bringer_name',
         'bringer_contact',
-        'bringer_fellowship',
         'born_again',
         'water_baptism',
         'prayer_requests',
@@ -39,6 +38,7 @@ class Member extends Model
         'retaining_officer_id',
         'user_id',
         'migrated_at',
+        'bringer_id',
         'created_by',
         'updated_by',
     ];
@@ -53,7 +53,14 @@ class Member extends Model
             'acknowledged_at' => 'datetime',
             'born_again' => 'boolean',
             'water_baptism' => 'boolean',
+            'migrated_at' => 'datetime',
+            'bringer_id' => 'integer',
         ];
+    }
+
+    public function bringer(): BelongsTo
+    {
+        return $this->belongsTo(Bringer::class);
     }
 
     // ── Relationships ──────────────────────────────────────
@@ -159,6 +166,6 @@ class Member extends Model
             return 'Not Started';
         }
 
-        return $latestAttendance->foundationClass->name;
+        return "Class: {$latestAttendance->foundationClass->class_number} {$latestAttendance->foundationClass->name}";
     }
 }

@@ -25,7 +25,7 @@ class DashboardService
             'total_churches' => Church::count(),
             'total_categories' => ChurchCategory::count(),
             'total_groups' => ChurchGroup::count(),
-            'total_first_timers' => FirstTimer::count(),
+            'total_first_timers' => FirstTimer::count() + Member::count(),
             'new_first_timers' => FirstTimer::where('status', 'New')->count(),
             'developing' => FirstTimer::where('status', 'Developing')->count(),
             'total_members' => Member::count(),
@@ -172,6 +172,9 @@ class DashboardService
         $newCount = FirstTimer::where('church_id', $churchId)->where('status', 'New')->count();
         $developingCount = FirstTimer::where('church_id', $churchId)->where('status', 'Developing')->count();
         $memberCount = Member::where('church_id', $churchId)->count();
+        $totalBringers = \App\Models\Bringer::where('church_id', $churchId)->count();
+
+        $totalFirstTimers = FirstTimer::where('church_id', $churchId)->count() + $memberCount;
 
         $retentionRate = $totalFirstTimers > 0
             ? round(($memberCount / $totalFirstTimers) * 100, 1)
@@ -199,6 +202,7 @@ class DashboardService
             'new_first_timers' => $newCount,
             'developing' => $developingCount,
             'total_members' => $memberCount,
+            'total_bringers' => $totalBringers,
             'retention_rate' => $retentionRate,
             'foundation_completion_rate' => $foundationRate,
             'gender_distribution' => $this->getGenderDistribution($churchId),
@@ -220,15 +224,16 @@ class DashboardService
         return $categories->map(function ($category) {
             $categoryGroups = $category->groups->map(function ($group) {
                 $churches = $group->churches->map(function ($church) {
-                    $retentionRate = $church->first_timers_count > 0
-                        ? round(($church->members_count / $church->first_timers_count) * 100, 1)
+                    $totalSouls = $church->first_timers_count + $church->members_count;
+                    $retentionRate = $totalSouls > 0
+                        ? round(($church->members_count / $totalSouls) * 100, 1)
                         : 0;
 
                     return [
                         'id' => $church->id,
                         'name' => $church->name,
                         'retaining_officer' => $church->retainingOfficer->name ?? 'Unassigned',
-                        'total_first_timers' => $church->first_timers_count,
+                        'total_first_timers' => $totalSouls,
                         'new' => $church->new_first_timers_count,
                         'developing' => $church->developing_count,
                         'members' => $church->members_count,

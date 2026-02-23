@@ -12,8 +12,9 @@
                         selectedGroup: '{{ $member->church->group->id ?? '' }}',
                         selectedChurch: '{{ $member->church_id }}',
                         selectedOfficer: '{{ $member->retaining_officer_id }}',
-                        groups: [],
                         churches: [],
+                        bringers: [],
+                        selectedBringerId: '{{ $member->bringer_id }}',
 
                         init() {
                             this.updateGroups(true);
@@ -38,6 +39,8 @@
                             if (!initial) {
                                 this.selectedChurch = '';
                                 this.selectedOfficer = '';
+                            } else {
+                                this.loadBringers();
                             }
                         },
 
@@ -48,13 +51,30 @@
                             } else {
                                 this.selectedOfficer = '';
                             }
-                        }
+                            this.loadBringers();
+                        },
+
+                        async loadBringers() {
+                            if (!this.selectedChurch) {
+                                this.bringers = [];
+                                return;
+                            }
+                            try {
+                                const response = await fetch(`/admin/bringers/church/${this.selectedChurch}`);
+                                this.bringers = await response.json();
+                            } catch (e) {
+                                console.error('Failed to load bringers', e);
+                            }
+                        },
                     }">
                 @csrf @method('PUT')
 
-                <h3
-                    class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4 pb-2 border-b border-gray-100 dark:border-slate-800">
-                    Personal Information</h3>
+                <div class="flex items-center gap-2 mb-4 pb-2 border-b dark:border-slate-800">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    </div>
+                    <h3 class="text-sm font-bold text-gray-800 dark:text-slate-200">Personal Information</h3>
+                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Full Name <span
@@ -139,15 +159,45 @@
                 </div>
 
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Residential
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Residential
                         Address</label>
                     <textarea name="residential_address" rows="2"
                         class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('residential_address', $member->residential_address) }}</textarea>
                 </div>
 
-                <h3
-                    class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4 pb-2 border-b border-gray-100 dark:border-slate-800">
-                    Credentials</h3>
+                <div class="flex items-center gap-2 mb-4 pb-2 border-b dark:border-slate-800">
+                    <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    </div>
+                    <h3 class="text-sm font-bold text-gray-800 dark:text-slate-200">Who Brought Them / Credentials</h3>
+                </div>
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Select Person (Optional)</label>
+                        <select name="bringer_id" x-model="selectedBringerId"
+                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">New Person / Not Listed (Use fields below)</option>
+                            <template x-for="person in bringers" :key="person.id">
+                                <option :value="person.id" x-text="`${person.name} (${person.contact})${person.is_ro ? ' (RO)' : ''}`" :selected="person.id == selectedBringerId"></option>
+                            </template>
+                        </select>
+                        <p class="mt-1 text-[10px] text-gray-400 dark:text-slate-500">If the person is already in the system, select them here. Otherwise, fill the details below.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" x-show="!selectedBringerId">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Bringer Name</label>
+                            <input type="text" name="bringer_name" value="{{ old('bringer_name', $member->bringer_name) }}"
+                                class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Bringer Contact</label>
+                            <input type="text" name="bringer_contact" value="{{ old('bringer_contact', $member->bringer_contact) }}"
+                                class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                     <label class="flex items-center gap-2">
                         <input type="checkbox" name="born_again" value="1" {{ old('born_again', $member->born_again) ? 'checked' : '' }}
@@ -161,9 +211,12 @@
                     </label>
                 </div>
 
-                <h3
-                    class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4 pb-2 border-b border-gray-100 dark:border-slate-800">
-                    Church Assignment</h3>
+                <div class="flex items-center gap-2 mb-4 pb-2 border-b dark:border-slate-800">
+                    <div class="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                    </div>
+                    <h3 class="text-sm font-bold text-gray-800 dark:text-slate-200">Church Assignment</h3>
+                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Category <span

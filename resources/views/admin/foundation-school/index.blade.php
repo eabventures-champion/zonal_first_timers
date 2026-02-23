@@ -10,9 +10,15 @@
                             $dispatch('open-modal', 'edit-class-modal');
                         }
                     }">
-        <div class="mb-6 flex items-center justify-between">
-            <div>
-                <p class="text-sm text-gray-500">Foundation School classes and progression tracking</p>
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18 18.247 18.477 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-gray-900 dark:text-white">Foundation School</h1>
+                    <p class="text-xs text-gray-500 dark:text-slate-400">Classes and progression tracking</p>
+                </div>
             </div>
             @if(auth()->user()->hasRole('Super Admin'))
                 <button @click="$dispatch('open-modal', 'add-class-modal')"
@@ -25,13 +31,14 @@
             @endif
         </div>
 
+        @php $fsClasses = collect($classes); @endphp
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-            @foreach($classes as $class)
+            @foreach($fsClasses as $fClass)
                 <div
                     class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-5 hover:shadow-md transition-shadow relative group">
                     @if(auth()->user()->hasRole('Super Admin'))
                         <div class="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button @click="openEdit({{ json_encode($class) }})"
+                            <button @click="openEdit({{ json_encode($fClass) }})"
                                 class="p-1.5 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                 title="Edit Class">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +46,7 @@
                                         d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
                             </button>
-                            <form action="{{ route('admin.foundation-school.classes.destroy', $class) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this class?')">
+                            <form action="{{ route('admin.foundation-school.classes.destroy', $fClass) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this class?')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="p-1.5 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Delete Class">
@@ -54,14 +61,14 @@
                     <div class="flex items-center gap-3 mb-3">
                         <div
                             class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                            {{ $class->class_number }}
+                            {{ $fClass->class_number }}
                         </div>
                         <div>
-                            <h3 class="text-sm font-semibold text-gray-900 dark:text-slate-100">{{ $class->name }}</h3>
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-slate-100">{{ $fClass->name }}</h3>
                         </div>
                     </div>
-                    @if($class->description)
-                        <p class="text-sm text-gray-500 dark:text-slate-400">{{ $class->description }}</p>
+                    @if($fClass->description)
+                        <p class="text-sm text-gray-500 dark:text-slate-400">{{ $fClass->description }}</p>
                     @endif
                 </div>
             @endforeach
@@ -179,7 +186,6 @@
             </div>
 
             <div class="space-y-4">
-            <div class="space-y-4">
                 @forelse($hierarchicalData as $category)
                     <div x-data="{ expanded: false }"
                         class="border border-gray-100 dark:border-slate-800 rounded-lg overflow-hidden transition-all shadow-sm">
@@ -248,7 +254,8 @@
                                                                         <span class="text-[9px] font-bold text-gray-400">({{ $students->count() }})</span>
                                                                     </div>
                                                                     
-                                                                    <div class="overflow-x-auto">
+                                                                    {{-- Desktop Table --}}
+                                                                    <div class="hidden sm:block overflow-x-auto">
                                                                         <table class="w-full text-left text-xs">
                                                                             <thead class="text-[9px] uppercase font-bold text-gray-400 dark:text-slate-600 border-b border-gray-100 dark:border-slate-800/50">
                                                                                 <tr>
@@ -287,6 +294,32 @@
                                                                                 @endforeach
                                                                             </tbody>
                                                                         </table>
+                                                                    </div>
+
+                                                                    {{-- Mobile Card List --}}
+                                                                    <div class="sm:hidden space-y-2">
+                                                                        @foreach($students as $ft)
+                                                                            @php
+                                                                                $completedCount = $ft->foundationAttendances->where('completed', true)->count();
+                                                                                $totalClasses = $classes->count();
+                                                                                $pct = $totalClasses > 0 ? round(($completedCount / $totalClasses) * 100) : 0;
+                                                                            @endphp
+                                                                            <div class="bg-white dark:bg-slate-800/40 p-3 rounded-lg border border-gray-100 dark:border-slate-800/60 shadow-sm flex items-center justify-between gap-3">
+                                                                                <div class="flex-1 min-w-0">
+                                                                                    <div class="font-bold text-gray-900 dark:text-slate-200 text-xs truncate">{{ $ft->full_name }}</div>
+                                                                                    <div class="flex items-center gap-2 mt-1">
+                                                                                        <div class="flex-1 bg-gray-100 dark:bg-slate-700 rounded-full h-1 overflow-hidden max-w-[60px]">
+                                                                                            <div class="h-full bg-indigo-500 rounded-full" style="width: {{ $pct }}%"></div>
+                                                                                        </div>
+                                                                                        <span class="text-[10px] font-bold text-gray-500 dark:text-slate-500">{{ $completedCount }}/{{ $totalClasses }}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <a href="{{ route('admin.foundation-school.show', ['id' => $ft->id, 'member' => $ft->is_member_record ? 1 : 0]) }}"
+                                                                                    class="p-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg shrink-0">
+                                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                                                                </a>
+                                                                            </div>
+                                                                        @endforeach
                                                                     </div>
                                                                 </div>
                                                             @endif

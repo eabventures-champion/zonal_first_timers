@@ -9,6 +9,7 @@ use App\Models\Church;
 use App\Models\FirstTimer;
 use App\Models\Member;
 use App\Models\User;
+use App\Models\Bringer;
 
 class SidebarComposer
 {
@@ -31,7 +32,15 @@ class SidebarComposer
                 return $q->where('church_id', $churchId);
             })
                 ->count(),
+            'bringers' => Bringer::when($isRO && $churchId, function ($q) use ($churchId) {
+                return $q->where('church_id', $churchId);
+            })->count(),
             'users' => User::count(),
+            'pending_approvals' => Member::whereNull('acknowledged_at')
+                ->when($isRO && $churchId, function ($q) use ($churchId) {
+                    return $q->where('church_id', $churchId);
+                })
+                ->count(),
         ];
 
         $view->with('sidebarCounts', $counts);

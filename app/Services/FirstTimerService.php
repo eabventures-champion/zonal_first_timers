@@ -83,44 +83,85 @@ class FirstTimerService
     {
         $data['created_by'] = Auth::id();
 
-        // Auto-assign retaining officer from church if not specified
-        if (empty($data['retaining_officer_id'])) {
-            $church = Church::find($data['church_id']);
-            $data['retaining_officer_id'] = $church?->retaining_officer_id;
-        }
+        $firstTimer = DB::transaction(function () use ($data) {
+            // Handle Bringer logic
+            $bringerId = $data['bringer_id'] ?? null;
 
-        // Fallback for Bringer Details using Retaining Officer's info
-        if (!empty($data['retaining_officer_id']) && (empty($data['bringer_name']) || empty($data['bringer_contact']) || empty($data['bringer_fellowship']))) {
-            $officer = \App\Models\User::with('church')->find($data['retaining_officer_id']);
-            if ($officer) {
-                if (empty($data['bringer_name'])) {
-                    $data['bringer_name'] = $officer->name;
-                }
-                if (empty($data['bringer_contact'])) {
-                    $data['bringer_contact'] = $officer->phone;
-                }
-                if (empty($data['bringer_fellowship'])) {
-                    $data['bringer_fellowship'] = $officer->church?->name;
+            if (!$bringerId) {
+                $bringerName = $data['bringer_name'] ?? null;
+                $bringerContact = $data['bringer_contact'] ?? null;
+                $churchId = $data['church_id'];
+
+                if ($bringerName && $bringerContact) {
+                    // Find or create person by contact (ensuring uniqueness)
+                    $bringer = \App\Models\Bringer::updateOrCreate(
+                        ['contact' => $bringerContact],
+                        [
+                            'church_id' => $churchId,
+                            'name' => $bringerName,
+                        ]
+                    );
+
+                    // Ensure Bringer has a User account for login
+                    if (!$bringer->user_id) {
+                        $user = User::where('phone', $bringerContact)->first();
+                        if (!$user) {
+                            $user = User::create([
+                                'name' => $bringerName,
+                                'phone' => $bringerContact,
+                                'email' => $bringerContact . '@zonal.com',
+                                'password' => $bringerContact,
+                                'church_id' => $churchId,
+                            ]);
+                        }
+                        if (!$user->hasRole('Bringer')) {
+                            $user->assignRole('Bringer');
+                        }
+                        $bringer->update(['user_id' => $user->id]);
+                    }
+                    $bringerId = $bringer->id;
+                } else {
+                    // Fallback to Retaining Officer details
+                    $church = Church::find($churchId);
+                    $officerId = $data['retaining_officer_id'] ?? $church?->retaining_officer_id;
+
+                    if ($officerId) {
+                        $officer = \App\Models\User::find($officerId);
+                        if ($officer) {
+                            $bringer = \App\Models\Bringer::firstOrCreate(
+                                ['church_id' => $churchId, 'user_id' => $officer->id],
+                                [
+                                    'name' => $officer->name,
+                                    'contact' => $officer->phone,
+                                    'is_ro' => true
+                                ]
+                            );
+                            $bringerId = $bringer->id;
+                        }
+                    }
                 }
             }
-        }
 
-        $firstTimer = FirstTimer::create($data);
+            $data['bringer_id'] = $bringerId;
+            $firstTimer = FirstTimer::create($data);
 
-        // Create User account for the First Timer
-        $user = User::create([
-            'name' => $firstTimer->full_name,
-            'email' => $firstTimer->email ?? ($firstTimer->primary_contact . '@church.com'), // Email is unique, so use contact as fallback if needed
-            'phone' => $firstTimer->primary_contact,
-            'password' => $firstTimer->primary_contact, // Default password is phone number
-            'church_id' => $firstTimer->church_id,
-        ]);
-        $user->assignRole('Member');
+            // Create User account for the First Timer
+            $user = User::create([
+                'name' => $firstTimer->full_name,
+                'email' => $firstTimer->email ?? ($firstTimer->primary_contact . '@church.com'),
+                'phone' => $firstTimer->primary_contact,
+                'password' => $firstTimer->primary_contact,
+                'church_id' => $firstTimer->church_id,
+            ]);
+            $user->assignRole('Member');
 
-        $firstTimer->update(['user_id' => $user->id]);
+            $firstTimer->update(['user_id' => $user->id]);
 
-        // Auto-record initial attendance for the date of visit
-        $this->recordInitialAttendance($firstTimer);
+            // Auto-record initial attendance
+            $this->recordInitialAttendance($firstTimer);
+
+            return $firstTimer;
+        });
 
         return $firstTimer;
     }
@@ -171,9 +212,86 @@ class FirstTimerService
 
     public function update(FirstTimer $firstTimer, array $data): FirstTimer
     {
-        $data['updated_by'] = Auth::id();
-        $firstTimer->update($data);
-        return $firstTimer->fresh();
+        return DB::transaction(function () use ($firstTimer, $data) {
+            $data['updated_by'] = Auth::id();
+
+            // Handle Bringer logic
+            $bringerId = $data['bringer_id'] ?? null;
+
+            if (!$bringerId) {
+                $bringerName = $data['bringer_name'] ?? null;
+                $bringerContact = $data['bringer_contact'] ?? null;
+                $churchId = $data['church_id'] ?? $firstTimer->church_id;
+
+                if ($bringerName && $bringerContact) {
+                    $bringer = \App\Models\Bringer::updateOrCreate(
+                        ['contact' => $bringerContact],
+                        [
+                            'church_id' => $churchId,
+                            'name' => $bringerName,
+                        ]
+                    );
+
+                    // Ensure Bringer has a User account for login
+                    if (!$bringer->user_id) {
+                        $user = User::where('phone', $bringerContact)->first();
+                        if (!$user) {
+                            $user = User::create([
+                                'name' => $bringerName,
+                                'phone' => $bringerContact,
+                                'email' => $bringerContact . '@zonal.com',
+                                'password' => $bringerContact,
+                                'church_id' => $churchId,
+                            ]);
+                        }
+                        if (!$user->hasRole('Bringer')) {
+                            $user->assignRole('Bringer');
+                        }
+                        $bringer->update(['user_id' => $user->id]);
+                    }
+                    $bringerId = $bringer->id;
+                } else {
+                    // Fallback to Retaining Officer if not provided and not explicitly selecting a person
+                    // However, for updates, we might want to keep the existing one if none provided
+                    // But if they cleared the manual fields AND didn't select anyone, maybe fallback to RO?
+                    // Actually, let's mirror create logic for consistency.
+                }
+            }
+
+            if ($bringerId) {
+                $data['bringer_id'] = $bringerId;
+            }
+
+            $firstTimer->update($data);
+
+            // Sync linked User record if it exists
+            if ($firstTimer->user_id) {
+                $userUpdates = [];
+                if (isset($data['full_name'])) {
+                    $userUpdates['name'] = $data['full_name'];
+                }
+                if (isset($data['email'])) {
+                    $userUpdates['email'] = $data['email'];
+                } elseif (isset($data['primary_contact'])) {
+                    // If email wasn't explicitly set but contact changed, update the fallback email
+                    $user = User::find($firstTimer->user_id);
+                    if ($user && str_ends_with($user->email, '@church.com')) {
+                        $userUpdates['email'] = $data['primary_contact'] . '@church.com';
+                    }
+                }
+                if (isset($data['primary_contact'])) {
+                    $userUpdates['phone'] = $data['primary_contact'];
+                }
+                if (isset($data['church_id'])) {
+                    $userUpdates['church_id'] = $data['church_id'];
+                }
+                if (!empty($userUpdates)) {
+                    User::where('id', $firstTimer->user_id)->update($userUpdates);
+                }
+            }
+
+            return $firstTimer->fresh();
+        });
     }
 
     public function delete(FirstTimer $firstTimer): void
@@ -205,8 +323,7 @@ class FirstTimerService
                 $church = Church::find($churchId);
                 $data['retaining_officer_id'] = $church?->retaining_officer_id;
 
-                $firstTimer = FirstTimer::create($data);
-                $this->recordInitialAttendance($firstTimer);
+                $this->create($data);
 
                 $results['success']++;
             } catch (\Exception $e) {

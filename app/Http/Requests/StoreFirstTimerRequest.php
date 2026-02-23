@@ -16,6 +16,7 @@ class StoreFirstTimerRequest extends FormRequest
     {
         return [
             'church_id' => ['required', 'exists:churches,id'],
+            'bringer_id' => ['nullable', 'exists:bringers,id'],
             'full_name' => ['required', 'string', 'max:255'],
             'primary_contact' => [
                 'required',
@@ -42,7 +43,6 @@ class StoreFirstTimerRequest extends FormRequest
             ],
             'bringer_name' => ['nullable', 'string', 'max:255'],
             'bringer_contact' => ['nullable', 'string', 'max:20'],
-            'bringer_fellowship' => ['nullable', 'string', 'max:255'],
             'born_again' => ['required', 'boolean'],
             'water_baptism' => ['required', 'boolean'],
             'prayer_requests' => ['nullable', 'string', 'max:2000'],

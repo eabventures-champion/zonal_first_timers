@@ -35,7 +35,7 @@
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Date of Birth</dt>
                         <dd class="font-medium text-gray-900 dark:text-white">
-                            {{ $member->date_of_birth?->format('M d, Y') ?? '—' }}
+                            {{ $member->date_of_birth?->format('M d') ?? '—' }}
                         </dd>
                     </div>
                     <div>
@@ -77,8 +77,14 @@
                             {{ $member->membership_approved_at?->format('M d, Y') ?? '—' }}</dd>
                     </div>
                     <div>
-                        <dt class="text-gray-500 dark:text-slate-500">Brought By</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->bringer_name ?? '—' }}</dd>
+                        <dt class="text-gray-500 dark:text-slate-500">Bringer</dt>
+                        <dd class="font-medium text-gray-900 dark:text-white">
+                            {{ $member->bringer->name ?? ($member->bringer_name ?? '—') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500 dark:text-slate-500">Bringer Contact</dt>
+                        <dd class="font-medium text-gray-900 dark:text-white">
+                            {{ $member->bringer->contact ?? ($member->bringer_contact ?? '—') }}</dd>
                     </div>
                 </dl>
             </div>

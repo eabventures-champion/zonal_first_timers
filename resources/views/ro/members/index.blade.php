@@ -28,10 +28,10 @@
 
     {{-- Table --}}
     <div x-data="{ 
-                                showHistory: false, 
-                                historyName: '', 
-                                historyDates: [] 
-                            }"
+                                    showHistory: false, 
+                                    historyName: '', 
+                                    historyDates: [] 
+                                }"
         class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
@@ -40,7 +40,8 @@
                         <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Name</th>
                         <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Contact</th>
                         <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Attendance</th>
-                        <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Foundation School Status</th>
+                        <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Foundation School
+                            Status</th>
                         <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Approved On</th>
                         <th class="px-6 py-3 text-right font-medium text-gray-500 dark:text-slate-400">Actions</th>
                     </tr>
@@ -84,10 +85,17 @@
                                     ];
                                     $fsStatus = $m->foundation_school_status;
                                 @endphp
-                                <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase {{ $fsColors[$fsStatus] ?? 'bg-gray-50 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400' }}">
-                                    {{ $fsStatus }}
-                                </span>
+                                <div class="flex flex-col items-center gap-1">
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase {{ $fsColors[$fsStatus] ?? 'bg-gray-50 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400' }}">
+                                        {{ $fsStatus }}
+                                    </span>
+                                    @if($fsStatus === 'in-progress')
+                                        <span class="text-[10px] text-blue-600 dark:text-blue-400 font-medium italic">
+                                            {{ $m->current_foundation_level }}
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-3 text-center text-gray-500 dark:text-slate-400 text-xs">
                                 {{ $m->membership_approved_at?->format('M d, Y') ?? '—' }}

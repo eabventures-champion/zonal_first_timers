@@ -47,8 +47,15 @@
                 ];
                 $fsStatus = $firstTimer->foundation_school_status;
             @endphp
-            <span
-                class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $sc[$fsStatus] ?? 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300' }}">{{ $fsStatus }}</span>
+            <div class="flex flex-col items-start gap-1">
+                <span
+                    class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $sc[$fsStatus] ?? 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300' }}">{{ $fsStatus }}</span>
+                @if($fsStatus === 'in-progress')
+                    <span class="text-[10px] text-blue-600 dark:text-blue-400 font-medium italic px-1">
+                        {{ $firstTimer->current_foundation_level }}
+                    </span>
+                @endif
+            </div>
         </div>
 
         {{-- Class Progress & Recording --}}
@@ -60,16 +67,16 @@
                         <div class="flex items-center gap-4">
                             <div
                                 class="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-bold shadow-sm
-                                                                                {{ $item['completed'] ? 'bg-emerald-500 text-white' : ($item['attended'] ? 'bg-amber-400 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-500') }}">
+                                                                                                {{ $item['completed'] ? 'bg-emerald-500 text-white' : ($item['attended'] ? 'bg-amber-400 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-500') }}">
                                 {{ $item['completed'] ? '✓' : $item['class']->class_number }}
                             </div>
                             <div>
                                 <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $item['class']->name }}</p>
                                 <p class="text-[10px] uppercase font-bold tracking-wider mt-0.5
-                                                                            @if($item['completed']) text-emerald-600 dark:text-emerald-400 
-                                                                            @elseif($item['attended']) text-amber-600 dark:text-amber-400 
-                                                                            @else text-gray-400 dark:text-slate-500
-                                                                            @endif">
+                                                                                            @if($item['completed']) text-emerald-600 dark:text-emerald-400 
+                                                                                            @elseif($item['attended']) text-amber-600 dark:text-amber-400 
+                                                                                            @else text-gray-400 dark:text-slate-500
+                                                                                            @endif">
                                     @if($item['completed']) Completed
                                     @elseif($item['attended']) Attended — Pending Completion
                                     @else Not Started

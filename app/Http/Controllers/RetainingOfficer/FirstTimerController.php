@@ -28,7 +28,7 @@ class FirstTimerController extends Controller
     public function create()
     {
         if (!auth()->user()->isOtherChurchRO()) {
-            abort(403, 'Unauthorized: Only Retaining Officers from "Other Churches" can register first timers.');
+            abort(403, 'Unauthorized: Only Retaining Officers from "OTHER CHURCHES" can register first timers.');
         }
 
         return view('retaining-officer.first-timers.create');

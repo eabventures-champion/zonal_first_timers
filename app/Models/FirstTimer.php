@@ -26,7 +26,6 @@ class FirstTimer extends Model
         'email',
         'bringer_name',
         'bringer_contact',
-        'bringer_fellowship',
         'born_again',
         'water_baptism',
         'prayer_requests',
@@ -36,10 +35,15 @@ class FirstTimer extends Model
         'membership_requested_at',
         'membership_approved_at',
         'retaining_officer_id',
-        'user_id',
+        'bringer_id',
         'created_by',
         'updated_by',
     ];
+
+    public function bringer(): BelongsTo
+    {
+        return $this->belongsTo(Bringer::class);
+    }
 
     protected function casts(): array
     {
@@ -50,6 +54,7 @@ class FirstTimer extends Model
             'membership_approved_at' => 'datetime',
             'born_again' => 'boolean',
             'water_baptism' => 'boolean',
+            'bringer_id' => 'integer',
         ];
     }
 

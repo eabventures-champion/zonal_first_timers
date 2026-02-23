@@ -24,31 +24,31 @@
     </div>
 
     <div x-data="{ 
-                    showHistory: false, 
-                    historyName: '', 
-                    historyDates: [],
-                    selectedIds: [],
-                    allSelected: false,
-                    toggleAll() {
-                        this.allSelected = !this.allSelected;
-                        if (this.allSelected) {
-                            this.selectedIds = Array.from(document.querySelectorAll('.member-checkbox')).map(cb => cb.value);
-                        } else {
-                            this.selectedIds = [];
-                        }
-                    },
-                    toggleOne(id) {
-                        if (this.selectedIds.includes(id)) {
-                            this.selectedIds = this.selectedIds.filter(item => item !== id);
-                            this.allSelected = false;
-                        } else {
-                            this.selectedIds.push(id);
-                            if (this.selectedIds.length === document.querySelectorAll('.member-checkbox').length) {
-                                this.allSelected = true;
+                        showHistory: false, 
+                        historyName: '', 
+                        historyDates: [],
+                        selectedIds: [],
+                        allSelected: false,
+                        toggleAll() {
+                            this.allSelected = !this.allSelected;
+                            if (this.allSelected) {
+                                this.selectedIds = Array.from(document.querySelectorAll('.member-checkbox')).map(cb => cb.value);
+                            } else {
+                                this.selectedIds = [];
+                            }
+                        },
+                        toggleOne(id) {
+                            if (this.selectedIds.includes(id)) {
+                                this.selectedIds = this.selectedIds.filter(item => item !== id);
+                                this.allSelected = false;
+                            } else {
+                                this.selectedIds.push(id);
+                                if (this.selectedIds.length === document.querySelectorAll('.member-checkbox').length) {
+                                    this.allSelected = true;
+                                }
                             }
                         }
-                    }
-                }"
+                    }"
         class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
 
         {{-- Bulk Actions Toolbar --}}
@@ -124,10 +124,25 @@
                                 </button>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <span
-                                    class="text-[10px] font-semibold text-gray-600 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded">
-                                    {{ $m->current_foundation_level }}
-                                </span>
+                                <div class="flex flex-col items-center gap-1">
+                                    @php
+                                        $fsStatus = $m->foundation_school_status;
+                                        $fsColors = [
+                                            'not yet' => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400',
+                                            'in-progress' => 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
+                                            'completed' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
+                                        ];
+                                    @endphp
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase {{ $fsColors[$fsStatus] ?? 'bg-gray-50 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400' }}">
+                                        {{ $fsStatus }}
+                                    </span>
+                                    @if($fsStatus === 'in-progress')
+                                        <span class="text-[10px] text-blue-600 dark:text-blue-400 font-medium italic">
+                                            {{ $m->current_foundation_level }}
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">
                                 {{ $m->membership_approved_at?->format('M d, Y') ?? 'Recently' }}

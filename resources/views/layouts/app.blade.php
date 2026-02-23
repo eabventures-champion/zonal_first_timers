@@ -95,11 +95,11 @@
 
         {{-- ── Sidebar ──────────────────────────────────────── --}}
         <aside
-            class="sidebar fixed inset-y-0 left-0 z-30 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col transition-all duration-300 lg:translate-x-0"
+            class="sidebar fixed inset-y-0 left-0 z-40 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col transition-all duration-300 lg:translate-x-0"
             :class="{
                 'translate-x-0': sidebarOpen,
                 '-translate-x-full': !sidebarOpen,
-                'w-64': !sidebarMinimized,
+                'w-72 sm:w-64': !sidebarMinimized,
                 'w-20': sidebarMinimized
             }" @click.away="sidebarOpen = false">
 
@@ -107,7 +107,7 @@
             <div class="flex items-center justify-between px-6 py-5 border-b border-white/10 overflow-hidden">
                 <div class="flex items-center gap-3">
                     <div
-                        class="w-9 h-9 rounded-lg bg-indigo-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                        class="w-9 h-9 rounded-lg bg-indigo-500 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg shadow-indigo-500/20">
                         ZC
                     </div>
                     <div x-show="!sidebarMinimized" x-transition:enter="transition ease-out duration-200"
@@ -118,12 +118,23 @@
                             System</p>
                     </div>
                 </div>
-                <button @click="toggleSidebar"
+
+                {{-- Toggle Sidebar (Desktop) / Close (Mobile) --}}
+                <button @click="sidebarMinimized = !sidebarMinimized; if(sidebarOpen) sidebarOpen = false"
                     class="hidden lg:block p-1.5 rounded-lg hover:bg-white/10 text-slate-400">
                     <svg class="w-5 h-5 transition-transform duration-300" :class="sidebarMinimized ? 'rotate-180' : ''"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                    </svg>
+                </button>
+
+                {{-- Mobile Close Button --}}
+                <button @click="sidebarOpen = false"
+                    class="lg:hidden p-1.5 rounded-lg hover:bg-white/10 text-slate-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -134,18 +145,19 @@
             </nav>
 
             {{-- User Info --}}
-            <div class="border-t border-white/10 px-4 py-4 overflow-hidden">
+            <div class="border-t border-white/10 px-4 py-4 overflow-hidden bg-slate-900/50">
                 <div class="flex items-center gap-3">
                     <div
-                        class="w-8 h-8 rounded-full bg-indigo-500/30 flex items-center justify-center text-xs font-semibold text-indigo-300 shrink-0">
+                        class="w-8 h-8 rounded-full bg-indigo-500/30 flex items-center justify-center text-xs font-semibold text-indigo-300 shrink-0 border border-indigo-500/20">
                         {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}
                     </div>
                     <div class="flex-1 min-w-0" x-show="!sidebarMinimized"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 -translate-x-2"
                         x-transition:enter-end="opacity-100 translate-x-0">
-                        <p class="text-sm font-medium truncate">{{ auth()->user()->name }}</p>
-                        <p class="text-[10px] text-slate-400">{{ auth()->user()->roles->first()?->name ?? 'User' }}</p>
+                        <p class="text-xs font-bold truncate">{{ auth()->user()->name }}</p>
+                        <p class="text-[9px] text-slate-400 uppercase tracking-widest">
+                            {{ auth()->user()->roles->first()?->name ?? 'User' }}</p>
                     </div>
                 </div>
             </div>

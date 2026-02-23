@@ -33,7 +33,7 @@
             <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
                 x-transition:enter-start="opacity-0 translate-x-1"
                 x-transition:enter-end="opacity-100 translate-x-0">Categories</span>
-            <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500 text-white rounded-full"
+            <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-black text-white rounded-full"
                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
                 x-transition:enter-end="opacity-100 scale-100">
                 {{ $sidebarCounts['categories'] ?? 0 }}
@@ -48,7 +48,7 @@
             <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
                 x-transition:enter-start="opacity-0 translate-x-1"
                 x-transition:enter-end="opacity-100 translate-x-0">Groups</span>
-            <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500 text-white rounded-full"
+            <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-black text-white rounded-full"
                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
                 x-transition:enter-end="opacity-100 scale-100">
                 {{ $sidebarCounts['groups'] ?? 0 }}
@@ -65,7 +65,7 @@
         <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-x-1"
             x-transition:enter-end="opacity-100 translate-x-0">Churches</span>
-        <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500 text-white rounded-full"
+        <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-black text-white rounded-full"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100">
             {{ $sidebarCounts['churches'] ?? 0 }}
@@ -81,7 +81,7 @@
         <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-x-1" x-transition:enter-end="opacity-100 translate-x-0">First
             Timers</span>
-        <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500 text-white rounded-full"
+        <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-black text-white rounded-full"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100">
             {{ $sidebarCounts['first_timers'] ?? 0 }}
@@ -97,7 +97,7 @@
         <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-x-1"
             x-transition:enter-end="opacity-100 translate-x-0">Members</span>
-        <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500 text-white rounded-full"
+        <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-black text-white rounded-full"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100">
             {{ $sidebarCounts['members'] ?? 0 }}
@@ -113,6 +113,13 @@
         <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-x-1" x-transition:enter-end="opacity-100 translate-x-0">Member
             Notifications</span>
+        @if(($sidebarCounts['pending_approvals'] ?? 0) > 0)
+            <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-orange-500 text-white rounded-full"
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100">
+                {{ $sidebarCounts['pending_approvals'] }}
+            </span>
+        @endif
     </a>
 
     <a href="{{ route('admin.foundation-school.index') }}"
@@ -125,7 +132,6 @@
             x-transition:enter-start="opacity-0 translate-x-1" x-transition:enter-end="opacity-100 translate-x-0">Foundation
             School</span>
     </a>
-
     <a href="{{ route('admin.attendance.index') }}"
         class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 {{ request()->routeIs('admin.attendance.*') ? 'active' : '' }}">
         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,6 +141,22 @@
         <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-x-1" x-transition:enter-end="opacity-100 translate-x-0">Weekly
             Attendance</span>
+    </a>
+
+    <a href="{{ route('admin.bringers.index') }}"
+        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 {{ request()->routeIs('admin.bringers.*') ? 'active' : '' }}">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-x-1"
+            x-transition:enter-end="opacity-100 translate-x-0">Bringers</span>
+        <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-black text-white rounded-full"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100">
+            {{ $sidebarCounts['bringers'] ?? 0 }}
+        </span>
     </a>
 
     @if($isSuperAdmin)
@@ -147,7 +169,7 @@
             <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
                 x-transition:enter-start="opacity-0 translate-x-1"
                 x-transition:enter-end="opacity-100 translate-x-0">Users</span>
-            <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500 text-white rounded-full"
+            <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-black text-white rounded-full"
                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
                 x-transition:enter-end="opacity-100 scale-100">
                 {{ $sidebarCounts['users'] ?? 0 }}
@@ -167,6 +189,15 @@
                     {{ $deletionCount }}
                 </span>
             @endif
+        </a>
+
+        <a href="{{ route('admin.homepage-settings.index') }}"
+            class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 {{ request()->routeIs('admin.homepage-settings.*') ? 'active' : '' }}">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span x-show="!sidebarMinimized" class="flex-1">Homepage Settings</span>
         </a>
     @endif
 @endif
@@ -195,7 +226,7 @@
         <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-x-1" x-transition:enter-end="opacity-100 translate-x-0">First
             Timers</span>
-        <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500 text-white rounded-full"
+        <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-black text-white rounded-full"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100">
             {{ $sidebarCounts['first_timers'] ?? 0 }}
@@ -212,7 +243,7 @@
         <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-x-1"
             x-transition:enter-end="opacity-100 translate-x-0">Members</span>
-        <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500 text-white rounded-full"
+        <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-black text-white rounded-full"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100">
             {{ $sidebarCounts['members'] ?? 0 }}

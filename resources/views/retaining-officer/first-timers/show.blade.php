@@ -34,7 +34,7 @@
                     </div>
                     <div>
                         <dt class="text-gray-500">Date of Birth</dt>
-                        <dd class="font-medium text-gray-900">{{ $firstTimer->date_of_birth?->format('F d') ?? 'Not specified' }}</dd>
+                        <dd class="font-medium text-gray-900">{{ $firstTimer->date_of_birth?->format('M d') ?? 'Not specified' }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500">Occupation</dt>
@@ -44,19 +44,15 @@
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-sm font-semibold text-gray-700 mb-4">Who Brought Them</h3>
+                <h3 class="text-sm font-semibold text-gray-700 mb-4">Bringer Info</h3>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                         <dt class="text-gray-500">Name</dt>
-                        <dd class="font-medium text-gray-900">{{ $firstTimer->bringer_name ?? 'Not specified' }}</dd>
+                        <dd class="font-medium text-gray-900">{{ $firstTimer->bringer->name ?? ($firstTimer->bringer_name ?? 'Not specified') }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500">Contact</dt>
-                        <dd class="font-medium text-gray-900">{{ $firstTimer->bringer_contact ?? 'Not specified' }}</dd>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <dt class="text-gray-500">Fellowship</dt>
-                        <dd class="font-medium text-gray-900">{{ $firstTimer->bringer_fellowship ?? 'Not specified' }}</dd>
+                        <dd class="font-medium text-gray-900">{{ $firstTimer->bringer->contact ?? ($firstTimer->bringer_contact ?? 'Not specified') }}</dd>
                     </div>
                 </dl>
             </div>

@@ -22,11 +22,14 @@
     </div>
 
     {{-- Stats --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <x-stats-card label="Total First Timers" :value="$stats['total_first_timers']" color="sky" />
         <x-stats-card label="New" :value="$stats['new_first_timers']" color="amber" />
         <x-stats-card label="Developing" :value="$stats['developing']" color="violet" />
         <x-stats-card label="Members" :value="$stats['total_members']" color="emerald" />
+        <a href="{{ route('ro.bringers.index') }}" class="block transition-transform hover:scale-105">
+            <x-stats-card label="Bringers" :value="$stats['total_bringers']" color="rose" />
+        </a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

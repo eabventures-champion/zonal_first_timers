@@ -43,10 +43,17 @@
                 ];
                 $fsStatus = $firstTimer->foundation_school_status;
             @endphp
-            <span
-                class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $sc[$fsStatus] ?? 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300' }}">
-                {{ $fsStatus }}
-            </span>
+            <div class="flex flex-col items-start gap-1">
+                <span
+                    class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $sc[$fsStatus] ?? 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300' }}">
+                    {{ $fsStatus }}
+                </span>
+                @if($fsStatus === 'in-progress')
+                    <span class="text-[10px] text-blue-600 dark:text-blue-400 font-medium italic px-1">
+                        {{ $firstTimer->current_foundation_level }}
+                    </span>
+                @endif
+            </div>
         </div>
 
         {{-- Class Progress --}}
@@ -57,7 +64,7 @@
                         <div class="flex items-center gap-3">
                             <div
                                 class="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold
-                                                                                                        {{ $item['completed'] ? 'bg-emerald-500 text-white' : ($item['attended'] ? 'bg-amber-400 text-white' : 'bg-gray-200 dark:bg-slate-800 text-gray-500 dark:text-slate-500') }}">
+                                                                                                                        {{ $item['completed'] ? 'bg-emerald-500 text-white' : ($item['attended'] ? 'bg-amber-400 text-white' : 'bg-gray-200 dark:bg-slate-800 text-gray-500 dark:text-slate-500') }}">
                                 {{ $item['completed'] ? '✓' : $item['class']->class_number }}
                             </div>
                             <div>
