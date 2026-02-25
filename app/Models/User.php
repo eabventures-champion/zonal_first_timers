@@ -7,13 +7,14 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Traits\HasRoles;
 use App\Models\Bringer;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, SoftDeletes;
 
     protected static function booted()
     {
@@ -35,9 +36,10 @@ class User extends Authenticatable
             \App\Models\Member::withTrashed()->where('retaining_officer_id', $user->id)->update(['retaining_officer_id' => null]);
             \App\Models\Church::withTrashed()->where('retaining_officer_id', $user->id)->update(['retaining_officer_id' => null]);
 
-            // Nullify other user associations
-            \App\Models\FirstTimer::withTrashed()->where('user_id', $user->id)->update(['user_id' => null]);
-            \App\Models\Member::withTrashed()->where('user_id', $user->id)->update(['user_id' => null]);
+            // Delete linked soul profiles
+            $user->firstTimer()->delete();
+            $user->member()->delete();
+
             \App\Models\WeeklyAttendance::where('recorded_by', $user->id)->update(['recorded_by' => null]);
 
             // Nullify audit fields (created_by, updated_by)
@@ -51,6 +53,12 @@ class User extends Authenticatable
             \App\Models\ChurchGroup::withTrashed()->where('updated_by', $user->id)->update(['updated_by' => null]);
             \App\Models\ChurchCategory::withTrashed()->where('created_by', $user->id)->update(['created_by' => null]);
             \App\Models\ChurchCategory::withTrashed()->where('updated_by', $user->id)->update(['updated_by' => null]);
+        });
+
+        static::restoring(function ($user) {
+            // Restore linked soul profiles
+            $user->firstTimer()->withTrashed()->restore();
+            $user->member()->withTrashed()->restore();
         });
     }
 

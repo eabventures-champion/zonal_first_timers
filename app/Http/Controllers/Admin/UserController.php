@@ -16,9 +16,39 @@ class UserController extends Controller
     ) {
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['roles', 'church', 'bringer', 'firstTimer', 'member'])->latest()->paginate(20);
+        $query = User::with(['roles', 'church', 'firstTimer', 'member'])->latest();
+
+        // Search filter (Name, Email, Phone)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        // Role filter
+        if ($request->filled('role')) {
+            $query->role($request->role);
+        }
+
+        // Status filter (FT, Retained)
+        if ($request->filled('status')) {
+            $status = $request->status;
+            if ($status === 'ft') {
+                $query->whereHas('firstTimer', function ($q) {
+                    $q->whereNull('membership_approved_at');
+                });
+            } elseif ($status === 'retained') {
+                $query->whereHas('member');
+            }
+        }
+
+        $users = $query->paginate(15)->withQueryString();
+
         return view('admin.users.index', compact('users'));
     }
 

@@ -49,6 +49,12 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
         Route::get('reports/weekly', [Admin\WeeklyReportController::class, 'index'])->name('reports.weekly');
         Route::get('reports/weekly/excel', [Admin\WeeklyReportController::class, 'exportExcel'])->name('reports.weekly.excel');
         Route::get('reports/weekly/pdf', [Admin\WeeklyReportController::class, 'exportPdf'])->name('reports.weekly.pdf');
+        // Trash Management
+        Route::get('/trash', [\App\Http\Controllers\Admin\TrashController::class, 'index'])->name('trash.index');
+        Route::post('/trash/{type}/{id}/restore', [\App\Http\Controllers\Admin\TrashController::class, 'restore'])->name('trash.restore');
+        Route::delete('/trash/{type}/{id}/force-delete', [\App\Http\Controllers\Admin\TrashController::class, 'forceDelete'])->name('trash.force-delete');
+        Route::post('/trash/bulk-restore', [\App\Http\Controllers\Admin\TrashController::class, 'bulkRestore'])->name('trash.bulk-restore');
+        Route::post('/trash/bulk-force-delete', [\App\Http\Controllers\Admin\TrashController::class, 'bulkForceDelete'])->name('trash.bulk-force-delete');
     });
 
     // Church Hierarchy

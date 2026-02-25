@@ -12,6 +12,21 @@ class FirstTimer extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected static function booted()
+    {
+        static::deleting(function ($firstTimer) {
+            // Clean up attendances using each() to trigger their own events if any
+            $firstTimer->weeklyAttendances()->each(fn($a) => $a->delete());
+            $firstTimer->foundationAttendances()->each(fn($a) => $a->delete());
+        });
+
+        static::restoring(function ($firstTimer) {
+            // Restore attendances that were deleted when the soul was deleted
+            $firstTimer->weeklyAttendances()->onlyTrashed()->each(fn($a) => $a->restore());
+            $firstTimer->foundationAttendances()->onlyTrashed()->each(fn($a) => $a->restore());
+        });
+    }
+
     protected $fillable = [
         'church_id',
         'full_name',

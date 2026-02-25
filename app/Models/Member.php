@@ -12,6 +12,21 @@ class Member extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected static function booted()
+    {
+        static::deleting(function ($member) {
+            // Clean up attendances using each() to trigger their own events if any
+            $member->weeklyAttendances()->each(fn($a) => $a->delete());
+            $member->foundationAttendances()->each(fn($a) => $a->delete());
+        });
+
+        static::restoring(function ($member) {
+            // Restore attendances that were deleted when the soul was deleted
+            $member->weeklyAttendances()->onlyTrashed()->each(fn($a) => $a->restore());
+            $member->foundationAttendances()->onlyTrashed()->each(fn($a) => $a->restore());
+        });
+    }
+
     protected $fillable = [
         'church_id',
         'full_name',

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\HomepageSetting;
 
 class HomepageSettingsSeeder extends Seeder
 {
@@ -18,18 +19,18 @@ class HomepageSettingsSeeder extends Seeder
 
             // Hero Section
             ['key' => 'hero_badge_text', 'value' => 'Experience Excellence in Discipleship', 'type' => 'text'],
-            ['key' => 'hero_title_1', 'value' => 'Raising', 'type' => 'text'],
-            ['key' => 'hero_title_1_highlight', 'value' => 'Leaders', 'type' => 'text'],
-            ['key' => 'hero_title_2', 'value' => 'Building', 'type' => 'text'],
-            ['key' => 'hero_title_2_highlight', 'value' => 'Legacies', 'type' => 'text'],
+            ['key' => 'hero_title_1', 'value' => 'We', 'type' => 'text'],
+            ['key' => 'hero_title_1_highlight', 'value' => 'Win', 'type' => 'text'],
+            ['key' => 'hero_title_2', 'value' => 'Build &', 'type' => 'text'],
+            ['key' => 'hero_title_2_highlight', 'value' => 'Send', 'type' => 'text'],
             ['key' => 'hero_subtitle', 'value' => 'A modern platform dedicated to tracking and nurturing the spiritual growth of every first timer in the zone.', 'type' => 'text'],
             ['key' => 'hero_button_primary_text', 'value' => 'Member Portal Access', 'type' => 'text'],
             ['key' => 'hero_button_secondary_text', 'value' => 'Our Mandate', 'type' => 'text'],
-            ['key' => 'hero_background_image', 'value' => '/assets/images/hero-bg.png', 'type' => 'image'],
+            ['key' => 'hero_background_image', 'value' => '/assets/images/1771954653_1b.jpeg', 'type' => 'image'],
 
             // Mission Section
-            ['key' => 'mission_heading_1', 'value' => 'Our Discipleship', 'type' => 'text'],
-            ['key' => 'mission_heading_highlight', 'value' => 'Pillars', 'type' => 'text'],
+            ['key' => 'mission_heading_1', 'value' => 'Our Aim &', 'type' => 'text'],
+            ['key' => 'mission_heading_highlight', 'value' => 'Objectives', 'type' => 'text'],
             ['key' => 'mission_subheading', 'value' => 'We are committed to the comprehensive growth and integration of every soul that walks through our doors.', 'type' => 'text'],
 
             // Card 1
@@ -49,7 +50,7 @@ class HomepageSettingsSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            \App\Models\HomepageSetting::updateOrCreate(
+            HomepageSetting::updateOrCreate(
                 ['key' => $setting['key']],
                 ['value' => $setting['value'], 'type' => $setting['type']]
             );

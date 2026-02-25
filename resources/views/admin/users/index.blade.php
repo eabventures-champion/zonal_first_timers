@@ -3,11 +3,14 @@
 @section('page-title', 'User Management')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <p class="text-sm text-gray-500">Manage system users and roles</p>
-        <div class="flex items-center gap-3">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">User Management</h2>
+            <p class="text-sm text-gray-500 dark:text-slate-400">Manage system users, roles, and profiles</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
             <button type="button" id="bulk-delete-btn" disabled
-                class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg shadow-sm transition">
+                class="inline-flex items-center gap-2 px-3.5 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-sm font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -15,13 +18,66 @@
                 Delete Selected
             </button>
             <a href="{{ route('admin.users.create') }}"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
+                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
                 Add User
             </a>
         </div>
+    </div>
+
+    {{-- Search & Filter Bar --}}
+    <div
+        class="mb-8 p-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
+        <form action="{{ route('admin.users.index') }}" method="GET" class="flex flex-col lg:flex-row items-center gap-4">
+            <div class="relative flex-1 w-full">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <svg class="w-4.5 h-4.5 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" name="search" value="{{ request('search') }}"
+                    placeholder="Search by name, email, or phone..."
+                    class="block w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-700 dark:text-white">
+            </div>
+
+            <div class="flex items-center gap-3 w-full lg:w-auto">
+                <select name="role"
+                    class="block w-full lg:w-44 px-3 py-2.5 text-sm bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-700 dark:text-white">
+                    <option value="">All Roles</option>
+                    <option value="Super Admin" {{ request('role') == 'Super Admin' ? 'selected' : '' }}>Super Admin</option>
+                    <option value="Admin" {{ request('role') == 'Admin' ? 'selected' : '' }}>Admin</option>
+                    <option value="Bringer" {{ request('role') == 'Bringer' ? 'selected' : '' }}>Bringer</option>
+                    <option value="Retaining Officer" {{ request('role') == 'Retaining Officer' ? 'selected' : '' }}>Retaining
+                        Officer</option>
+                </select>
+
+                <select name="status"
+                    class="block w-full lg:w-44 px-3 py-2.5 text-sm bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-700 dark:text-white">
+                    <option value="">All Statuses</option>
+                    <option value="ft" {{ request('status') == 'ft' ? 'selected' : '' }}>First Timer (FT)</option>
+                    <option value="retained" {{ request('status') == 'retained' ? 'selected' : '' }}>Retained Member</option>
+                </select>
+
+                <button type="submit"
+                    class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                    Filter
+                </button>
+
+                @if(request()->hasAny(['search', 'role', 'status']))
+                    <a href="{{ route('admin.users.index') }}"
+                        class="p-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all"
+                        title="Clear Filters">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </a>
+                @endif
+            </div>
+        </form>
     </div>
 
     <form id="bulk-delete-form" method="POST" action="{{ route('admin.users.bulk-delete') }}">
@@ -145,18 +201,18 @@
 
                     if (checkedCount > 0) {
                         bulkDeleteBtn.innerHTML = `
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                </svg>
-                                                                Delete Selected (${checkedCount})
-                                                            `;
+                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                        </svg>
+                                                                        Delete Selected (${checkedCount})
+                                                                    `;
                     } else {
                         bulkDeleteBtn.innerHTML = `
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                </svg>
-                                                                Delete Selected
-                                                            `;
+                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                        </svg>
+                                                                        Delete Selected
+                                                                    `;
                     }
                 }
 

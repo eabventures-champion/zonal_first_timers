@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             DatabaseCleanupSeeder::class,
             HomepageSettingsSeeder::class,
             SyncBringersToUsersSeeder::class,
+            ChurchHierarchySeeder::class,
             // DemoDataSeeder::class,
         ]);
     }
