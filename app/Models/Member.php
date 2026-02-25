@@ -166,6 +166,6 @@ class Member extends Model
             return 'Not Started';
         }
 
-        return "Class: {$latestAttendance->foundationClass->class_number} {$latestAttendance->foundationClass->name}";
+        return $latestAttendance->foundationClass->name;
     }
 }

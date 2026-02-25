@@ -7,114 +7,163 @@
     <div class="max-w-3xl">
         <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
             <form method="POST" action="{{ route('admin.first-timers.store') }}"
+                @submit.prevent="if(contactError || alternateContactError || (!selectedBringerId && bringerContactError) || isValidating) { return; } $el.submit();"
                 x-data="{
-                    categories: {{ Js::from($categories) }},
-                    selectedCategory: '',
-                    selectedGroup: '',
-                    selectedChurch: '',
-                    groups: [],
-                    churches: [],
-                    bringers: [],
-                    selectedBringerId: '',
-                    selectedOfficer: '',
-                    
-                    // Bringer Contact Validation
-                    bringerContact: '{{ old('bringer_contact') }}',
-                    bringerContactError: '',
+                                categories: {{ Js::from($categories) }},
+                                selectedCategory: '',
+                                selectedGroup: '',
+                                selectedChurch: '',
+                                groups: [],
+                                churches: [],
+                                bringers: [],
+                                selectedBringerId: '',
+                                selectedOfficer: '',
+                                fullName: '{{ old('full_name') }}',
 
-                    updateGroups() {
-                        const category = this.categories.find(c => c.id == this.selectedCategory);
-                        this.groups = category ? category.groups : [];
-                        this.selectedGroup = '';
-                        this.churches = [];
-                        this.selectedChurch = '';
-                        this.broughtBies = [];
-                        this.selectedBringerId = '';
-                        this.selectedOfficer = '';
-                    },
-                    
-                    updateChurches() {
-                        const group = this.groups.find(g => g.id == this.selectedGroup);
-                        this.churches = group ? group.churches : [];
-                        this.selectedChurch = '';
-                        this.selectedOfficer = '';
-                    },
+                                // Contact Validation
+                                primaryContact: '{{ old('primary_contact') }}',
+                                contactError: '',
+                                isValidating: false,
+                                bringerContact: '{{ old('bringer_contact') }}',
+                                bringerContactError: '',
+                                bringerName: '{{ old('bringer_name') }}',
+                                alternateContact: '{{ old('alternate_contact') }}',
+                                alternateContactError: '',
+                                bringerConfirmed: false,
 
-                    updateOfficer() {
-                        const church = this.churches.find(c => c.id == this.selectedChurch);
-                        if (church && church.retaining_officer_id) {
-                            this.selectedOfficer = church.retaining_officer_id;
-                        } else {
-                            this.selectedOfficer = '';
-                        }
-                        this.loadBringers();
-                    },
-
-                    async loadBringers() {
-                        if (!this.selectedChurch) {
-                            this.bringers = [];
-                            return;
-                        }
-                        try {
-                            const response = await fetch(`/admin/bringers/church/${this.selectedChurch}`);
-                            this.bringers = await response.json();
-                        } catch (e) {
-                            console.error('Failed to load bringers', e);
-                        }
-                    },
-
-                    async checkContact() {
-                        if (this.primaryContact.length < 5) {
-                            this.contactError = '';
-                            return;
-                        }
-                        
-                        this.isValidating = true;
-                        try {
-                            const response = await fetch('{{ route('admin.first-timers.check-contact') }}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                canSubmit() {
+                                    const isCommonValid = this.fullName && this.fullName.trim() && this.primaryContact && this.primaryContact.trim() && this.selectedChurch && !this.contactError && !this.alternateContactError && !this.isValidating;
+                                    const isBringerValid = this.selectedBringerId || (this.bringerConfirmed && this.bringerName && this.bringerName.trim() && this.bringerContact && this.bringerContact.trim() && !this.bringerContactError);
+                                    return isCommonValid && isBringerValid;
                                 },
-                                body: JSON.stringify({ contact: this.primaryContact })
-                            });
-                            const data = await response.json();
-                            this.contactError = data.exists ? data.message : '';
-                        } catch (e) {
-                            console.error('Validation failed', e);
-                        } finally {
-                            this.isValidating = false;
-                        }
-                    },
 
-                    async checkBringerContact() {
-                        if (this.bringerContact.length < 5) {
-                            this.bringerContactError = '';
-                            return;
-                        }
-                        
-                        try {
-                            const response = await fetch('{{ route('admin.bringers.check-contact') }}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                updateGroups() {
+                                    const category = this.categories.find(c => c.id == this.selectedCategory);
+                                    this.groups = category ? category.groups : [];
+                                    this.selectedGroup = '';
+                                    this.churches = [];
+                                    this.selectedChurch = '';
+                                    this.broughtBies = [];
+                                    this.selectedBringerId = '';
+                                    this.selectedOfficer = '';
                                 },
-                                body: JSON.stringify({ contact: this.bringerContact })
-                            });
-                            const data = await response.json();
-                            this.bringerContactError = data.exists ? data.message : '';
-                        } catch (e) {
-                            console.error('Validation failed', e);
-                        }
-                    }
-                }">
+
+                                updateChurches() {
+                                    const group = this.groups.find(g => g.id == this.selectedGroup);
+                                    this.churches = group ? group.churches : [];
+                                    this.selectedChurch = '';
+                                    this.selectedOfficer = '';
+                                },
+
+                                updateOfficer() {
+                                    const church = this.churches.find(c => c.id == this.selectedChurch);
+                                    if (church && church.retaining_officer_id) {
+                                        this.selectedOfficer = church.retaining_officer_id;
+                                    } else {
+                                        this.selectedOfficer = '';
+                                    }
+                                    this.loadBringers();
+                                },
+
+                                async loadBringers() {
+                                    if (!this.selectedChurch) {
+                                        this.bringers = [];
+                                        return;
+                                    }
+                                    try {
+                                        const response = await fetch(`/admin/bringers/church/${this.selectedChurch}`);
+                                        this.bringers = await response.json();
+                                    } catch (e) {
+                                        console.error('Failed to load bringers', e);
+                                    }
+                                },
+
+                                async checkContact() {
+                                    const phone = this.primaryContact.trim();
+                                    if (phone.length === 0) {
+                                        this.contactError = '';
+                                        return;
+                                    }
+
+                                    // Length validation
+                                    if (phone.length !== 10) {
+                                        this.contactError = 'Phone number must be exactly 10 digits.';
+                                        return;
+                                    }
+
+                                    this.contactError = '';
+                                    this.isValidating = true;
+                                    try {
+                                        const response = await fetch('{{ route('admin.first-timers.check-contact') }}', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                            },
+                                            body: JSON.stringify({ 
+                                                contact: phone,
+                                                type: 'first_timer'
+                                            })
+                                        });
+                                        const data = await response.json();
+                                        this.contactError = data.exists ? data.message : '';
+                                    } catch (e) {
+                                        console.error('Validation failed', e);
+                                    } finally {
+                                        this.isValidating = false;
+                                    }
+                                },
+
+                                checkAlternateContact() {
+                                    const phone = this.alternateContact.trim();
+                                    if (phone.length === 0) {
+                                        this.alternateContactError = '';
+                                        return;
+                                    }
+                                    if (phone.length !== 10) {
+                                        this.alternateContactError = 'Phone number must be exactly 10 digits.';
+                                        return;
+                                    }
+                                    this.alternateContactError = '';
+                                },
+
+                                async checkBringerContact() {
+                                    const phone = this.bringerContact.trim();
+                                    if (phone.length === 0) {
+                                        this.bringerContactError = '';
+                                        return;
+                                    }
+                                    if (phone.length !== 10) {
+                                        this.bringerContactError = 'Phone number must be exactly 10 digits.';
+                                        return;
+                                    }
+
+                                    this.bringerContactError = '';
+                                    try {
+                                        const response = await fetch('{{ route('admin.bringers.check-contact') }}', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                            },
+                                            body: JSON.stringify({ contact: phone })
+                                        });
+                                        const data = await response.json();
+                                        this.bringerContactError = data.exists ? data.message : '';
+                                    } catch (e) {
+                                        console.error('Validation failed', e);
+                                    }
+                                }
+                            }">
                 @csrf
 
                 <div class="flex items-center gap-2 mb-4 pb-2 border-b dark:border-slate-800">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    <div
+                        class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
                     </div>
                     <h3 class="text-sm font-bold text-gray-800 dark:text-slate-200">Personal Information</h3>
                 </div>
@@ -122,7 +171,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Full Name <span
                                 class="text-red-500">*</span></label>
-                        <input type="text" name="full_name" value="{{ old('full_name') }}" required
+                        <input type="text" name="full_name" x-model="fullName" required
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
                         @error('full_name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
@@ -133,19 +182,25 @@
                         @error('email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Primary Contact <span
-                                class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Primary Contact
+                            <span class="text-red-500">*</span></label>
                         <input type="text" name="primary_contact" required x-model="primaryContact"
-                            @input.debounce.500ms="checkContact()"
+                            @input.debounce.500ms="checkContact()" minlength="10" maxlength="20"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
                             :class="contactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''">
-                        <p x-show="contactError" x-text="contactError" class="mt-1 text-xs text-red-600" style="display: none;"></p>
+                        <p x-show="contactError" x-text="contactError" class="mt-1 text-xs text-red-600"
+                            style="display: none;"></p>
                         @error('primary_contact') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Alternate Contact</label>
-                        <input type="text" name="alternate_contact" value="{{ old('alternate_contact') }}"
-                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Alternate
+                            Contact</label>
+                        <input type="text" name="alternate_contact" x-model="alternateContact"
+                            @input.debounce.500ms="checkAlternateContact()" minlength="10" maxlength="20"
+                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            :class="alternateContactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''">
+                        <p x-show="alternateContactError" x-text="alternateContactError" class="mt-1 text-xs text-red-600"
+                            style="display: none;"></p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Gender <span
@@ -159,14 +214,14 @@
                         @error('gender') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Date of Birth (Day & Month)</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Date of Birth (Day &
+                            Month)</label>
                         <div class="grid grid-cols-2 gap-2">
                             <select name="dob_day"
                                 class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 <option value="">Day</option>
                                 @for ($i = 1; $i <= 31; $i++)
-                                    <option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}" 
-                                        {{ old('dob_day') == str_pad($i, 2, '0', STR_PAD_LEFT) ? 'selected' : '' }}>
+                                    <option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}" {{ old('dob_day') == str_pad($i, 2, '0', STR_PAD_LEFT) ? 'selected' : '' }}>
                                         {{ $i }}
                                     </option>
                                 @endfor
@@ -183,7 +238,8 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Marital Status</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Marital
+                            Status</label>
                         <select name="marital_status"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="">Select</option>
@@ -200,23 +256,28 @@
                 </div>
 
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Residential Address <span
-                            class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Residential Address
+                        <span class="text-red-500">*</span></label>
                     <textarea name="residential_address" rows="2" required
                         class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('residential_address') }}</textarea>
                     @error('residential_address') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="flex items-center gap-2 mb-4 pb-2 border-b dark:border-slate-800">
-                    <div class="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                    <div
+                        class="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
                     </div>
                     <h3 class="text-sm font-bold text-gray-800 dark:text-slate-200">Church & Visit Details</h3>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                    
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Category <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Category <span
+                                class="text-red-500">*</span></label>
                         <select x-model="selectedCategory" @change="updateGroups()"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="">Select Category</option>
@@ -227,7 +288,8 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Group <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Group <span
+                                class="text-red-500">*</span></label>
                         <select x-model="selectedGroup" @change="updateChurches()" :disabled="!selectedCategory"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-slate-800/10">
                             <option value="">Select Group</option>
@@ -238,8 +300,10 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Church <span class="text-red-500">*</span></label>
-                        <select name="church_id" x-model="selectedChurch" required :disabled="!selectedGroup" @change="updateOfficer()"
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Church <span
+                                class="text-red-500">*</span></label>
+                        <select name="church_id" x-model="selectedChurch" required :disabled="!selectedGroup"
+                            @change="updateOfficer()"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-slate-800/10">
                             <option value="">Select Church</option>
                             <template x-for="church in churches" :key="church.id">
@@ -262,7 +326,8 @@
                             placeholder="e.g., Sunday Service">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Retaining Officer</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Retaining
+                            Officer</label>
                         <select name="retaining_officer_id" x-model="selectedOfficer" :disabled="!selectedChurch"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-slate-800/10">
                             <option value="">Auto-assign from church</option>
@@ -273,37 +338,63 @@
                     </div>
                 </div>
 
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4 pb-2 border-b dark:border-slate-800">Who Brought Them / Credentials</h3>
+                <h3
+                    class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4 pb-2 border-b dark:border-slate-800">
+                    Invited By / Credentials</h3>
                 <div class="space-y-4 mb-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Select Person (Optional)</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Select
+                            Person</label>
                         <select name="bringer_id" x-model="selectedBringerId"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="">New Person / Not Listed (Use fields below)</option>
                             <template x-for="person in bringers" :key="person.id">
-                                <option :value="person.id" x-text="`${person.name} (${person.contact})${person.is_ro ? ' (RO)' : ''}`"></option>
+                                <option :value="person.id"
+                                    x-text="`${person.name} (${person.contact})${person.is_ro ? ' (RO)' : ''}`"></option>
                             </template>
                         </select>
-                        <p class="mt-1 text-[10px] text-gray-400 dark:text-slate-500">If the person is already in the system, select them here. Otherwise, fill the details below.</p>
+                        <p class="mt-1 text-[10px] text-gray-400 dark:text-slate-500">If the person is already in the
+                            system, select them here. Otherwise, fill the details below.</p>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" x-show="!selectedBringerId">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Bringer Name</label>
-                            <input type="text" name="bringer_name" value="{{ old('bringer_name') }}"
+                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Bringer
+                                Name</label>
+                            <input type="text" name="bringer_name" x-model="bringerName"
                                 class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Bringer Contact</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Bringer
+                                Contact</label>
                             <input type="text" name="bringer_contact" x-model="bringerContact"
-                                @input.debounce.500ms="checkBringerContact()"
+                                @input.debounce.500ms="checkBringerContact()" minlength="10" maxlength="20"
                                 class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 :class="bringerContactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''">
-                            <p x-show="bringerContactError" x-text="bringerContactError" class="mt-1 text-[10px] text-red-600" style="display: none;"></p>
+                            <p x-show="bringerContactError" x-text="bringerContactError"
+                                class="mt-1 text-[10px] text-red-600" style="display: none;"></p>
+
+                            <div x-show="!selectedBringerId && bringerName.trim() && bringerContact.trim() && !bringerContactError"
+                                style="display: none;" class="mt-2">
+                                <button type="button" @click="bringerConfirmed = true" x-show="!bringerConfirmed"
+                                    class="text-[10px] px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition">
+                                    Use this Bringer
+                                </button>
+                                <p x-show="bringerConfirmed" class="text-[10px] text-green-600 flex items-center gap-1">
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    Bringer confirmed and ready.
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    <div x-show="!selectedBringerId && !selectedOfficer" class="p-2 bg-amber-50 dark:bg-amber-100/10 rounded-lg border border-amber-100 dark:border-amber-100/20">
-                        <p class="text-[10px] text-amber-700 dark:text-amber-400 italic">If left empty, this first timer will be linked to the Retaining Officer ({{ $officers->find(old('retaining_officer_id'))?->name ?? 'assigned later' }}).</p>
+                    <div x-show="!selectedBringerId && !selectedOfficer"
+                        class="p-2 bg-amber-50 dark:bg-amber-100/10 rounded-lg border border-amber-100 dark:border-amber-100/20">
+                        <p class="text-[10px] text-amber-700 dark:text-amber-400 italic">If left empty, this first timer
+                            will be linked to the Retaining Officer
+                            ({{ $officers->find(old('retaining_officer_id'))?->name ?? 'assigned later' }}).</p>
                     </div>
                 </div>
 
@@ -327,9 +418,11 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button type="submit"
-                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition">Register
-                        First Timer</button>
+                    <button type="submit" :disabled="!canSubmit()"
+                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-show="!isValidating">Register First Timer</span>
+                        <span x-show="isValidating">Validating...</span>
+                    </button>
                     <a href="{{ route('admin.first-timers.index') }}"
                         class="text-sm text-gray-500 hover:text-gray-700">Cancel</a>
                 </div>

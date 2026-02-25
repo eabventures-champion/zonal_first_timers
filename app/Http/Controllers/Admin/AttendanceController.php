@@ -97,21 +97,25 @@ class AttendanceController extends Controller
         $groupedAttendance = $allEligible->sortByDesc('date_of_visit')->groupBy(function ($person) {
             return Carbon::parse($person->date_of_visit)->format('F Y');
         })->map(function ($group) {
-            return $group->map(function ($person) {
+            return $group->sortByDesc('id')->map(function ($person) {
                 $weeks = [];
                 foreach ($person->weeklyAttendances as $wa) {
-                    $weeks[$wa->week_number] = $wa->attended;
+                    $weeks[$wa->week_number] = $wa->attended ? 'attended' : 'absent';
                 }
+
+                $isMember = get_class($person) === \App\Models\Member::class;
+
                 return [
                     'id' => $person->id,
+                    'row_id' => ($isMember ? 'm_' : 'ft_') . $person->id,
                     'name' => $person->full_name,
-                    'is_member' => ($person instanceof \App\Models\Member),
-                    'is_readonly' => ($person instanceof \App\Models\Member || $person->total_attended >= 6),
+                    'is_member' => $isMember,
+                    'is_readonly' => ($isMember || $person->total_attended >= 6),
                     'total_attended' => $person->total_attended,
                     'weeks' => $weeks,
                     'join_date' => Carbon::parse($person->date_of_visit)->format('M d, Y'),
                 ];
-            });
+            })->values(); // Reset array keys sequentially for Alpine/Blade to avoid weird index tracking bugs
         });
 
         return view('admin.attendance.show', compact('church', 'groupedAttendance', 'month', 'year', 'sundays'));
@@ -126,7 +130,7 @@ class AttendanceController extends Controller
             'year' => 'required|integer',
             'week_number' => 'required|integer',
             'service_date' => 'required|date',
-            'attended' => 'required|boolean',
+            'status' => 'required|in:attended,absent,clear',
         ]);
 
         $query = [
@@ -155,21 +159,59 @@ class AttendanceController extends Controller
             ], 403);
         }
 
-        $attendance = WeeklyAttendance::updateOrCreate(
-            [
+        if ($val['status'] === 'clear') {
+            WeeklyAttendance::where([
                 'month' => $val['month'],
                 'year' => $val['year'],
                 'week_number' => $val['week_number'],
                 'first_timer_id' => $query['first_timer_id'],
                 'member_id' => $query['member_id'],
-            ],
-            [
-                'church_id' => $person->church_id,
-                'service_date' => $val['service_date'],
-                'attended' => $val['attended'],
-                'recorded_by' => auth()->id(),
-            ]
-        );
+            ])->delete();
+        } else {
+            $attendance = WeeklyAttendance::updateOrCreate(
+                [
+                    'month' => $val['month'],
+                    'year' => $val['year'],
+                    'week_number' => $val['week_number'],
+                    'first_timer_id' => $query['first_timer_id'],
+                    'member_id' => $query['member_id'],
+                ],
+                [
+                    'church_id' => $person->church_id,
+                    'service_date' => $val['service_date'],
+                    'attended' => $val['status'] === 'attended',
+                    'recorded_by' => auth()->id(),
+                ]
+            );
+        }
+
+        // Update the date_of_visit (join date) to be the earliest recorded attendance date
+        $earliestAttendance = WeeklyAttendance::where(function ($q) use ($query) {
+            if ($query['member_id']) {
+                $q->where('member_id', $query['member_id']);
+            } else {
+                $q->where('first_timer_id', $query['first_timer_id']);
+            }
+        })
+            ->where('attended', true)
+            ->orderBy('service_date', 'asc')
+            ->first();
+
+        if ($earliestAttendance) {
+            $earliestDate = Carbon::parse($earliestAttendance->service_date)->startOfDay();
+            $currentJoinDate = Carbon::parse($person->date_of_visit)->startOfDay();
+
+            // Always enforce that the date of visit matches the earliest attendance date
+            if ($earliestDate->notEqualTo($currentJoinDate)) {
+                $person->update(['date_of_visit' => $earliestDate->toDateString()]);
+            }
+        } else {
+            // No attendance records exist OR they are all marked 'absent'; default back to original visit date logic
+            $createdAt = Carbon::parse($person->created_at)->startOfDay();
+            if ($createdAt->notEqualTo(Carbon::parse($person->date_of_visit)->startOfDay())) {
+                $person->update(['date_of_visit' => $createdAt->toDateString()]);
+            }
+        }
 
         if (!$val['is_member']) {
             $this->firstTimerService->syncMembershipStatus($person);

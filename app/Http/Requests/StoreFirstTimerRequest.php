@@ -15,18 +15,20 @@ class StoreFirstTimerRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'church_id' => ['required', 'exists:churches,id'],
+            'church_id' => ['sometimes', 'exists:churches,id'],
             'bringer_id' => ['nullable', 'exists:bringers,id'],
             'full_name' => ['required', 'string', 'max:255'],
             'primary_contact' => [
                 'required',
                 'string',
+                'min:10',
                 'max:20',
                 Rule::unique('first_timers', 'primary_contact')
             ],
             'alternate_contact' => [
                 'nullable',
                 'string',
+                'min:10',
                 'max:20',
                 Rule::unique('first_timers', 'alternate_contact')
             ],
@@ -35,14 +37,14 @@ class StoreFirstTimerRequest extends FormRequest
             'age' => ['nullable', 'integer', 'min:0', 'max:150'],
             'residential_address' => ['required', 'string', 'max:1000'],
             'occupation' => ['nullable', 'string', 'max:255'],
-            'marital_status' => ['required', 'in:Single,Married,Divorced,Widowed'],
+            'marital_status' => ['nullable', 'in:Single,Married,Divorced,Widowed'],
             'email' => [
                 'nullable',
                 'email',
                 Rule::unique('first_timers', 'email')
             ],
             'bringer_name' => ['nullable', 'string', 'max:255'],
-            'bringer_contact' => ['nullable', 'string', 'max:20'],
+            'bringer_contact' => ['nullable', 'string', 'min:10', 'max:20'],
             'born_again' => ['required', 'boolean'],
             'water_baptism' => ['required', 'boolean'],
             'prayer_requests' => ['nullable', 'string', 'max:2000'],

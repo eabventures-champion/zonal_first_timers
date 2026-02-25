@@ -20,11 +20,23 @@ class BringerController extends Controller
                 return redirect()->route('ro.dashboard')->with('error', 'You are not assigned to a church.');
             }
 
-            $church = Church::with(['bringers.firstTimers', 'bringers.members'])->findOrFail($churchId);
+            $church = Church::with([
+                'bringers' => function ($q) {
+                    $q->has('firstTimers')->orHas('members');
+                },
+                'bringers.firstTimers',
+                'bringers.members'
+            ])->findOrFail($churchId);
             return view('ro.bringers.index', compact('church'));
         }
 
-        $categories = ChurchCategory::with(['groups.churches.bringers.firstTimers', 'groups.churches.bringers.members'])->get();
+        $categories = ChurchCategory::with([
+            'groups.churches.bringers' => function ($q) {
+                $q->where(function ($query) {
+                    $query->has('firstTimers')->orHas('members');
+                })->with(['firstTimers', 'members']);
+            }
+        ])->get();
 
         // Sort groups and churches by total souls count (first timers + members) descending
         $categories->each(function ($category) {
@@ -52,11 +64,42 @@ class BringerController extends Controller
 
     public function checkContact(Request $request)
     {
-        $exists = Bringer::where('contact', $request->contact)->exists();
+        $contact = $request->contact;
+
+        $bringerExists = Bringer::where('contact', $contact)->exists();
+        if ($bringerExists) {
+            return response()->json([
+                'exists' => true,
+                'message' => 'A Bringer with this contact already exists. Please select them from the list above.'
+            ]);
+        }
+
+        $user = \App\Models\User::where('phone', $contact)->first();
+        $member = \App\Models\Member::where('primary_contact', $contact)->first();
+        $ft = \App\Models\FirstTimer::where('primary_contact', $contact)->first();
+
+        $exists = (bool) ($user || $member || $ft);
+
+        if ($exists) {
+            $name = $user ? $user->name : ($member ? $member->full_name : $ft->full_name);
+            $type = '';
+            if ($user) {
+                $type = $user->getRoleNames()->implode(', ') ?: 'System User';
+            } elseif ($member) {
+                $type = 'Member';
+            } else {
+                $type = 'First Timer';
+            }
+
+            return response()->json([
+                'exists' => true,
+                'message' => "This contact belongs to an existing {$name} ({$type})."
+            ]);
+        }
 
         return response()->json([
-            'exists' => $exists,
-            'message' => $exists ? 'A Bringer with this contact already exists. Please select them from the list above.' : ''
+            'exists' => false,
+            'message' => ''
         ]);
     }
 }

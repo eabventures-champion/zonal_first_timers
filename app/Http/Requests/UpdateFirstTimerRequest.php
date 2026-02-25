@@ -24,12 +24,14 @@ class UpdateFirstTimerRequest extends FormRequest
             'primary_contact' => [
                 'required',
                 'string',
+                'min:10',
                 'max:20',
                 Rule::unique('first_timers', 'primary_contact')->ignore($id)
             ],
             'alternate_contact' => [
                 'nullable',
                 'string',
+                'min:10',
                 'max:20',
                 Rule::unique('first_timers', 'alternate_contact')->ignore($id)
             ],
@@ -45,7 +47,7 @@ class UpdateFirstTimerRequest extends FormRequest
                 Rule::unique('first_timers', 'email')->ignore($id)
             ],
             'bringer_name' => ['nullable', 'string', 'max:255'],
-            'bringer_contact' => ['nullable', 'string', 'max:20'],
+            'bringer_contact' => ['nullable', 'string', 'min:10', 'max:20'],
             'born_again' => ['required', 'boolean'],
             'water_baptism' => ['required', 'boolean'],
             'prayer_requests' => ['nullable', 'string', 'max:2000'],

@@ -12,6 +12,8 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             FoundationClassSeeder::class,
             DatabaseCleanupSeeder::class,
+            HomepageSettingsSeeder::class,
+            SyncBringersToUsersSeeder::class,
             // DemoDataSeeder::class,
         ]);
     }

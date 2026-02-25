@@ -10,6 +10,8 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view-dashboards']);
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
         $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Bringer']);
         $role->givePermissionTo('view-dashboards');
     }

@@ -18,7 +18,7 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::with(['roles', 'church'])->latest()->paginate(20);
+        $users = User::with(['roles', 'church', 'bringer'])->latest()->paginate(20);
         return view('admin.users.index', compact('users'));
     }
 
@@ -147,11 +147,54 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         if ($user->id === auth()->id()) {
-            return back()->with('error', 'You cannot delete your own account.');
+            return back()->with('error', 'You cannot delete yourself.');
         }
 
         $user->delete();
+
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        $userIds = collect($request->user_ids)->reject(function ($id) {
+            return $id == auth()->id();
+        })->toArray();
+
+        if (empty($userIds)) {
+            return back()->with('error', 'No valid users selected for deletion.');
+        }
+
+        // Clean up related records for each user via model events
+        $users = User::whereIn('id', $userIds)->get();
+        foreach ($users as $user) {
+            /** @var \App\Models\User $user */
+            $user->delete();
+        }
+
+        return redirect()->route('admin.users.index')
+            ->with('success', count($userIds) . ' user(s) deleted successfully.');
+    }
+
+    public function checkContact(Request $request)
+    {
+        $query = User::where('phone', $request->contact);
+
+        if ($request->exclude_id) {
+            $query->where('id', '!=', $request->exclude_id);
+        }
+
+        $user = $query->first();
+
+        return response()->json([
+            'exists' => (bool) $user,
+            'message' => $user ? "This phone number is already registered to {$user->name}." : ''
+        ]);
     }
 }

@@ -199,6 +199,17 @@
             </svg>
             <span x-show="!sidebarMinimized" class="flex-1">Homepage Settings</span>
         </a>
+
+        <p x-show="!sidebarMinimized" class="px-3 mt-5 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+            Reports</p>
+        <a href="{{ route('admin.reports.weekly') }}"
+            class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M9 17v1a3 3 0 106 0v-1m-6 0a3 3 0 006 0m-6 0H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-4" />
+            </svg>
+            <span x-show="!sidebarMinimized" class="flex-1">Weekly First Timers</span>
+        </a>
     @endif
 @endif
 

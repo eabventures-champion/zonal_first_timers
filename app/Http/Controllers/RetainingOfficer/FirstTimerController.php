@@ -42,6 +42,7 @@ class FirstTimerController extends Controller
 
         $data = $request->validated();
         $data['church_id'] = auth()->user()->church_id;
+        $data['retaining_officer_id'] = auth()->id();
 
         $this->service->create($data);
 

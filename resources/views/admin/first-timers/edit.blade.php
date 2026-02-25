@@ -7,12 +7,14 @@
     <div class="max-w-3xl">
         <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
             <form method="POST" action="{{ route('admin.first-timers.update', $firstTimer) }}"
+                @submit.prevent="if(contactError || alternateContactError || (!selectedBringerId && bringerContactError) || isValidating) { return; } $el.submit();"
                 x-data="{
                     categories: {{ Js::from($categories) }},
                     selectedCategory: '{{ $firstTimer->church->group->category->id ?? '' }}',
                     selectedGroup: '{{ $firstTimer->church->group->id ?? '' }}',
                     selectedChurch: '{{ $firstTimer->church_id }}',
                     selectedOfficer: '{{ $firstTimer->retaining_officer_id }}',
+                    fullName: '{{ old('full_name', $firstTimer->full_name) }}',
                     groups: [],
                     churches: [],
                     bringers: [],
@@ -21,8 +23,18 @@
                     // Contact Validation
                     primaryContact: '{{ old('primary_contact', $firstTimer->primary_contact) }}',
                     contactError: '',
+                    alternateContact: '{{ old('alternate_contact', $firstTimer->alternate_contact) }}',
+                    alternateContactError: '',
                     isValidating: false,
+                    bringerConfirmed: false,
+
+                    canSubmit() {
+                        const isCommonValid = this.fullName && this.fullName.trim() && this.primaryContact && this.primaryContact.trim() && this.selectedChurch && !this.contactError && !this.alternateContactError && !this.isValidating;
+                        const isBringerValid = this.selectedBringerId || (this.bringerConfirmed && this.bringerName && this.bringerName.trim() && this.bringerContact && this.bringerContact.trim() && !this.bringerContactError);
+                        return isCommonValid && isBringerValid;
+                    },
                     excludeId: '{{ $firstTimer->id }}',
+                    bringerName: '{{ old('bringer_name', $firstTimer->bringer_name) }}',
 
                     init() {
                         this.updateGroups(true);
@@ -76,11 +88,19 @@
                     },
 
                     async checkContact() {
-                        if (this.primaryContact.length < 5) {
+                        const phone = this.primaryContact.trim();
+                        if (phone.length === 0) {
                             this.contactError = '';
                             return;
                         }
                         
+                        // Length validation
+                        if (phone.length !== 10) {
+                            this.contactError = 'Phone number must be exactly 10 digits.';
+                            return;
+                        }
+
+                        this.contactError = '';
                         this.isValidating = true;
                         try {
                             const response = await fetch('{{ route('admin.first-timers.check-contact') }}', {
@@ -90,8 +110,9 @@
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                                 },
                                 body: JSON.stringify({ 
-                                    contact: this.primaryContact,
-                                    exclude_id: this.excludeId
+                                    contact: phone,
+                                    exclude_id: this.excludeId,
+                                    type: 'first_timer'
                                 })
                             });
                             const data = await response.json();
@@ -103,15 +124,34 @@
                         }
                     },
 
+                    checkAlternateContact() {
+                        const phone = this.alternateContact.trim();
+                        if (phone.length === 0) {
+                            this.alternateContactError = '';
+                            return;
+                        }
+                        if (phone.length !== 10) {
+                            this.alternateContactError = 'Phone number must be exactly 10 digits.';
+                            return;
+                        }
+                        this.alternateContactError = '';
+                    },
+
                     bringerContact: '{{ old('bringer_contact', $firstTimer->bringer_contact) }}',
                     bringerContactError: '',
 
                     async checkBringerContact() {
-                        if (this.bringerContact.length < 5) {
+                        const phone = this.bringerContact.trim();
+                        if (phone.length === 0) {
                             this.bringerContactError = '';
                             return;
                         }
+                        if (phone.length !== 10) {
+                            this.bringerContactError = 'Phone number must be exactly 10 digits.';
+                            return;
+                        }
                         
+                        this.bringerContactError = '';
                         try {
                             const response = await fetch('{{ route('admin.bringers.check-contact') }}', {
                                 method: 'POST',
@@ -119,7 +159,7 @@
                                     'Content-Type': 'application/json',
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                                 },
-                                body: JSON.stringify({ contact: this.bringerContact })
+                                body: JSON.stringify({ contact: phone })
                             });
                             const data = await response.json();
                             this.bringerContactError = data.exists ? data.message : '';
@@ -135,7 +175,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Full Name <span
                                 class="text-red-500">*</span></label>
-                        <input type="text" name="full_name" value="{{ old('full_name', $firstTimer->full_name) }}" required
+                        <input type="text" name="full_name" x-model="fullName" required
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
                         @error('full_name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
@@ -149,7 +189,7 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Primary Contact <span
                                 class="text-red-500">*</span></label>
                         <input type="text" name="primary_contact" required x-model="primaryContact"
-                            @input.debounce.500ms="checkContact()"
+                            @input.debounce.500ms="checkContact()" minlength="10" maxlength="20"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
                             :class="contactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''">
                         <p x-show="contactError" x-text="contactError" class="mt-1 text-xs text-red-600" style="display: none;"></p>
@@ -157,9 +197,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Alternate Contact</label>
-                        <input type="text" name="alternate_contact"
-                            value="{{ old('alternate_contact', $firstTimer->alternate_contact) }}"
-                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <input type="text" name="alternate_contact" x-model="alternateContact"
+                            @input.debounce.500ms="checkAlternateContact()" minlength="10" maxlength="20"
+                            class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            :class="alternateContactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''">
+                        <p x-show="alternateContactError" x-text="alternateContactError" class="mt-1 text-xs text-red-600" style="display: none;"></p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Gender <span
@@ -281,10 +323,10 @@
                     </div>
                 </div>
 
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4 pb-2 border-b dark:border-slate-800">Who Brought Them / Credentials</h3>
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4 pb-2 border-b dark:border-slate-800">Invited By</h3>
                 <div class="space-y-4 mb-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Select Person (Optional)</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Select Person</label>
                         <select name="bringer_id" x-model="selectedBringerId"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="">New Person / Not Listed (Use fields below)</option>
@@ -299,17 +341,29 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Bringer
                                 Name</label>
-                            <input type="text" name="bringer_name" value="{{ old('bringer_name', $firstTimer->bringer_name) }}"
+                            <input type="text" name="bringer_name" x-model="bringerName"
                                 class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Bringer
                                 Contact</label>
                             <input type="text" name="bringer_contact" x-model="bringerContact"
-                                @input.debounce.500ms="checkBringerContact()"
+                                @input.debounce.500ms="checkBringerContact()" minlength="10" maxlength="20"
                                 class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 :class="bringerContactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''">
                             <p x-show="bringerContactError" x-text="bringerContactError" class="mt-1 text-[10px] text-red-600" style="display: none;"></p>
+                            
+                            <div x-show="!selectedBringerId && bringerName.trim() && bringerContact.trim() && !bringerContactError" style="display: none;" class="mt-2">
+                                <button type="button" @click="bringerConfirmed = true" x-show="!bringerConfirmed"
+                                    class="text-[10px] px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition">
+                                    Use this Bringer
+                                </button>
+                                <p x-show="bringerConfirmed" 
+                                   class="text-[10px] text-green-600 flex items-center gap-1">
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    Bringer confirmed and ready.
+                                </p>
+                            </div>
                         </div>
                     </div>
                     <div x-show="!selectedBringerId && !selectedOfficer" class="p-2 bg-amber-50 dark:bg-amber-100/10 rounded-lg border border-amber-100 dark:border-amber-100/20">
@@ -336,9 +390,12 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button type="submit"
-                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition">Update
-                        First Timer</button>
+                    <button type="submit" 
+                        :disabled="!canSubmit()"
+                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-show="!isValidating">Update First Timer</span>
+                        <span x-show="isValidating">Validating...</span>
+                    </button>
                     <a href="{{ route('admin.first-timers.index') }}"
                         class="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200">Cancel</a>
                 </div>

@@ -78,7 +78,7 @@
                     </div>
                     <div>
                         <dt class="text-gray-500 dark:text-slate-500">Bringer</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->bringer_name ?? '—' }}</dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $member->bringer->name ?? ($member->bringer_name ?? '—') }}</dd>
                     </div>
                 </dl>
             </div>

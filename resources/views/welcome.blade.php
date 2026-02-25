@@ -45,9 +45,25 @@
         }
 
         .hero-bg {
-            background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7)), url('{{ $settings['hero_background_image']->value ?? '/assets/images/hero-bg.png' }}');
-            background-size: cover;
-            background-position: center;
+            position: relative;
+        }
+
+        .hero-bg-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center center;
+            z-index: 0;
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7));
+            z-index: 1;
         }
 
         .text-glow {
@@ -109,10 +125,13 @@
     </nav>
 
     {{-- Hero Section --}}
-    <section class="relative h-screen flex items-center justify-center overflow-hidden hero-bg">
-        <div class="absolute inset-0 bg-indigo-900/10 backdrop-blur-[2px]"></div>
+    <section class="relative h-[70vh] flex items-center justify-center overflow-hidden hero-bg">
+        <img src="{{ $settings['hero_background_image']->value ?? '/assets/images/hero-bg.png' }}" alt="Hero Background"
+            class="hero-bg-img" />
+        <div class="hero-overlay"></div>
+        <div class="absolute inset-0 bg-indigo-900/10 backdrop-blur-[2px]" style="z-index: 2;"></div>
 
-        <div class="relative z-10 max-w-5xl mx-auto px-6 text-center pt-20 pb-24">
+        <div class="relative z-10 max-w-5xl mx-auto px-6 text-center pt-16 pb-20" style="z-index: 3;">
             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 animate-fade-in-down">
                 <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
                 <span
@@ -120,25 +139,26 @@
             </div>
 
             <h1
-                class="text-4xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold mb-6 sm:mb-8 heading-font text-white leading-tight transition-all text-glow">
+                class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 heading-font text-white leading-tight transition-all text-glow">
                 {{ $settings['hero_title_1']->value ?? 'Raising' }} <span
                     class="text-indigo-400">{{ $settings['hero_title_1_highlight']->value ?? 'Leaders' }}</span>,<br>{{ $settings['hero_title_2']->value ?? 'Building' }}
                 <span
-                    class="text-accent underline decoration-indigo-500 decoration-4 sm:decoration-8 underline-offset-4 sm:underline-offset-8">{{ $settings['hero_title_2_highlight']->value ?? 'Legacies' }}</span>.
+                    class="text-accent underline decoration-indigo-500 decoration-2 sm:decoration-4 underline-offset-4 sm:underline-offset-8">{{ $settings['hero_title_2_highlight']->value ?? 'Legacies' }}</span>.
             </h1>
 
             <p
-                class="text-base sm:text-lg lg:text-2xl text-slate-300 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-2">
+                class="text-sm sm:text-base lg:text-lg text-slate-300 mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed px-2">
                 {{ $settings['hero_subtitle']->value ?? 'A modern platform dedicated to tracking and nurturing the spiritual growth of every first timer in the zone.' }}
             </p>
 
             <div
-                class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 sm:gap-6 w-full sm:w-auto">
+                class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
                 <a href="{{ route('login') }}"
-                    class="group relative px-6 sm:px-10 py-4 sm:py-5 bg-indigo-600 rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 w-full sm:w-auto text-center">
+                    class="group relative px-5 sm:px-8 py-3 sm:py-3.5 bg-indigo-600 rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 w-full sm:w-auto text-center">
                     <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 transition-opacity">
                     </div>
-                    <span class="relative text-white font-bold text-lg flex items-center justify-center gap-3">
+                    <span
+                        class="relative text-white font-semibold text-sm sm:text-base flex items-center justify-center gap-2">
                         {{ $settings['hero_button_primary_text']->value ?? 'Member Portal Access' }}
                         <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none"
                             stroke="currentColor" viewBox="0 0 24 24">
@@ -149,14 +169,14 @@
                 </a>
 
                 <a href="#mission"
-                    class="px-6 sm:px-10 py-4 sm:py-5 glass rounded-2xl text-white font-bold text-base sm:text-lg transition-all hover:bg-white/10 w-full sm:w-auto text-center">
+                    class="px-5 sm:px-8 py-3 sm:py-3.5 glass rounded-xl text-white font-semibold text-sm sm:text-base transition-all hover:bg-white/10 w-full sm:w-auto text-center">
                     Our Mandate
                 </a>
             </div>
         </div>
 
         {{-- Floating Decorative Elements --}}
-        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 hidden sm:flex">
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 hidden sm:flex" style="z-index: 3;">
             <a href="#mission"
                 class="w-16 h-10 rounded-full border-2 border-white/20 flex items-center justify-start pl-2 hover:border-white/40 transition-colors animate-bounce-x">
                 <div class="w-3 h-1 bg-white/40 rounded-full"></div>
@@ -165,7 +185,7 @@
     </section>
 
     {{-- Mission/Feature Cards --}}
-    <section id="mission" class="py-24 px-6 relative dark:bg-slate-950 overflow-hidden">
+    <section id="mission" class="py-12 px-6 relative dark:bg-slate-950 overflow-hidden">
         <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 blur-[120px] rounded-full"></div>
         <div class="absolute bottom-0 left-0 w-96 h-96 bg-purple-600/10 blur-[120px] rounded-full"></div>
 

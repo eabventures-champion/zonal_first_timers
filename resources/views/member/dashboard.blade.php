@@ -19,7 +19,7 @@
                     @if($member && $record->migrated_at)
                         <div class="px-4 py-2 bg-emerald-500/20 backdrop-blur-md rounded-xl border border-emerald-500/30">
                             <p class="text-[10px] uppercase tracking-widest text-emerald-200 font-bold mb-0.5">Member Since</p>
-                            <p class="text-lg font-bold">{{ $record->migrated_at->format('M d, Y') }}</p>
+                            <p class="text-lg font-bold">{{ $record->date_of_visit?->format('M d, Y') ?? '—' }}</p>
                         </div>
                     @endif
                 </div>

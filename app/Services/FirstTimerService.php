@@ -81,6 +81,12 @@ class FirstTimerService
 
     public function create(array $data): FirstTimer
     {
+        // Prevent registering existing administrative users as first timers
+        $existingUser = User::where('phone', $data['primary_contact'])->first();
+        if ($existingUser && $existingUser->roles()->whereIn('name', ['Super Admin', 'Admin', 'Retaining Officer'])->exists()) {
+            throw new \Exception("This phone number belongs to an existing " . $existingUser->getRoleNames()->first() . " and cannot be registered as a first timer.");
+        }
+
         $data['created_by'] = Auth::id();
 
         $firstTimer = DB::transaction(function () use ($data) {
@@ -145,15 +151,19 @@ class FirstTimerService
             $data['bringer_id'] = $bringerId;
             $firstTimer = FirstTimer::create($data);
 
-            // Create User account for the First Timer
-            $user = User::create([
-                'name' => $firstTimer->full_name,
-                'email' => $firstTimer->email ?? ($firstTimer->primary_contact . '@church.com'),
-                'phone' => $firstTimer->primary_contact,
-                'password' => $firstTimer->primary_contact,
-                'church_id' => $firstTimer->church_id,
-            ]);
-            $user->assignRole('Member');
+            // Create or find User account for the First Timer
+            $user = User::firstOrCreate(
+                ['phone' => $firstTimer->primary_contact],
+                [
+                    'name' => $firstTimer->full_name,
+                    'email' => $firstTimer->email ?? ($firstTimer->primary_contact . '@church.com'),
+                    'password' => $firstTimer->primary_contact,
+                    'church_id' => $firstTimer->church_id,
+                ]
+            );
+            if (!$user->hasRole('Member')) {
+                $user->assignRole('Member');
+            }
 
             $firstTimer->update(['user_id' => $user->id]);
 

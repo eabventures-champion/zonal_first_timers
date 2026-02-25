@@ -172,7 +172,11 @@ class DashboardService
         $newCount = FirstTimer::where('church_id', $churchId)->where('status', 'New')->count();
         $developingCount = FirstTimer::where('church_id', $churchId)->where('status', 'Developing')->count();
         $memberCount = Member::where('church_id', $churchId)->count();
-        $totalBringers = \App\Models\Bringer::where('church_id', $churchId)->count();
+        $totalBringers = \App\Models\Bringer::where('church_id', $churchId)
+            ->where(function ($q) {
+                $q->has('firstTimers')->orHas('members');
+            })
+            ->count();
 
         $totalFirstTimers = FirstTimer::where('church_id', $churchId)->count() + $memberCount;
 

@@ -43,14 +43,19 @@
         </div>
     </div>
 
-    <div x-data="{ 
+        <div x-data="{ 
             month: {{ $month }},
             year: {{ $year }},
             loading: {},
-            async toggle(ftId, isMember, weekNum, serviceDate, currentAttended) {
-                const key = `${ftId}-${weekNum}`;
+            async toggle(ftId, rowId, isMember, weekNum, serviceDate, currentStatus) {
+                const key = `${rowId}-${weekNum}`;
                 if (this.loading[key]) return;
                 
+                let nextStatus;
+                if (currentStatus === 'clear') nextStatus = 'attended';
+                else if (currentStatus === 'attended') nextStatus = 'absent';
+                else nextStatus = 'clear';
+
                 this.loading[key] = true;
                 try {
                     const response = await fetch('{{ route('admin.attendance.toggle') }}', {
@@ -66,7 +71,7 @@
                             year: this.year,
                             week_number: weekNum,
                             service_date: serviceDate,
-                            attended: !currentAttended
+                            status: nextStatus
                         })
                     });
                     
@@ -124,25 +129,25 @@
                                 </td>
                                 @foreach($sundays as $sunday)
                                     @php
-                                        $attended = $data['weeks'][$sunday['week_number']] ?? false;
-                                        $exists = isset($data['weeks'][$sunday['week_number']]);
-                                        $key = $data['id'] . '-' . $sunday['week_number'];
+                                        $status = $data['weeks'][$sunday['week_number']] ?? 'clear';
+                                        $key = $data['row_id'] . '-' . $sunday['week_number'];
                                     @endphp
                                     <td class="px-3 py-4 text-center">
                                         <button 
                                             @if($data['is_readonly']) disabled @endif
-                                            @click="toggle({{ $data['id'] }}, {{ $data['is_member'] ? 'true' : 'false' }}, {{ $sunday['week_number'] }}, '{{ $sunday['date'] }}', {{ $attended ? 'true' : 'false' }})"
+                                            @click="toggle({{ $data['id'] }}, '{{ $data['row_id'] }}', {{ $data['is_member'] ? 'true' : 'false' }}, {{ $sunday['week_number'] }}, '{{ $sunday['date'] }}', '{{ $status }}')"
+                                            :id="'btn-' + '{{ $key }}'"
                                             :class="loading['{{ $key }}'] || {{ $data['is_readonly'] ? 'true' : 'false' }} ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'"
                                             class="inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200 relative group/btn"
                                             title="{{ $data['is_readonly'] ? 'Record locked (Retained)' : \Carbon\Carbon::parse($sunday['date'])->format('l, M d, Y') }}">
                                             
-                                            @if($attended)
+                                            @if($status === 'attended')
                                                 <div class="bg-emerald-500 dark:bg-emerald-600 text-white p-1 rounded-md shadow-sm shadow-emerald-200 dark:shadow-none">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                                                     </svg>
                                                 </div>
-                                            @elseif($exists && !$attended)
+                                            @elseif($status === 'absent')
                                                 <div class="bg-red-500 dark:bg-red-600 text-white p-1 rounded-md shadow-sm shadow-red-200 dark:shadow-none">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />

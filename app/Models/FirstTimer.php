@@ -36,6 +36,7 @@ class FirstTimer extends Model
         'membership_approved_at',
         'retaining_officer_id',
         'bringer_id',
+        'user_id',
         'created_by',
         'updated_by',
     ];

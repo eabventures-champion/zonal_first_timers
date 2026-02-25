@@ -44,6 +44,11 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
     Route::middleware(['role:Super Admin'])->group(function () {
         Route::get('homepage-settings', [\App\Http\Controllers\HomepageSettingController::class, 'index'])->name('homepage-settings.index');
         Route::post('homepage-settings', [\App\Http\Controllers\HomepageSettingController::class, 'update'])->name('homepage-settings.update');
+
+        // Weekly Report
+        Route::get('reports/weekly', [Admin\WeeklyReportController::class, 'index'])->name('reports.weekly');
+        Route::get('reports/weekly/excel', [Admin\WeeklyReportController::class, 'exportExcel'])->name('reports.weekly.excel');
+        Route::get('reports/weekly/pdf', [Admin\WeeklyReportController::class, 'exportPdf'])->name('reports.weekly.pdf');
     });
 
     // Church Hierarchy
@@ -81,6 +86,7 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
     Route::post('membership-approvals/bulk-sync', [Admin\MembershipApprovalController::class, 'bulkSync'])->name('membership-approvals.bulk-sync');
 
     // User Management (Super Admin only via controller)
+    Route::post('users/bulk-delete', [Admin\UserController::class, 'bulkDelete'])->name('users.bulk-delete');
     Route::resource('users', Admin\UserController::class)->except(['show']);
 
     // Weekly Attendance
@@ -93,10 +99,11 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
 });
 
 // Shared Utility Routes (Accessible by Admin and RO)
-Route::middleware(['auth', 'role:Super Admin,Admin,Retaining Officer'])->group(function () {
-    Route::post('admin/first-timers/check-contact', [Admin\FirstTimerController::class, 'checkContact'])->name('admin.first-timers.check-contact');
-    Route::post('admin/bringers/check-contact', [Admin\BringerController::class, 'checkContact'])->name('admin.bringers.check-contact');
-    Route::get('admin/bringers/church/{church}', [Admin\BringerController::class, 'getForChurch'])->name('admin.bringers.get-for-church');
+Route::middleware(['auth', 'role:Super Admin,Admin,Retaining Officer'])->prefix('admin')->name('admin.')->group(function () {
+    Route::post('first-timers/check-contact', [Admin\FirstTimerController::class, 'checkContact'])->name('first-timers.check-contact');
+    Route::post('users/check-contact', [Admin\UserController::class, 'checkContact'])->name('users.check-contact');
+    Route::post('bringers/check-contact', [Admin\BringerController::class, 'checkContact'])->name('bringers.check-contact');
+    Route::get('bringers/church/{church}', [Admin\BringerController::class, 'getForChurch'])->name('bringers.get-for-church');
 });
 
 // ── Bringer Routes ─────────────────────────────────────────

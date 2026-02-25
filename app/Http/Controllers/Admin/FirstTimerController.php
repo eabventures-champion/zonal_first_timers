@@ -122,17 +122,48 @@ class FirstTimerController extends Controller
 
     public function checkContact(Request $request)
     {
-        $query = FirstTimer::where('primary_contact', $request->contact);
+        $contact = $request->contact;
+        $excludeId = $request->exclude_id;
+        $type = $request->type; // 'first_timer' or 'member'
 
-        if ($request->exclude_id) {
-            $query->where('id', '!=', $request->exclude_id);
+        $firstTimerQuery = FirstTimer::where('primary_contact', $contact);
+        $memberQuery = \App\Models\Member::where('primary_contact', $contact);
+        $userQuery = User::where('phone', $contact);
+
+        if ($excludeId) {
+            if ($type === 'member') {
+                $memberQuery->where('id', '!=', $excludeId);
+            } else {
+                $firstTimerQuery->where('id', '!=', $excludeId);
+            }
+            // If it's a linked user, we might need to exclude it too, 
+            // but usually checkContact is for NEW registrations.
         }
 
-        $exists = $query->exists();
+        $ft = $firstTimerQuery->first();
+        $member = $memberQuery->first();
+        $user = $userQuery->first();
+
+        $exists = (bool) ($ft || $member || $user);
+
+        $name = '';
+        $foundType = '';
+
+        if ($ft) {
+            $name = $ft->full_name;
+            $foundType = 'First Timer';
+        } elseif ($member) {
+            $name = $member->full_name;
+            $foundType = 'Member';
+        } elseif ($user) {
+            $name = $user->name;
+            $roleNames = $user->getRoleNames()->implode(', ');
+            $foundType = $roleNames ?: 'System User';
+        }
 
         return response()->json([
             'exists' => $exists,
-            'message' => $exists ? 'This phone number is already registered.' : ''
+            'message' => $exists ? "This phone number is already registered to {$name} ({$foundType})." : ''
         ]);
     }
 }

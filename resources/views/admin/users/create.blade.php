@@ -25,7 +25,48 @@
                     </div>
                 </div>
 
-                <div x-data="{ role: '{{ old('role') }}' }">
+                <div x-data="{ 
+                        role: '{{ old('role') }}',
+                        phone: '{{ old('phone') }}',
+                        phoneError: '',
+                        isCheckingContact: false,
+                        lastCheckedPhone: '',
+
+                        async checkContact() {
+                            const phone = this.phone.trim();
+                            if (phone.length === 0) {
+                                this.phoneError = '';
+                                return;
+                            }
+
+                            // Length validation
+                            if (phone.length !== 10) {
+                                this.phoneError = 'Phone number must be exactly 10 digits.';
+                                return;
+                            }
+
+                            if (phone === this.lastCheckedPhone) return;
+
+                            this.isCheckingContact = true;
+                            try {
+                                const response = await fetch('{{ route('admin.users.check-contact') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    },
+                                    body: JSON.stringify({ contact: phone })
+                                });
+                                const data = await response.json();
+                                this.phoneError = data.exists ? data.message : '';
+                                this.lastCheckedPhone = phone;
+                            } catch (error) {
+                                console.error('Error checking contact:', error);
+                            } finally {
+                                this.isCheckingContact = false;
+                            }
+                        }
+                    }" x-init="$watch('phone', () => checkContact())">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Role <span
@@ -44,8 +85,22 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Phone <span
                                     class="text-red-500">*</span></label>
-                            <input type="text" name="phone" value="{{ old('phone') }}" required
-                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <div class="relative">
+                                <input type="text" name="phone" x-model="phone" required
+                                    class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    :class="phoneError ? 'border-red-500 ring-red-500' : ''" placeholder="e.g. 024XXXXXXX">
+                                <div x-show="isCheckingContact" class="absolute right-3 top-2.5">
+                                    <svg class="animate-spin h-4 w-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p x-show="phoneError" x-text="phoneError" class="mt-1 text-xs text-red-600"></p>
                             @error('phone') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -84,21 +139,21 @@
                 </div>
 
                 <div x-data="{ 
-                                        categories: {{ $categories->toJson() }},
-                                        selectedCategory: '{{ old('category_id') }}',
-                                        selectedGroup: '{{ old('group_id') }}',
-                                        selectedChurch: '{{ old('church_id') }}',
-                                        get groups() {
-                                            if (!this.selectedCategory) return [];
-                                            const cat = this.categories.find(c => c.id == this.selectedCategory);
-                                            return cat ? cat.groups : [];
-                                        },
-                                        get churches() {
-                                            if (!this.selectedGroup) return [];
-                                            const group = this.groups.find(g => g.id == this.selectedGroup);
-                                            return group ? group.churches : [];
-                                        }
-                                    }" class="space-y-4 mb-6">
+                                            categories: {{ $categories->toJson() }},
+                                            selectedCategory: '{{ old('category_id') }}',
+                                            selectedGroup: '{{ old('group_id') }}',
+                                            selectedChurch: '{{ old('church_id') }}',
+                                            get groups() {
+                                                if (!this.selectedCategory) return [];
+                                                const cat = this.categories.find(c => c.id == this.selectedCategory);
+                                                return cat ? cat.groups : [];
+                                            },
+                                            get churches() {
+                                                if (!this.selectedGroup) return [];
+                                                const group = this.groups.find(g => g.id == this.selectedGroup);
+                                                return group ? group.churches : [];
+                                            }
+                                        }" class="space-y-4 mb-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Church Category</label>
@@ -139,8 +194,8 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button type="submit"
-                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition">Create
+                    <button type="submit" :disabled="phoneError || isCheckingContact"
+                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">Create
                         User</button>
                     <a href="{{ route('admin.users.index') }}" class="text-sm text-gray-500 hover:text-gray-700">Cancel</a>
                 </div>

@@ -32,7 +32,9 @@ class SidebarComposer
                 return $q->where('church_id', $churchId);
             })
                 ->count(),
-            'bringers' => Bringer::when($isRO && $churchId, function ($q) use ($churchId) {
+            'bringers' => Bringer::where(function ($query) {
+                $query->has('firstTimers')->orHas('members');
+            })->when($isRO && $churchId, function ($q) use ($churchId) {
                 return $q->where('church_id', $churchId);
             })->count(),
             'users' => User::count(),

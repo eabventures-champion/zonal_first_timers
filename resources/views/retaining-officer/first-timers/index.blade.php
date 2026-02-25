@@ -36,7 +36,7 @@
                         <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Name</th>
                         <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Contact</th>
                         <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Visit Date</th>
-                        <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Status</th>
+                        <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Status (Church attendance)</th>
                         <th class="px-6 py-3 text-right font-medium text-gray-500 dark:text-slate-400">Actions</th>
                     </tr>
                 </thead>
