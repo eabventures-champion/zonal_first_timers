@@ -95,7 +95,7 @@
 
         {{-- ── Sidebar ──────────────────────────────────────── --}}
         <aside
-            class="sidebar fixed inset-y-0 left-0 z-40 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col transition-all duration-300 lg:translate-x-0"
+            class="sidebar fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col transition-all duration-300 lg:translate-x-0"
             :class="{
                 'translate-x-0': sidebarOpen,
                 '-translate-x-full': !sidebarOpen,
@@ -157,14 +157,15 @@
                         x-transition:enter-end="opacity-100 translate-x-0">
                         <p class="text-xs font-bold truncate">{{ auth()->user()->name }}</p>
                         <p class="text-[9px] text-slate-400 uppercase tracking-widest">
-                            {{ auth()->user()->roles->first()?->name ?? 'User' }}</p>
+                            {{ auth()->user()->roles->pluck('name')->implode(' & ') ?: 'User' }}
+                        </p>
                     </div>
                 </div>
             </div>
         </aside>
 
         {{-- Overlay --}}
-        <div x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 bg-black/50 z-20 lg:hidden"
+        <div x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 bg-black/50 z-40 lg:hidden"
             @click="sidebarOpen = false"></div>
 
         {{-- ── Main Content ─────────────────────────────────── --}}
@@ -173,10 +174,10 @@
 
             {{-- Topbar --}}
             <header
-                class="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800 transition-colors duration-300">
+                class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-800 transition-colors duration-300">
                 <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
                     <div class="flex items-center gap-4">
-                        <button @click="sidebarOpen = !sidebarOpen"
+                        <button @click.stop="sidebarOpen = !sidebarOpen"
                             class="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800">
                             <svg class="w-5 h-5 text-gray-600 dark:text-slate-400" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
@@ -240,7 +241,7 @@
             @endif
 
             {{-- Page Content --}}
-            <main class="flex-1 p-4 sm:p-6 lg:p-8 content-fade">
+            <main class="flex-1 p-4 sm:p-6 lg:p-8 pt-6 sm:pt-8 lg:pt-10 content-fade">
                 {{ $slot ?? '' }}
                 @yield('content')
             </main>

@@ -78,6 +78,18 @@
                                             Bringer
                                         </span>
                                     @endif
+                                    @if($user->hasRole('Member') && $user->firstTimer && !$user->member)
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 uppercase">
+                                            FT
+                                        </span>
+                                    @endif
+                                    @if($user->hasRole('Member') && $user->member)
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 uppercase">
+                                            Retained
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-3 text-gray-500 dark:text-slate-400">{{ $user->church->name ?? '—' }}</td>
                                 <td class="px-6 py-3 text-right space-x-2">

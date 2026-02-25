@@ -194,6 +194,7 @@
                                                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                                                                 {{ $ft->total_attended }} {{ Str::plural('Service', $ft->total_attended) }}
                                                             </span>
+                                                            
                                                         </div>
                                                         <div class="text-[10px] text-gray-400 dark:text-slate-500">Joined: {{ $ft->date_of_visit?->format('M d, Y') }}</div>
                                                     </td>

@@ -109,7 +109,7 @@
                             <thead class="bg-gray-50 dark:bg-slate-800/50">
                                 <tr>
                                     <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Name</th>
-                                    <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Contact</th>
+                                    <!-- <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Contact</th> -->
                                     <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Church</th>
                                     <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Attendance</th>
                                     <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Foundation School Status</th>
@@ -128,9 +128,10 @@
                                                 </span>
                                             </div>
                                             <div class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">{{ $m->status }}</div>
+                                            <div class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">{{ $m->primary_contact }}</div>
                                             <div class="text-[10px] text-gray-400 dark:text-slate-500">First Visit: {{ $m->date_of_visit?->format('M d, Y') }}</div>
                                         </td>
-                                        <td class="px-6 py-3 text-gray-500 dark:text-slate-400">{{ $m->primary_contact }}</td>
+                                        <!-- <td class="px-6 py-3 text-gray-500 dark:text-slate-400">{{ $m->primary_contact }}</td> -->
                                         <td class="px-6 py-3 text-gray-500 dark:text-slate-400">
                                             <div class="flex items-center gap-2">
                                                 <div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>

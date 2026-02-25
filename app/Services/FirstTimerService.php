@@ -111,19 +111,47 @@ class FirstTimerService
                     // Ensure Bringer has a User account for login
                     if (!$bringer->user_id) {
                         $user = User::where('phone', $bringerContact)->first();
+
+                        // If no user exists, check if they are a first timer or member to get their name
                         if (!$user) {
+                            $member = \App\Models\Member::where('primary_contact', $bringerContact)->first();
+                            $ft = \App\Models\FirstTimer::where('primary_contact', $bringerContact)->first();
+
+                            $finalName = $bringerName;
+                            if ($member)
+                                $finalName = $member->full_name;
+                            elseif ($ft)
+                                $finalName = $ft->full_name;
+
                             $user = User::create([
-                                'name' => $bringerName,
+                                'name' => $finalName,
                                 'phone' => $bringerContact,
                                 'email' => $bringerContact . '@zonal.com',
                                 'password' => $bringerContact,
                                 'church_id' => $churchId,
                             ]);
                         }
+
                         if (!$user->hasRole('Bringer')) {
                             $user->assignRole('Bringer');
                         }
+
+                        // Ensure they have the Member role if they were a First Timer or Member record match
+                        // (Though lines 164-166 handle this for the NEW first timer, we should check here for the BRINGER)
+                        $isFTorMember = \App\Models\Member::where('primary_contact', $bringerContact)->exists() ||
+                            \App\Models\FirstTimer::where('primary_contact', $bringerContact)->exists();
+
+                        if ($isFTorMember && !$user->hasRole('Member')) {
+                            $user->assignRole('Member');
+                        }
+
                         $bringer->update(['user_id' => $user->id]);
+                    } else {
+                        // Even if bringer record exists with user_id, ensure the User has the Bringer role
+                        $user = $bringer->user;
+                        if ($user && !$user->hasRole('Bringer')) {
+                            $user->assignRole('Bringer');
+                        }
                     }
                     $bringerId = $bringer->id;
                 } else {

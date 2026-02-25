@@ -9,152 +9,188 @@
             <form method="POST" action="{{ route('admin.first-timers.store') }}"
                 @submit.prevent="if(contactError || alternateContactError || (!selectedBringerId && bringerContactError) || isValidating) { return; } $el.submit();"
                 x-data="{
-                                categories: {{ Js::from($categories) }},
-                                selectedCategory: '',
-                                selectedGroup: '',
-                                selectedChurch: '',
-                                groups: [],
-                                churches: [],
-                                bringers: [],
-                                selectedBringerId: '',
-                                selectedOfficer: '',
-                                fullName: '{{ old('full_name') }}',
+                                                                categories: {{ Js::from($categories) }},
+                                                                selectedCategory: '',
+                                                                selectedGroup: '',
+                                                                selectedChurch: '',
+                                                                groups: [],
+                                                                churches: [],
+                                                                bringers: [],
+                                                                selectedBringerId: '',
+                                                                selectedOfficer: '',
+                                                                fullName: '{{ old('full_name') }}',
 
-                                // Contact Validation
-                                primaryContact: '{{ old('primary_contact') }}',
-                                contactError: '',
-                                isValidating: false,
-                                bringerContact: '{{ old('bringer_contact') }}',
-                                bringerContactError: '',
-                                bringerName: '{{ old('bringer_name') }}',
-                                alternateContact: '{{ old('alternate_contact') }}',
-                                alternateContactError: '',
-                                bringerConfirmed: false,
+                                                                // Contact Validation
+                                                                primaryContact: '{{ old('primary_contact') }}',
+                                                                contactError: '',
+                                                                isValidating: false,
+                                                                bringerContact: '{{ old('bringer_contact') }}',
+                                                                bringerContactError: '',
+                                                                bringerName: '{{ old('bringer_name') }}',
+                                                                alternateContact: '{{ old('alternate_contact') }}',
+                                                                alternateContactError: '',
+                                                                bringerConfirmed: false,
+                                                            bringerCanConfirm: false,
+                                                            bringerExistsButCantAdd: false,
+                                                            bringerSourceType: '',
+                                                            bringerFoundName: '',
+                                                            bringerChurchName: '',
+                                                            churchEvent: '{{ old('church_event') }}',
 
-                                canSubmit() {
-                                    const isCommonValid = this.fullName && this.fullName.trim() && this.primaryContact && this.primaryContact.trim() && this.selectedChurch && !this.contactError && !this.alternateContactError && !this.isValidating;
-                                    const isBringerValid = this.selectedBringerId || (this.bringerConfirmed && this.bringerName && this.bringerName.trim() && this.bringerContact && this.bringerContact.trim() && !this.bringerContactError);
-                                    return isCommonValid && isBringerValid;
-                                },
+                                                                canSubmit() {
+                                                                    const isCommonValid = this.fullName && this.fullName.trim() && this.primaryContact && this.primaryContact.trim() && this.selectedChurch && !this.contactError && !this.alternateContactError && !this.isValidating;
+                                                                    const isBringerValid = this.selectedBringerId || (this.bringerConfirmed && this.bringerName && this.bringerName.trim() && this.bringerContact && this.bringerContact.trim() && !this.bringerContactError);
+                                                                    return isCommonValid && isBringerValid;
+                                                                },
 
-                                updateGroups() {
-                                    const category = this.categories.find(c => c.id == this.selectedCategory);
-                                    this.groups = category ? category.groups : [];
-                                    this.selectedGroup = '';
-                                    this.churches = [];
-                                    this.selectedChurch = '';
-                                    this.broughtBies = [];
-                                    this.selectedBringerId = '';
-                                    this.selectedOfficer = '';
-                                },
+                                                                updateGroups() {
+                                                                    const category = this.categories.find(c => c.id == this.selectedCategory);
+                                                                    this.groups = category ? category.groups : [];
 
-                                updateChurches() {
-                                    const group = this.groups.find(g => g.id == this.selectedGroup);
-                                    this.churches = group ? group.churches : [];
-                                    this.selectedChurch = '';
-                                    this.selectedOfficer = '';
-                                },
+                                                                    // Auto-populate Church Event for OTHER CHURCHES
+                                                                    if (category && category.name && category.name.trim().toUpperCase() === 'OTHER CHURCHES') {
+                                                                        this.churchEvent = 'Service service';
+                                                                    }
 
-                                updateOfficer() {
-                                    const church = this.churches.find(c => c.id == this.selectedChurch);
-                                    if (church && church.retaining_officer_id) {
-                                        this.selectedOfficer = church.retaining_officer_id;
-                                    } else {
-                                        this.selectedOfficer = '';
-                                    }
-                                    this.loadBringers();
-                                },
+                                                                    this.selectedGroup = '';
+                                                                    this.churches = [];
+                                                                    this.selectedChurch = '';
+                                                                    this.broughtBies = [];
+                                                                    this.selectedBringerId = '';
+                                                                    this.selectedOfficer = '';
+                                                                },
 
-                                async loadBringers() {
-                                    if (!this.selectedChurch) {
-                                        this.bringers = [];
-                                        return;
-                                    }
-                                    try {
-                                        const response = await fetch(`/admin/bringers/church/${this.selectedChurch}`);
-                                        this.bringers = await response.json();
-                                    } catch (e) {
-                                        console.error('Failed to load bringers', e);
-                                    }
-                                },
+                                                                updateChurches() {
+                                                                    const group = this.groups.find(g => g.id == this.selectedGroup);
+                                                                    this.churches = group ? group.churches : [];
+                                                                    this.selectedChurch = '';
+                                                                    this.selectedOfficer = '';
+                                                                },
 
-                                async checkContact() {
-                                    const phone = this.primaryContact.trim();
-                                    if (phone.length === 0) {
-                                        this.contactError = '';
-                                        return;
-                                    }
+                                                                updateOfficer() {
+                                                                    const church = this.churches.find(c => c.id == this.selectedChurch);
+                                                                    if (church && church.retaining_officer_id) {
+                                                                        this.selectedOfficer = church.retaining_officer_id;
+                                                                    } else {
+                                                                        this.selectedOfficer = '';
+                                                                    }
+                                                                    this.loadBringers();
+                                                                },
 
-                                    // Length validation
-                                    if (phone.length !== 10) {
-                                        this.contactError = 'Phone number must be exactly 10 digits.';
-                                        return;
-                                    }
+                                                                async loadBringers() {
+                                                                    if (!this.selectedChurch) {
+                                                                        this.bringers = [];
+                                                                        return;
+                                                                    }
+                                                                    try {
+                                                                        const response = await fetch(`/admin/bringers/church/${this.selectedChurch}`);
+                                                                        this.bringers = await response.json();
+                                                                    } catch (e) {
+                                                                        console.error('Failed to load bringers', e);
+                                                                    }
+                                                                },
 
-                                    this.contactError = '';
-                                    this.isValidating = true;
-                                    try {
-                                        const response = await fetch('{{ route('admin.first-timers.check-contact') }}', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                            },
-                                            body: JSON.stringify({ 
-                                                contact: phone,
-                                                type: 'first_timer'
-                                            })
-                                        });
-                                        const data = await response.json();
-                                        this.contactError = data.exists ? data.message : '';
-                                    } catch (e) {
-                                        console.error('Validation failed', e);
-                                    } finally {
-                                        this.isValidating = false;
-                                    }
-                                },
+                                                                async checkContact() {
+                                                                    const phone = this.primaryContact.trim();
+                                                                    if (phone.length === 0) {
+                                                                        this.contactError = '';
+                                                                        return;
+                                                                    }
 
-                                checkAlternateContact() {
-                                    const phone = this.alternateContact.trim();
-                                    if (phone.length === 0) {
-                                        this.alternateContactError = '';
-                                        return;
-                                    }
-                                    if (phone.length !== 10) {
-                                        this.alternateContactError = 'Phone number must be exactly 10 digits.';
-                                        return;
-                                    }
-                                    this.alternateContactError = '';
-                                },
+                                                                    // Length validation
+                                                                    if (phone.length !== 10) {
+                                                                        this.contactError = 'Phone number must be exactly 10 digits.';
+                                                                        return;
+                                                                    }
 
-                                async checkBringerContact() {
-                                    const phone = this.bringerContact.trim();
-                                    if (phone.length === 0) {
-                                        this.bringerContactError = '';
-                                        return;
-                                    }
-                                    if (phone.length !== 10) {
-                                        this.bringerContactError = 'Phone number must be exactly 10 digits.';
-                                        return;
-                                    }
+                                                                    this.contactError = '';
+                                                                    this.isValidating = true;
+                                                                    try {
+                                                                        const response = await fetch('{{ route('admin.first-timers.check-contact') }}', {
+                                                                            method: 'POST',
+                                                                            headers: {
+                                                                                'Content-Type': 'application/json',
+                                                                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                                                            },
+                                                                            body: JSON.stringify({ 
+                                                                                contact: phone,
+                                                                                type: 'first_timer'
+                                                                            })
+                                                                        });
+                                                                        const data = await response.json();
+                                                                        this.contactError = data.exists ? data.message : '';
+                                                                    } catch (e) {
+                                                                        console.error('Validation failed', e);
+                                                                    } finally {
+                                                                        this.isValidating = false;
+                                                                    }
+                                                                },
 
-                                    this.bringerContactError = '';
-                                    try {
-                                        const response = await fetch('{{ route('admin.bringers.check-contact') }}', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                            },
-                                            body: JSON.stringify({ contact: phone })
-                                        });
-                                        const data = await response.json();
-                                        this.bringerContactError = data.exists ? data.message : '';
-                                    } catch (e) {
-                                        console.error('Validation failed', e);
-                                    }
-                                }
-                            }">
+                                                                checkAlternateContact() {
+                                                                    const phone = this.alternateContact.trim();
+                                                                    if (phone.length === 0) {
+                                                                        this.alternateContactError = '';
+                                                                        return;
+                                                                    }
+                                                                    if (phone.length !== 10) {
+                                                                        this.alternateContactError = 'Phone number must be exactly 10 digits.';
+                                                                        return;
+                                                                    }
+                                                                    this.alternateContactError = '';
+                                                                },
+
+                                                                async checkBringerContact() {
+                                                                    const phone = this.bringerContact.trim();
+                                                                    if (phone.length === 0) {
+                                                                        this.bringerContactError = '';
+                                                                        return;
+                                                                    }
+                                                                    if (phone.length !== 10) {
+                                                                        this.bringerContactError = 'Phone number must be exactly 10 digits.';
+                                                                        return;
+                                                                    }
+
+                                                                    this.bringerContactError = '';
+                                                                    this.bringerCanConfirm = false;
+                                                                    try {
+                                                                        const response = await fetch('{{ route('admin.bringers.check-contact') }}', {
+                                                                            method: 'POST',
+                                                                            headers: {
+                                                                                'Content-Type': 'application/json',
+                                                                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                                                            },
+                                                                            body: JSON.stringify({ 
+                                                                                contact: phone,
+                                                                                church_id: this.selectedChurch
+                                                                            })
+                                                                        });
+                                                                        const data = await response.json();
+                                                                        this.bringerContactError = data.exists ? data.message : '';
+                                                                        if (data.exists) {
+                                                                            if (data.can_confirm) {
+                                                                                this.bringerCanConfirm = true;
+                                                                                this.bringerExistsButCantAdd = false;
+                                                                                // Auto-sync name if confirmable
+                                                                                this.bringerName = data.name;
+                                                                            } else {
+                                                                                this.bringerCanConfirm = false;
+                                                                                this.bringerExistsButCantAdd = true;
+                                                                            }
+                                                                            this.bringerSourceType = data.type;
+                                                                            this.bringerFoundName = data.name;
+                                                                            this.bringerChurchName = data.church_name;
+                                                                        }
+                                                                } catch (e) {
+                                                                    console.error('Validation failed', e);
+                                                                }
+                                                            },
+                                                                confirmExistingAsBringer() {
+                                                                    this.bringerName = this.bringerFoundName;
+                                                                    this.bringerConfirmed = true;
+                                                                    this.bringerCanConfirm = false;
+                                                                    this.bringerContactError = '';
+                                                                }
+                                                            }">
                 @csrf
 
                 <div class="flex items-center gap-2 mb-4 pb-2 border-b dark:border-slate-800">
@@ -321,7 +357,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Church Event</label>
-                        <input type="text" name="church_event" value="{{ old('church_event') }}"
+                        <input type="text" name="church_event" x-model="churchEvent"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
                             placeholder="e.g., Sunday Service">
                     </div>
@@ -371,14 +407,25 @@
                                 @input.debounce.500ms="checkBringerContact()" minlength="10" maxlength="20"
                                 class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 :class="bringerContactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''">
-                            <p x-show="bringerContactError" x-text="bringerContactError"
-                                class="mt-1 text-[10px] text-red-600" style="display: none;"></p>
-
-                            <div x-show="!selectedBringerId && bringerName.trim() && bringerContact.trim() && !bringerContactError"
+                            <div class="mt-1 flex items-center gap-2">
+                                <p x-show="bringerContactError" x-text="bringerContactError" style="display: none;"
+                                    class="text-[10px] text-red-600 dark:text-red-400 font-medium">
+                                </p>
+                                <span x-show="bringerExistsButCantAdd" style="display: none;"
+                                    class="px-2 py-0.5 bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400 rounded text-[9px] font-bold uppercase">can't
+                                    add</span>
+                            </div>
+                            <div x-show="!selectedBringerId && bringerName.trim() && bringerContact.trim() && (!bringerContactError || bringerCanConfirm)"
                                 style="display: none;" class="mt-2">
-                                <button type="button" @click="bringerConfirmed = true" x-show="!bringerConfirmed"
-                                    class="text-[10px] px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition">
-                                    Use this Bringer
+                                <button type="button" @click="confirmExistingAsBringer()"
+                                    x-show="bringerCanConfirm && !bringerConfirmed"
+                                    class="text-[10px] px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition font-bold uppercase shadow-sm">
+                                    ADD AS BRINGER
+                                </button>
+                                <button type="button" @click="bringerConfirmed = true"
+                                    x-show="!bringerConfirmed && !bringerCanConfirm"
+                                    class="text-[10px] px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition font-bold uppercase shadow-sm">
+                                    ADD AS BRINGER
                                 </button>
                                 <p x-show="bringerConfirmed" class="text-[10px] text-green-600 flex items-center gap-1">
                                     <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

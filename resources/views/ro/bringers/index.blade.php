@@ -26,7 +26,7 @@
             </div>
 
             <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6">
                     <div
                         class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
                         <div class="space-y-1">
@@ -38,7 +38,11 @@
                                                             class="font-semibold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{{ $bringer->name }}</span>
                                                         @if($bringer->is_ro)
                                                             <span
-                                                                class="px-2 py-0.5 text-[10px] bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 rounded-full font-bold uppercase">RO</span>
+                                                                class="px-2 py-0.5 text-[9px] bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 rounded-full font-bold uppercase transition-all duration-300">RO &middot; Bringer</span>
+                                                        @endif
+                                                        @if($bringer->user && $bringer->user->hasRole('Member'))
+                                                            <span
+                                                                class="px-2 py-0.5 text-[9px] bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full font-bold uppercase">Member</span>
                                                         @endif
                                                     </div>
 

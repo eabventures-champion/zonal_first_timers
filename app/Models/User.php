@@ -99,6 +99,16 @@ class User extends Authenticatable
         return $this->hasOne(Bringer::class);
     }
 
+    public function firstTimer(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(FirstTimer::class);
+    }
+
+    public function member(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Member::class);
+    }
+
     /**
      * Check if this user is also a bringer (via direct user_id link or via RO church assignment).
      */

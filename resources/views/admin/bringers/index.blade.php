@@ -70,7 +70,7 @@
                                     </span>
                                 </h3>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                                     @foreach($group->churches as $church)
                                         @php
                                             $bringerCount = $church->bringers->sum(fn($b) => $b->firstTimers->count());
@@ -108,11 +108,15 @@
                                                                     <div class="flex items-center gap-2">
                                                                         <span
                                                                             class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{{ $bringer->name }}</span>
-                                                                        @if($bringer->is_ro)
-                                                                            <span
-                                                                                class="px-2 py-0.5 text-[10px] bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 rounded-full font-bold uppercase">RO</span>
-                                                                        @endif
-                                                                    </div>
+                                                                         @if($bringer->is_ro)
+                                                                             <span
+                                                                                 class="px-2 py-0.5 text-[9px] bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 rounded-full font-bold uppercase transition-all duration-300">RO &middot; Bringer</span>
+                                                                         @endif
+                                                                         @if($bringer->user && $bringer->user->hasRole('Member'))
+                                                                             <span
+                                                                                 class="px-2 py-0.5 text-[9px] bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full font-bold uppercase">Member</span>
+                                                                         @endif
+                                                                     </div>
 
                                                                     <div class="flex items-center gap-1 cursor-pointer"
                                                                         @click="openModal('{{ addslashes($bringer->name) }}', {{ 

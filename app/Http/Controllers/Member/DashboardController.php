@@ -38,6 +38,39 @@ class DashboardController extends Controller
             'foundationAttendances.foundationClass'
         ]);
 
-        return view('member.dashboard', compact('record', 'member', 'firstTimer'));
+        // Bringer Data if applicable
+        $isBringer = $user->isBringer();
+        $bringer = null;
+        $firstTimers = collect();
+        $bringerStats = [];
+
+        if ($isBringer) {
+            $bringer = \App\Models\Bringer::where('user_id', $user->id)->first();
+            if ($bringer) {
+                $fts = $bringer->firstTimers()
+                    ->with(['church', 'weeklyAttendances', 'foundationAttendances'])
+                    ->get();
+
+                $mbs = $bringer->members()
+                    ->with(['church', 'weeklyAttendances', 'foundationAttendances'])
+                    ->get();
+
+                $allSouls = $fts->concat($mbs)->sortByDesc('date_of_visit');
+
+                $bringerStats = [
+                    'total_souls' => $allSouls->count(),
+                    'retained' => $allSouls->where('status', 'Retained')->count(),
+                    'developing' => $allSouls->where('status', 'Developing')->count(),
+                    'new' => $allSouls->where('status', 'New')->count(),
+                ];
+
+                // Keep variable names consistent for the view if possible, or update view
+                $firstTimers = $allSouls;
+            }
+        }
+
+        $foundationClasses = \App\Models\FoundationClass::ordered()->get();
+
+        return view('member.dashboard', compact('record', 'member', 'firstTimer', 'isBringer', 'bringer', 'firstTimers', 'bringerStats', 'foundationClasses'));
     }
 }

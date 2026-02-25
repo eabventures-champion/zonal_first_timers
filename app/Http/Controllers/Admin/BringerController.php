@@ -25,7 +25,8 @@ class BringerController extends Controller
                     $q->has('firstTimers')->orHas('members');
                 },
                 'bringers.firstTimers',
-                'bringers.members'
+                'bringers.members',
+                'bringers.user.roles'
             ])->findOrFail($churchId);
             return view('ro.bringers.index', compact('church'));
         }
@@ -34,7 +35,7 @@ class BringerController extends Controller
             'groups.churches.bringers' => function ($q) {
                 $q->where(function ($query) {
                     $query->has('firstTimers')->orHas('members');
-                })->with(['firstTimers', 'members']);
+                })->with(['firstTimers', 'members', 'user.roles']);
             }
         ])->get();
 
@@ -65,6 +66,7 @@ class BringerController extends Controller
     public function checkContact(Request $request)
     {
         $contact = $request->contact;
+        $churchId = $request->church_id;
 
         $bringerExists = Bringer::where('contact', $contact)->exists();
         if ($bringerExists) {
@@ -83,17 +85,35 @@ class BringerController extends Controller
         if ($exists) {
             $name = $user ? $user->name : ($member ? $member->full_name : $ft->full_name);
             $type = '';
+            $isSameChurch = false;
+            $churchName = '';
+
             if ($user) {
                 $type = $user->getRoleNames()->implode(', ') ?: 'System User';
+                $isSameChurch = $churchId && $user->church_id == $churchId;
+                $churchName = $user->church->name ?? 'Unknown Church';
             } elseif ($member) {
                 $type = 'Member';
+                $isSameChurch = $churchId && $member->church_id == $churchId;
+                $churchName = $member->church->name ?? 'Unknown Church';
             } else {
                 $type = 'First Timer';
+                $isSameChurch = $churchId && $ft->church_id == $churchId;
+                $churchName = $ft->church->name ?? 'Unknown Church';
             }
+
+            // Only allow confirming if they are in the same church
+            $canConfirm = $isSameChurch;
 
             return response()->json([
                 'exists' => true,
-                'message' => "This contact belongs to an existing {$name} ({$type})."
+                'can_confirm' => $canConfirm,
+                'name' => $name,
+                'type' => $type,
+                'church_name' => $churchName,
+                'message' => $isSameChurch
+                    ? "This contact belongs to an existing {$name} ({$type}) in this church."
+                    : "This contact belongs to an existing {$name} ({$type}) in {$churchName}."
             ]);
         }
 
