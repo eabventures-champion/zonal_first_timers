@@ -134,11 +134,40 @@ class DashboardService
             ->orderBy('month')
             ->get();
 
-        // Get all months in range
-        $months = $results->pluck('month')->unique()->sort()->values()->toArray();
+        // Determine start date based on period
+        $startDate = now();
+        $count = 6;
+        switch ($period) {
+            case 'this_month':
+                $startDate = now()->startOfMonth();
+                $count = 1;
+                break;
+            case 'this_year':
+                $startDate = now()->startOfYear();
+                $count = now()->month;
+                break;
+            case 'last_year':
+                $startDate = now()->subYear()->startOfYear();
+                $count = 12;
+                break;
+            case 'last_6_months':
+            default:
+                $startDate = now()->subMonths(5)->startOfMonth();
+                $count = 6;
+                break;
+        }
 
-        // Get all unique categories from results
+        // Generate all months in range
+        $months = [];
+        for ($i = 0; $i < $count; $i++) {
+            $months[] = $startDate->copy()->addMonths($i)->format('Y-m');
+        }
+
+        // Get all unique categories from results OR from DB to ensure consistency
         $categories = $results->pluck('category_name')->unique()->toArray();
+        if (empty($categories)) {
+            $categories = ChurchCategory::pluck('name')->toArray();
+        }
 
         $series = [];
         foreach ($categories as $catName) {
@@ -159,7 +188,7 @@ class DashboardService
         return [
             'labels' => $monthNames,
             'series' => $series,
-            'months' => $months // raw months for target mapping
+            'months' => $months
         ];
     }
 
