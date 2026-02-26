@@ -68,7 +68,12 @@ class ChurchHierarchyService
                 $q->with(['retainingOfficer'])->withStats();
             },
             'category'
-        ])->get();
+        ])
+            ->join('church_categories', 'church_groups.church_category_id', '=', 'church_categories.id')
+            ->orderByRaw("CASE WHEN church_categories.name = 'MAIN CHURCH' THEN 0 ELSE 1 END")
+            ->orderBy('church_categories.name')
+            ->select('church_groups.*')
+            ->get();
     }
 
     public function deleteGroup(ChurchGroup $group): void
