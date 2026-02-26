@@ -80,11 +80,11 @@
         {{-- Upcoming Birthdays —— Grouped by Church Group --}}
         <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col h-full"
             x-data="{
-                                            showModal: false,
-                                            selected: null,
-                                            open(person) { this.selected = person; this.showModal = true; },
-                                            close() { this.showModal = false; this.selected = null; }
-                                        }">
+                                                            showModal: false,
+                                                            selected: null,
+                                                            open(person) { this.selected = person; this.showModal = true; },
+                                                            close() { this.showModal = false; this.selected = null; }
+                                                        }">
             <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">🎂 Birthday Reminders</h3>
                 <span class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">This Month &
@@ -113,21 +113,21 @@
                         <div x-show="expanded" x-collapse class="divide-y divide-gray-50 dark:divide-slate-800/50">
                             @foreach($people as $person)
                                 <div @click="open({
-                                                                                                                            full_name: '{{ addslashes($person->full_name) }}',
-                                                                                                                            date_of_birth: '{{ \Carbon\Carbon::parse($person->date_of_birth)->format('M d') }}',
-                                                                                                                            primary_contact: '{{ addslashes($person->primary_contact ?? 'N/A') }}',
-                                                                                                                            type: '{{ $person->type }}',
-                                                                                                                            status: '{{ addslashes($person->status ?? '') }}',
-                                                                                                                            church_name: '{{ addslashes($person->church_name) }}',
-                                                                                                                            group_name: '{{ addslashes($person->group_name) }}',
-                                                                                                                            days_until: {{ $person->days_until }},
-                                                                                                                            already_passed: {{ $person->already_passed ? 'true' : 'false' }}
-                                                                                                                        })"
+                                                                                                                                                                            full_name: '{{ addslashes($person->full_name) }}',
+                                                                                                                                                                            date_of_birth: '{{ \Carbon\Carbon::parse($person->date_of_birth)->format('M d') }}',
+                                                                                                                                                                            primary_contact: '{{ addslashes($person->primary_contact ?? 'N/A') }}',
+                                                                                                                                                                            type: '{{ $person->type }}',
+                                                                                                                                                                            status: '{{ addslashes($person->status ?? '') }}',
+                                                                                                                                                                            church_name: '{{ addslashes($person->church_name) }}',
+                                                                                                                                                                            group_name: '{{ addslashes($person->group_name) }}',
+                                                                                                                                                                            days_until: {{ $person->days_until }},
+                                                                                                                                                                            already_passed: {{ $person->already_passed ? 'true' : 'false' }}
+                                                                                                                                                                        })"
                                     class="flex items-center justify-between px-5 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer {{ $person->already_passed ? 'opacity-50' : '' }}">
                                     <div class="flex items-center gap-3">
                                         <div
                                             class="w-8 h-8 rounded-full flex items-center justify-center text-sm
-                                                                                                                                {{ $person->days_until === 0 ? 'bg-pink-100 dark:bg-pink-500/10' : ($person->already_passed ? 'bg-gray-100 dark:bg-slate-800' : 'bg-indigo-50 dark:bg-indigo-500/10') }}">
+                                                                                                                                                                                {{ $person->days_until === 0 ? 'bg-pink-100 dark:bg-pink-500/10' : ($person->already_passed ? 'bg-gray-100 dark:bg-slate-800' : 'bg-indigo-50 dark:bg-indigo-500/10') }}">
                                             {{ $person->days_until === 0 ? '🎉' : '🎂' }}
                                         </div>
                                         <div class="min-w-0">
@@ -487,270 +487,257 @@
                             y: {
                                 formatter: function (val, { series, seriesIndex, dataPointIndex, w }) {
                                     if (w.config.series[seriesIndex].name === 'Target') {
-                                        return val;
+                                        return `<span class="font-bold underline">${val}</span>`;
                                     }
 
-                                    // Calculate total for this month (excluding target)
-                                    let monthTotal = 0;
-                                    for (let i = 0; i < categorySeries.length; i++) {
-                                        monthTotal += series[i][dataPointIndex];
+                                    const percentage = ((val / targetValue) * 100).toFixed(1);
+                                    return `<span style="color: #eab308; font-weight: 600;">${val} out of ${targetValue} (${percentage}%)</span>`;
+                                            }
+                                        }
+                                    },
+                                    legend: {
+                                        show: true,
+                                        position: 'top',
+                                        horizontalAlign: 'right',
+                                        labels: { colors: '#94a3b8' }
                                     }
+                                };
 
-                                    const percentage = monthTotal > 0 ? ((val / monthTotal) * 100).toFixed(1) : 0;
-                                    const targetPercent = ((monthTotal / targetValue) * 100).toFixed(0);
+                                const chart = new ApexCharts(document.querySelector("#trendChart"), options);
 
-                                    if (seriesIndex === categorySeries.length - 1) {
-                                        // Add a summary line in the last category tooltip
-                                        return `${val} (${percentage}%) <br><small class="text-gray-400">Total: ${monthTotal} (${targetPercent}% of target)</small>`;
+                                setTimeout(() => {
+                                    chart.render();
+                                    window.dispatchEvent(new Event('resize'));
+                                }, 100);
+
+                                const resizeObserver = new ResizeObserver(() => {
+                                    if (chart && typeof chart.windowResize === 'function') {
+                                        chart.windowResize();
                                     }
-
-                                    return `${val} (${percentage}%)`;
+                                });
+                                const chartImpactContainer = document.querySelector("#trendChart");
+                                if (chartImpactContainer) {
+                                    resizeObserver.observe(chartImpactContainer);
                                 }
-                            }
-                        },
-                        legend: {
-                            show: true,
-                            position: 'top',
-                            horizontalAlign: 'right',
-                            labels: { colors: '#94a3b8' }
-                        }
-                    };
 
-                    const chart = new ApexCharts(document.querySelector("#trendChart"), options);
+                                window.addEventListener('toggle-chart', (e) => {
+                                    const newType = e.detail;
+                                    const newSeries = getSeries(newType);
 
-                    setTimeout(() => {
-                        chart.render();
-                        window.dispatchEvent(new Event('resize'));
-                    }, 100);
+                                    chart.updateOptions({
+                                        chart: { type: newType === 'area' ? 'area' : 'bar' },
+                                        series: newSeries,
+                                        stroke: { width: newType === 'area' ? 3 : 0 },
+                                        fill: {
+                                            type: newType === 'area' ? 'gradient' : 'solid'
+                                        }
+                                    });
 
-                    const resizeObserver = new ResizeObserver(() => {
-                        if (chart && typeof chart.windowResize === 'function') {
-                            chart.windowResize();
-                        }
-                    });
-                    const chartImpactContainer = document.querySelector("#trendChart");
-                    if (chartImpactContainer) {
-                        resizeObserver.observe(chartImpactContainer);
-                    }
+                                    setTimeout(() => {
+                                        chart.windowResize();
+                                        window.dispatchEvent(new Event('resize'));
+                                    }, 50);
+                                });
 
-                    window.addEventListener('toggle-chart', (e) => {
-                        const newType = e.detail;
-                        const newSeries = getSeries(newType);
-
-                        chart.updateOptions({
-                            chart: { type: newType === 'area' ? 'area' : 'bar' },
-                            series: newSeries,
-                            stroke: { width: newType === 'area' ? 3 : 0 },
-                            fill: {
-                                type: newType === 'area' ? 'gradient' : 'solid'
-                            }
-                        });
-
-                        setTimeout(() => {
-                            chart.windowResize();
-                            window.dispatchEvent(new Event('resize'));
-                        }, 50);
-                    });
-
-                    window.addEventListener('storage', (e) => {
-                        if (e.key === 'darkMode') {
-                            chart.updateOptions({
-                                tooltip: { theme: e.newValue === 'true' ? 'dark' : 'light' },
-                                grid: { borderColor: e.newValue === 'true' ? '#1e293b' : '#f1f5f9' }
+                                window.addEventListener('storage', (e) => {
+                                    if (e.key === 'darkMode') {
+                                        chart.updateOptions({
+                                            tooltip: { theme: e.newValue === 'true' ? 'dark' : 'light' },
+                                            grid: { borderColor: e.newValue === 'true' ? '#1e293b' : '#f1f5f9' }
+                                        });
+                                    }
+                                });
                             });
-                        }
-                    });
-                });
-            </script>
+                        </script>
         @endpush
     @endif
 
 
-    {{-- Church Performance Hierarchy --}}
-    <div
-        class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden mt-20">
-        <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
-            <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">Church Performance Hierarchy</h3>
-            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sorted by Retention Rate</span>
-        </div>
+        {{-- Church Performance Hierarchy --}}
+        <div
+            class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden mt-20">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">Church Performance Hierarchy</h3>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sorted by Retention Rate</span>
+            </div>
 
-        <div class="p-4 space-y-4">
-            @forelse($churchPerformance as $category)
-                <div x-data="{ expanded: false }"
-                    class="border border-gray-100 dark:border-slate-800 rounded-lg overflow-hidden transition-all">
-                    <button @click="expanded = !expanded"
-                        class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <span class="p-1 rounded-md bg-white dark:bg-slate-900 text-gray-400 shadow-sm">
-                                <svg class="w-4 h-4 transition-transform" :class="expanded ? 'rotate-90' : ''" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </span>
-                            <span
-                                class="font-bold text-gray-900 dark:text-slate-200 text-sm tracking-tight">{{ $category['name'] }}</span>
-                            <span class="text-[10px] text-gray-500 font-medium">({{ $category['total_churches'] ?? 0 }}
-                                Churches)</span>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <div class="text-[10px] text-gray-500 dark:text-slate-400 flex items-center gap-1">
-                                <span class="font-semibold">AVG Retention:</span>
+            <div class="p-4 space-y-4">
+                @forelse($churchPerformance as $category)
+                    <div x-data="{ expanded: false }"
+                        class="border border-gray-100 dark:border-slate-800 rounded-lg overflow-hidden transition-all">
+                        <button @click="expanded = !expanded"
+                            class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <span class="p-1 rounded-md bg-white dark:bg-slate-900 text-gray-400 shadow-sm">
+                                    <svg class="w-4 h-4 transition-transform" :class="expanded ? 'rotate-90' : ''" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </span>
                                 <span
-                                    class="text-emerald-600 dark:text-emerald-400 font-bold">{{ $category['total_retention'] }}%</span>
+                                    class="font-bold text-gray-900 dark:text-slate-200 text-sm tracking-tight">{{ $category['name'] }}</span>
+                                <span class="text-[10px] text-gray-500 font-medium">({{ $category['total_churches'] ?? 0 }}
+                                    Churches)</span>
                             </div>
-                        </div>
-                    </button>
+                            <div class="flex items-center gap-4">
+                                <div class="text-[10px] text-gray-500 dark:text-slate-400 flex items-center gap-1">
+                                    <span class="font-semibold">AVG Retention:</span>
+                                    <span
+                                        class="text-emerald-600 dark:text-emerald-400 font-bold">{{ $category['total_retention'] }}%</span>
+                                </div>
+                            </div>
+                        </button>
 
-                    <div x-show="expanded" x-collapse>
-                        <div class="p-4 space-y-6">
-                            @foreach($category['groups'] as $group)
-                                <div x-data="{ expanded: true }" class="ml-4">
-                                    <button @click="expanded = !expanded"
-                                        class="flex items-center justify-between w-full mb-3 group/grp">
-                                        <div class="flex items-center gap-2">
-                                            <svg class="w-3 h-3 text-gray-400 transition-transform group-hover/grp:text-indigo-500"
-                                                :class="expanded ? 'rotate-90' : ''" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 5l7 7-7 7" />
-                                            </svg>
-                                            <span
-                                                class="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover/grp:text-indigo-600 transition-colors">{{ $group['name'] }}</span>
-                                            <span class="text-[10px] text-gray-400 font-normal">({{ count($group['churches']) }}
-                                                Churches)</span>
-                                        </div>
-                                        <div class="text-[10px] font-medium text-gray-500 dark:text-slate-400 italic">Group
-                                            Performance: {{ $group['total_retention'] }}%</div>
-                                    </button>
+                        <div x-show="expanded" x-collapse>
+                            <div class="p-4 space-y-6">
+                                @foreach($category['groups'] as $group)
+                                    <div x-data="{ expanded: true }" class="ml-4">
+                                        <button @click="expanded = !expanded"
+                                            class="flex items-center justify-between w-full mb-3 group/grp">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-3 h-3 text-gray-400 transition-transform group-hover/grp:text-indigo-500"
+                                                    :class="expanded ? 'rotate-90' : ''" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M9 5l7 7-7 7" />
+                                                </svg>
+                                                <span
+                                                    class="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover/grp:text-indigo-600 transition-colors">{{ $group['name'] }}</span>
+                                                <span class="text-[10px] text-gray-400 font-normal">({{ count($group['churches']) }}
+                                                    Churches)</span>
+                                            </div>
+                                            <div class="text-[10px] font-medium text-gray-500 dark:text-slate-400 italic">Group
+                                                Performance: {{ $group['total_retention'] }}%</div>
+                                        </button>
 
-                                    <div x-show="expanded" x-collapse class="ml-5 border-l-2 border-gray-100 dark:border-slate-800">
+                                        <div x-show="expanded" x-collapse class="ml-5 border-l-2 border-gray-100 dark:border-slate-800">
 
-                                        {{-- Desktop Table --}}
-                                        <div class="hidden lg:block overflow-x-auto">
-                                            <table class="w-full text-[13px]">
-                                                <thead class="bg-gray-50/50 dark:bg-slate-800/30">
-                                                    <tr
-                                                        class="text-left text-[11px] text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                                                        <th class="px-4 py-2 font-medium">Church</th>
-                                                        <th class="px-4 py-2 font-medium">Officer</th>
-                                                        <th class="px-4 py-2 text-center font-medium">Total FT</th>
-                                                        <th class="px-4 py-2 text-center font-medium">New FT</th>
-                                                        <th class="px-4 py-2 text-center font-medium">Developing</th>
-                                                        <th class="px-4 py-2 text-center font-medium">Members</th>
-                                                        <th class="px-4 py-2 text-center font-medium">Retention</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody class="divide-y divide-gray-50 dark:divide-slate-800">
-                                                    @foreach($group['churches'] as $church)
+                                            {{-- Desktop Table --}}
+                                            <div class="hidden lg:block overflow-x-auto">
+                                                <table class="w-full text-[13px]">
+                                                    <thead class="bg-gray-50/50 dark:bg-slate-800/30">
                                                         <tr
-                                                            class="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors group/item">
-                                                            <td class="px-4 py-2.5 font-medium text-gray-900 dark:text-slate-200">
-                                                                {{ $church['name'] }}
-                                                            </td>
-                                                            <td class="px-4 py-2.5 text-gray-500 dark:text-slate-400">
-                                                                {{ $church['retaining_officer'] }}
-                                                            </td>
-                                                            <td
-                                                                class="px-4 py-2.5 text-center text-gray-600 dark:text-slate-400 font-semibold">
-                                                                {{ $church['total_first_timers'] }}
-                                                            </td>
-                                                            <td class="px-4 py-2.5 text-center">
-                                                                <span
-                                                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{{ $church['new'] }}</span>
-                                                            </td>
-                                                            <td class="px-4 py-2.5 text-center">
-                                                                <span
-                                                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{ $church['developing'] }}</span>
-                                                            </td>
-                                                            <td class="px-4 py-2.5 text-center">
-                                                                <span
-                                                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{{ $church['members'] }}</span>
-                                                            </td>
-                                                            <td
-                                                                class="px-4 py-2.5 text-center font-bold {{ $church['retention_rate'] >= 50 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
-                                                                {{ $church['retention_rate'] }}%
-                                                            </td>
+                                                            class="text-left text-[11px] text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                                                            <th class="px-4 py-2 font-medium">Church</th>
+                                                            <th class="px-4 py-2 font-medium">Officer</th>
+                                                            <th class="px-4 py-2 text-center font-medium">Total FT</th>
+                                                            <th class="px-4 py-2 text-center font-medium">New FT</th>
+                                                            <th class="px-4 py-2 text-center font-medium">Developing</th>
+                                                            <th class="px-4 py-2 text-center font-medium">Members</th>
+                                                            <th class="px-4 py-2 text-center font-medium">Retention</th>
                                                         </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-gray-50 dark:divide-slate-800">
+                                                        @foreach($group['churches'] as $church)
+                                                            <tr
+                                                                class="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors group/item">
+                                                                <td class="px-4 py-2.5 font-medium text-gray-900 dark:text-slate-200">
+                                                                    {{ $church['name'] }}
+                                                                </td>
+                                                                <td class="px-4 py-2.5 text-gray-500 dark:text-slate-400">
+                                                                    {{ $church['retaining_officer'] }}
+                                                                </td>
+                                                                <td
+                                                                    class="px-4 py-2.5 text-center text-gray-600 dark:text-slate-400 font-semibold">
+                                                                    {{ $church['total_first_timers'] }}
+                                                                </td>
+                                                                <td class="px-4 py-2.5 text-center">
+                                                                    <span
+                                                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{{ $church['new'] }}</span>
+                                                                </td>
+                                                                <td class="px-4 py-2.5 text-center">
+                                                                    <span
+                                                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{ $church['developing'] }}</span>
+                                                                </td>
+                                                                <td class="px-4 py-2.5 text-center">
+                                                                    <span
+                                                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{{ $church['members'] }}</span>
+                                                                </td>
+                                                                <td
+                                                                    class="px-4 py-2.5 text-center font-bold {{ $church['retention_rate'] >= 50 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
+                                                                    {{ $church['retention_rate'] }}%
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
 
-                                        {{-- Mobile Card List --}}
-                                        <div class="lg:hidden space-y-3 p-1">
-                                            @foreach($group['churches'] as $church)
-                                                <div
-                                                    class="bg-gray-50/50 dark:bg-slate-800/40 rounded-xl p-3 border border-gray-100 dark:border-slate-800/60 shadow-sm">
-                                                    <div class="flex items-center justify-between mb-3">
-                                                        <div>
-                                                            <h4 class="text-sm font-bold text-gray-900 dark:text-slate-200">
-                                                                {{ $church['name'] }}
-                                                            </h4>
-                                                            <p class="text-[10px] text-gray-500 dark:text-slate-500 font-medium">RO:
-                                                                {{ $church['retaining_officer'] }}
-                                                            </p>
-                                                        </div>
-                                                        <div class="text-right">
-                                                            <div
-                                                                class="text-[14px] font-black {{ $church['retention_rate'] >= 50 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
-                                                                {{ $church['retention_rate'] }}%
+                                            {{-- Mobile Card List --}}
+                                            <div class="lg:hidden space-y-3 p-1">
+                                                @foreach($group['churches'] as $church)
+                                                    <div
+                                                        class="bg-gray-50/50 dark:bg-slate-800/40 rounded-xl p-3 border border-gray-100 dark:border-slate-800/60 shadow-sm">
+                                                        <div class="flex items-center justify-between mb-3">
+                                                            <div>
+                                                                <h4 class="text-sm font-bold text-gray-900 dark:text-slate-200">
+                                                                    {{ $church['name'] }}
+                                                                </h4>
+                                                                <p class="text-[10px] text-gray-500 dark:text-slate-500 font-medium">RO:
+                                                                    {{ $church['retaining_officer'] }}
+                                                                </p>
                                                             </div>
-                                                            <div class="text-[8px] text-gray-400 uppercase tracking-tighter font-bold">
-                                                                Retention</div>
+                                                            <div class="text-right">
+                                                                <div
+                                                                    class="text-[14px] font-black {{ $church['retention_rate'] >= 50 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
+                                                                    {{ $church['retention_rate'] }}%
+                                                                </div>
+                                                                <div class="text-[8px] text-gray-400 uppercase tracking-tighter font-bold">
+                                                                    Retention</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="grid grid-cols-4 gap-2">
+                                                            <div
+                                                                class="bg-white dark:bg-slate-900/60 p-1.5 rounded-lg text-center border border-gray-100 dark:border-slate-800/40">
+                                                                <div class="text-[11px] font-bold text-gray-700 dark:text-slate-300">
+                                                                    {{ $church['total_first_timers'] }}
+                                                                </div>
+                                                                <div
+                                                                    class="text-[8px] text-gray-400 dark:text-slate-500 uppercase tracking-tighter font-bold">
+                                                                    Total</div>
+                                                            </div>
+                                                            <div
+                                                                class="bg-amber-50 dark:bg-amber-900/20 p-1.5 rounded-lg text-center border border-amber-100 dark:border-amber-800/40">
+                                                                <div class="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                                                                    {{ $church['new'] }}
+                                                                </div>
+                                                                <div
+                                                                    class="text-[8px] text-amber-600 dark:text-amber-500 uppercase tracking-tighter font-bold">
+                                                                    New</div>
+                                                            </div>
+                                                            <div
+                                                                class="bg-blue-50 dark:bg-blue-900/20 p-1.5 rounded-lg text-center border border-blue-100 dark:border-blue-800/40">
+                                                                <div class="text-[11px] font-bold text-blue-700 dark:text-blue-400">
+                                                                    {{ $church['developing'] }}
+                                                                </div>
+                                                                <div
+                                                                    class="text-[8px] text-blue-600 dark:text-blue-500 uppercase tracking-tighter font-bold">
+                                                                    Dev</div>
+                                                            </div>
+                                                            <div
+                                                                class="bg-emerald-50 dark:bg-emerald-900/20 p-1.5 rounded-lg text-center border border-emerald-100 dark:border-emerald-800/40">
+                                                                <div class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                                                                    {{ $church['members'] }}
+                                                                </div>
+                                                                <div
+                                                                    class="text-[8px] text-emerald-600 dark:text-emerald-500 uppercase tracking-tighter font-bold">
+                                                                    Ret</div>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div class="grid grid-cols-4 gap-2">
-                                                        <div
-                                                            class="bg-white dark:bg-slate-900/60 p-1.5 rounded-lg text-center border border-gray-100 dark:border-slate-800/40">
-                                                            <div class="text-[11px] font-bold text-gray-700 dark:text-slate-300">
-                                                                {{ $church['total_first_timers'] }}
-                                                            </div>
-                                                            <div
-                                                                class="text-[8px] text-gray-400 dark:text-slate-500 uppercase tracking-tighter font-bold">
-                                                                Total</div>
-                                                        </div>
-                                                        <div
-                                                            class="bg-amber-50 dark:bg-amber-900/20 p-1.5 rounded-lg text-center border border-amber-100 dark:border-amber-800/40">
-                                                            <div class="text-[11px] font-bold text-amber-700 dark:text-amber-400">
-                                                                {{ $church['new'] }}
-                                                            </div>
-                                                            <div
-                                                                class="text-[8px] text-amber-600 dark:text-amber-500 uppercase tracking-tighter font-bold">
-                                                                New</div>
-                                                        </div>
-                                                        <div
-                                                            class="bg-blue-50 dark:bg-blue-900/20 p-1.5 rounded-lg text-center border border-blue-100 dark:border-blue-800/40">
-                                                            <div class="text-[11px] font-bold text-blue-700 dark:text-blue-400">
-                                                                {{ $church['developing'] }}
-                                                            </div>
-                                                            <div
-                                                                class="text-[8px] text-blue-600 dark:text-blue-500 uppercase tracking-tighter font-bold">
-                                                                Dev</div>
-                                                        </div>
-                                                        <div
-                                                            class="bg-emerald-50 dark:bg-emerald-900/20 p-1.5 rounded-lg text-center border border-emerald-100 dark:border-emerald-800/40">
-                                                            <div class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                                                                {{ $church['members'] }}
-                                                            </div>
-                                                            <div
-                                                                class="text-[8px] text-emerald-600 dark:text-emerald-500 uppercase tracking-tighter font-bold">
-                                                                Ret</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @endforeach
+                                                @endforeach
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            @endforeach
+                                @endforeach
+                            </div>
                         </div>
                     </div>
-                </div>
-            @empty
-                <div class="py-12 text-center text-gray-400 dark:text-slate-600">
-                    <p class="text-sm">No data found.</p>
-                </div>
-            @endforelse
+                @empty
+                    <div class="py-12 text-center text-gray-400 dark:text-slate-600">
+                        <p class="text-sm">No data found.</p>
+                    </div>
+                @endforelse
+            </div>
         </div>
-    </div>
 @endsection
