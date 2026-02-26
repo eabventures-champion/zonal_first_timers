@@ -4,9 +4,9 @@
 
 @section('content')
     <div class="flex items-center justify-between mb-6">
-        <p class="text-sm text-gray-500">Manage individual churches</p>
+        <p class="text-sm text-gray-500 hidden sm:block">Manage individual churches</p>
         <a href="{{ route('admin.churches.create') }}"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
+            class="inline-flex items-center gap-1.5 px-3 py-2 sm:gap-2 sm:px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium rounded-lg shadow-sm transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -15,15 +15,15 @@
     </div>
 
     <div x-data="{ 
-                                expandedGroups: new Set(),
-                                toggleGroup(name) {
-                                    if (this.expandedGroups.has(name)) {
-                                        this.expandedGroups.delete(name);
-                                    } else {
-                                        this.expandedGroups.add(name);
+                                    expandedGroups: new Set(),
+                                    toggleGroup(name) {
+                                        if (this.expandedGroups.has(name)) {
+                                            this.expandedGroups.delete(name);
+                                        } else {
+                                            this.expandedGroups.add(name);
+                                        }
                                     }
-                                }
-                            }" class="space-y-8">
+                                }" class="space-y-8">
         @forelse($groups as $group)
             <div class="space-y-3">
                 <div class="flex items-center gap-2 px-1 text-left">
@@ -46,13 +46,14 @@
                 </div>
 
                 <div x-show="expandedGroups.has('{{ $group->name }}')" x-collapse
-                    class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+                    class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
+                        <table class="w-full text-sm min-w-[650px]">
                             <thead class="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
                                 <tr>
                                     <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Church</th>
-                                    <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Retaining Officer</th>
+                                    <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Retaining
+                                        Officer</th>
                                     <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">First Timers
                                     </th>
                                     <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Members</th>
