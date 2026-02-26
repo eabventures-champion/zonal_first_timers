@@ -47,7 +47,7 @@
         <div
             class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6 flex flex-col h-full">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4">Gender Distribution</h3>
-            <div class="space-y-6 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
+            <div class="space-y-6">
                 @foreach($genderDistribution as $label => $group)
                     <div class="space-y-2">
                         @if(count($genderDistribution) > 1)
@@ -81,81 +81,94 @@
         <div
             class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col h-full"
             x-data="{
-                showModal: false,
-                selected: null,
-                open(person) { this.selected = person; this.showModal = true; },
-                close() { this.showModal = false; this.selected = null; }
-            }">
+                    showModal: false,
+                    selected: null,
+                    open(person) { this.selected = person; this.showModal = true; },
+                    close() { this.showModal = false; this.selected = null; }
+                }">
             <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">🎂 Birthday Reminders</h3>
-                <span class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">This Month & Next 30 Days</span>
+                <span class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">This Month &
+                    Next 30 Days</span>
             </div>
 
-            <div class="max-h-[320px] overflow-y-auto custom-scrollbar">
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
                 @forelse($upcomingBirthdays as $groupName => $people)
                     <div x-data="{ expanded: false }" class="border-b border-gray-50 dark:border-slate-800 last:border-b-0">
                         {{-- Group Header --}}
                         <button @click="expanded = !expanded"
                             class="w-full flex items-center justify-between px-5 py-2.5 bg-gray-50/70 dark:bg-slate-800/40 hover:bg-gray-100 dark:hover:bg-slate-800/70 transition-colors">
                             <div class="flex items-center gap-2">
-                                <svg class="w-3 h-3 text-gray-400 transition-transform" :class="expanded ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-3 h-3 text-gray-400 transition-transform" :class="expanded ? 'rotate-90' : ''"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                 </svg>
-                                <span class="text-xs font-bold text-gray-700 dark:text-slate-300 tracking-tight">{{ $groupName }}</span>
+                                <span
+                                    class="text-xs font-bold text-gray-700 dark:text-slate-300 tracking-tight">{{ $groupName }}</span>
                             </div>
-                            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">{{ $people->count() }}</span>
+                            <span
+                                class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">{{ $people->count() }}</span>
                         </button>
 
                         {{-- Birthday Entries --}}
                         <div x-show="expanded" x-collapse class="divide-y divide-gray-50 dark:divide-slate-800/50">
                             @foreach($people as $person)
                                 <div @click="open({
-                                        full_name: '{{ addslashes($person->full_name) }}',
-                                        date_of_birth: '{{ \Carbon\Carbon::parse($person->date_of_birth)->format('M d') }}',
-                                        primary_contact: '{{ addslashes($person->primary_contact ?? 'N/A') }}',
-                                        type: '{{ $person->type }}',
-                                        status: '{{ addslashes($person->status ?? '') }}',
-                                        church_name: '{{ addslashes($person->church_name) }}',
-                                        group_name: '{{ addslashes($person->group_name) }}',
-                                        days_until: {{ $person->days_until }},
-                                        already_passed: {{ $person->already_passed ? 'true' : 'false' }}
-                                    })"
+                                                    full_name: '{{ addslashes($person->full_name) }}',
+                                                    date_of_birth: '{{ \Carbon\Carbon::parse($person->date_of_birth)->format('M d') }}',
+                                                    primary_contact: '{{ addslashes($person->primary_contact ?? 'N/A') }}',
+                                                    type: '{{ $person->type }}',
+                                                    status: '{{ addslashes($person->status ?? '') }}',
+                                                    church_name: '{{ addslashes($person->church_name) }}',
+                                                    group_name: '{{ addslashes($person->group_name) }}',
+                                                    days_until: {{ $person->days_until }},
+                                                    already_passed: {{ $person->already_passed ? 'true' : 'false' }}
+                                                })"
                                     class="flex items-center justify-between px-5 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer {{ $person->already_passed ? 'opacity-50' : '' }}">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm
-                                            {{ $person->days_until === 0 ? 'bg-pink-100 dark:bg-pink-500/10' : ($person->already_passed ? 'bg-gray-100 dark:bg-slate-800' : 'bg-indigo-50 dark:bg-indigo-500/10') }}">
+                                        <div
+                                            class="w-8 h-8 rounded-full flex items-center justify-center text-sm
+                                                        {{ $person->days_until === 0 ? 'bg-pink-100 dark:bg-pink-500/10' : ($person->already_passed ? 'bg-gray-100 dark:bg-slate-800' : 'bg-indigo-50 dark:bg-indigo-500/10') }}">
                                             {{ $person->days_until === 0 ? '🎉' : '🎂' }}
                                         </div>
                                         <div class="min-w-0">
-                                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ $person->full_name }}</p>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                {{ $person->full_name }}</p>
                                             <p class="text-[11px] text-gray-500 dark:text-slate-400">
                                                 {{ \Carbon\Carbon::parse($person->date_of_birth)->format('M d') }} ·
-                                                <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $person->type }}</span>
+                                                <span
+                                                    class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $person->type }}</span>
                                                 · {{ $person->church_name }}
                                                 @if($person->primary_contact)
-                                                    · <span class="text-gray-600 dark:text-slate-300">{{ $person->primary_contact }}</span>
+                                                    · <span
+                                                        class="text-gray-600 dark:text-slate-300">{{ $person->primary_contact }}</span>
                                                 @endif
                                             </p>
                                         </div>
                                     </div>
                                     @if($person->already_passed)
-                                        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+                                        <span
+                                            class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400">
                                             {{ abs($person->days_until) }} {{ abs($person->days_until) === 1 ? 'day' : 'days' }} ago
                                         </span>
                                     @elseif($person->days_until === 0)
-                                        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-100 text-pink-700 dark:bg-pink-500/10 dark:text-pink-400">
+                                        <span
+                                            class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-100 text-pink-700 dark:bg-pink-500/10 dark:text-pink-400">
                                             Today! 🎉
                                         </span>
                                     @elseif($person->days_until === 1)
-                                        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+                                        <span
+                                            class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
                                             Tomorrow
                                         </span>
                                     @elseif($person->days_until <= 7)
-                                        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
+                                        <span
+                                            class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
                                             {{ $person->days_until }} days
                                         </span>
                                     @else
-                                        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+                                        <span
+                                            class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400">
                                             {{ $person->days_until }} days
                                         </span>
                                     @endif
@@ -164,7 +177,8 @@
                         </div>
                     </div>
                 @empty
-                    <div class="px-6 py-8 text-center text-gray-400 dark:text-slate-500 text-sm">No upcoming birthdays in the next 30 days.</div>
+                    <div class="px-6 py-8 text-center text-gray-400 dark:text-slate-500 text-sm">No upcoming birthdays in the
+                        next 30 days.</div>
                 @endforelse
             </div>
 
@@ -173,18 +187,20 @@
                 <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="close()">
                     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="close()"></div>
                     <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 w-full max-w-sm p-6 animate-in zoom-in-95 duration-200"
-                         @click.away="close()">
+                        @click.away="close()">
                         {{-- Close Button --}}
-                        <button @click="close()" class="absolute top-3 right-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 transition-colors">
+                        <button @click="close()"
+                            class="absolute top-3 right-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
 
                         {{-- Header --}}
                         <div class="text-center mb-5">
                             <div class="w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl mb-3"
-                                 :class="selected.days_until === 0 ? 'bg-pink-100 dark:bg-pink-500/10' : 'bg-indigo-50 dark:bg-indigo-500/10'">
+                                :class="selected.days_until === 0 ? 'bg-pink-100 dark:bg-pink-500/10' : 'bg-indigo-50 dark:bg-indigo-500/10'">
                                 <span x-text="selected.days_until === 0 ? '🎉' : '🎂'"></span>
                             </div>
                             <h3 class="text-base font-bold text-gray-900 dark:text-white" x-text="selected.full_name"></h3>
@@ -193,34 +209,44 @@
 
                         {{-- Details Grid --}}
                         <div class="space-y-3">
-                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+                            <div
+                                class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
                                 <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Phone</span>
-                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200" x-text="selected.primary_contact"></span>
+                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200"
+                                    x-text="selected.primary_contact"></span>
                             </div>
-                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+                            <div
+                                class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
                                 <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Church</span>
-                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200" x-text="selected.church_name"></span>
+                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200"
+                                    x-text="selected.church_name"></span>
                             </div>
-                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+                            <div
+                                class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
                                 <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Group</span>
-                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200" x-text="selected.group_name"></span>
+                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200"
+                                    x-text="selected.group_name"></span>
                             </div>
-                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+                            <div
+                                class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
                                 <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Type</span>
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
-                                      :class="selected.type === 'Member' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'"
-                                      x-text="selected.type"></span>
+                                    :class="selected.type === 'Member' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'"
+                                    x-text="selected.type"></span>
                             </div>
-                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+                            <div
+                                class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
                                 <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Status</span>
-                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200" x-text="selected.status"></span>
+                                <span class="text-[11px] font-bold text-gray-900 dark:text-slate-200"
+                                    x-text="selected.status"></span>
                             </div>
                             <div class="flex items-center justify-between py-2">
                                 <span class="text-[11px] font-medium text-gray-500 dark:text-slate-400">Birthday</span>
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold"
-                                      :class="selected.already_passed ? 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400' : (selected.days_until === 0 ? 'bg-pink-100 text-pink-700 dark:bg-pink-500/10 dark:text-pink-400' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400')">
+                                    :class="selected.already_passed ? 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400' : (selected.days_until === 0 ? 'bg-pink-100 text-pink-700 dark:bg-pink-500/10 dark:text-pink-400' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400')">
                                     <template x-if="selected.already_passed">
-                                        <span x-text="Math.abs(selected.days_until) + (Math.abs(selected.days_until) === 1 ? ' day ago' : ' days ago')"></span>
+                                        <span
+                                            x-text="Math.abs(selected.days_until) + (Math.abs(selected.days_until) === 1 ? ' day ago' : ' days ago')"></span>
                                     </template>
                                     <template x-if="!selected.already_passed && selected.days_until === 0">
                                         <span>Today! 🎉</span>
@@ -598,9 +624,8 @@
                                             Performance: {{ $group['total_retention'] }}%</div>
                                     </button>
 
-                                    <div x-show="expanded" x-collapse
-                                        class="ml-5 border-l-2 border-gray-100 dark:border-slate-800">
-                                        
+                                    <div x-show="expanded" x-collapse class="ml-5 border-l-2 border-gray-100 dark:border-slate-800">
+
                                         {{-- Desktop Table --}}
                                         <div class="hidden lg:block overflow-x-auto">
                                             <table class="w-full text-[13px]">
@@ -655,35 +680,56 @@
                                         {{-- Mobile Card List --}}
                                         <div class="lg:hidden space-y-3 p-1">
                                             @foreach($group['churches'] as $church)
-                                                <div class="bg-gray-50/50 dark:bg-slate-800/40 rounded-xl p-3 border border-gray-100 dark:border-slate-800/60 shadow-sm">
+                                                <div
+                                                    class="bg-gray-50/50 dark:bg-slate-800/40 rounded-xl p-3 border border-gray-100 dark:border-slate-800/60 shadow-sm">
                                                     <div class="flex items-center justify-between mb-3">
                                                         <div>
-                                                            <h4 class="text-sm font-bold text-gray-900 dark:text-slate-200">{{ $church['name'] }}</h4>
-                                                            <p class="text-[10px] text-gray-500 dark:text-slate-500 font-medium">RO: {{ $church['retaining_officer'] }}</p>
+                                                            <h4 class="text-sm font-bold text-gray-900 dark:text-slate-200">
+                                                                {{ $church['name'] }}</h4>
+                                                            <p class="text-[10px] text-gray-500 dark:text-slate-500 font-medium">RO:
+                                                                {{ $church['retaining_officer'] }}</p>
                                                         </div>
                                                         <div class="text-right">
-                                                            <div class="text-[14px] font-black {{ $church['retention_rate'] >= 50 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
+                                                            <div
+                                                                class="text-[14px] font-black {{ $church['retention_rate'] >= 50 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
                                                                 {{ $church['retention_rate'] }}%
                                                             </div>
-                                                            <div class="text-[8px] text-gray-400 uppercase tracking-tighter font-bold">Retention</div>
+                                                            <div class="text-[8px] text-gray-400 uppercase tracking-tighter font-bold">
+                                                                Retention</div>
                                                         </div>
                                                     </div>
                                                     <div class="grid grid-cols-4 gap-2">
-                                                        <div class="bg-white dark:bg-slate-900/60 p-1.5 rounded-lg text-center border border-gray-100 dark:border-slate-800/40">
-                                                            <div class="text-[11px] font-bold text-gray-700 dark:text-slate-300">{{ $church['total_first_timers'] }}</div>
-                                                            <div class="text-[8px] text-gray-400 dark:text-slate-500 uppercase tracking-tighter font-bold">Total</div>
+                                                        <div
+                                                            class="bg-white dark:bg-slate-900/60 p-1.5 rounded-lg text-center border border-gray-100 dark:border-slate-800/40">
+                                                            <div class="text-[11px] font-bold text-gray-700 dark:text-slate-300">
+                                                                {{ $church['total_first_timers'] }}</div>
+                                                            <div
+                                                                class="text-[8px] text-gray-400 dark:text-slate-500 uppercase tracking-tighter font-bold">
+                                                                Total</div>
                                                         </div>
-                                                        <div class="bg-amber-50 dark:bg-amber-900/20 p-1.5 rounded-lg text-center border border-amber-100 dark:border-amber-800/40">
-                                                            <div class="text-[11px] font-bold text-amber-700 dark:text-amber-400">{{ $church['new'] }}</div>
-                                                            <div class="text-[8px] text-amber-600 dark:text-amber-500 uppercase tracking-tighter font-bold">New</div>
+                                                        <div
+                                                            class="bg-amber-50 dark:bg-amber-900/20 p-1.5 rounded-lg text-center border border-amber-100 dark:border-amber-800/40">
+                                                            <div class="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                                                                {{ $church['new'] }}</div>
+                                                            <div
+                                                                class="text-[8px] text-amber-600 dark:text-amber-500 uppercase tracking-tighter font-bold">
+                                                                New</div>
                                                         </div>
-                                                        <div class="bg-blue-50 dark:bg-blue-900/20 p-1.5 rounded-lg text-center border border-blue-100 dark:border-blue-800/40">
-                                                            <div class="text-[11px] font-bold text-blue-700 dark:text-blue-400">{{ $church['developing'] }}</div>
-                                                            <div class="text-[8px] text-blue-600 dark:text-blue-500 uppercase tracking-tighter font-bold">Dev</div>
+                                                        <div
+                                                            class="bg-blue-50 dark:bg-blue-900/20 p-1.5 rounded-lg text-center border border-blue-100 dark:border-blue-800/40">
+                                                            <div class="text-[11px] font-bold text-blue-700 dark:text-blue-400">
+                                                                {{ $church['developing'] }}</div>
+                                                            <div
+                                                                class="text-[8px] text-blue-600 dark:text-blue-500 uppercase tracking-tighter font-bold">
+                                                                Dev</div>
                                                         </div>
-                                                        <div class="bg-emerald-50 dark:bg-emerald-900/20 p-1.5 rounded-lg text-center border border-emerald-100 dark:border-emerald-800/40">
-                                                            <div class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">{{ $church['members'] }}</div>
-                                                            <div class="text-[8px] text-emerald-600 dark:text-emerald-500 uppercase tracking-tighter font-bold">Ret</div>
+                                                        <div
+                                                            class="bg-emerald-50 dark:bg-emerald-900/20 p-1.5 rounded-lg text-center border border-emerald-100 dark:border-emerald-800/40">
+                                                            <div class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                                                                {{ $church['members'] }}</div>
+                                                            <div
+                                                                class="text-[8px] text-emerald-600 dark:text-emerald-500 uppercase tracking-tighter font-bold">
+                                                                Ret</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -696,9 +742,9 @@
                     </div>
                 </div>
             @empty
-                <div class="py-12 text-center text-gray-400 dark:text-slate-600">
-                    <p class="text-sm">No data found.</p>
-                </div>
+            <div class="py-12 text-center text-gray-400 dark:text-slate-600">
+                <p class="text-sm">No data found.</p>
+            </div>
             @endforelse
         </div>
     </div>
