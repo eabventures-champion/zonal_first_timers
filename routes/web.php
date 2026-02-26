@@ -60,7 +60,9 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
     // Church Hierarchy
     Route::resource('church-categories', Admin\ChurchCategoryController::class)->except(['show']);
     Route::resource('church-groups', Admin\ChurchGroupController::class)->except(['show']);
+    Route::post('church-groups/check-pastor-contact', [Admin\ChurchGroupController::class, 'checkPastorContact'])->name('church-groups.check-pastor-contact');
     Route::resource('churches', Admin\ChurchController::class);
+    Route::post('churches/check-leader-contact', [Admin\ChurchController::class, 'checkLeaderContact'])->name('churches.check-leader-contact');
 
     // First Timers & Members
     Route::get('members', [Admin\MemberController::class, 'index'])->name('members.index');

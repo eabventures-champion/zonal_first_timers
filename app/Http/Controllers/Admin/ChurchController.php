@@ -10,6 +10,7 @@ use App\Models\ChurchGroup;
 use App\Models\User;
 use App\Services\ChurchHierarchyService;
 use App\Services\DashboardService;
+use Illuminate\Http\Request;
 
 class ChurchController extends Controller
 {
@@ -83,5 +84,28 @@ class ChurchController extends Controller
         $this->service->deleteChurch($church);
         return redirect()->route('admin.churches.index')
             ->with('success', 'Church deleted successfully.');
+    }
+
+    public function checkLeaderContact(Request $request)
+    {
+        $contact = $request->contact;
+        $excludeId = $request->exclude_id;
+
+        if (!$contact) {
+            return response()->json(['exists' => false, 'message' => '']);
+        }
+
+        $query = Church::where('leader_contact', $contact);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        $church = $query->first();
+
+        return response()->json([
+            'exists' => (bool) $church,
+            'message' => $church ? "This contact is already assigned to church \"{$church->name}\" (Leader: {$church->leader_name})." : '',
+        ]);
     }
 }

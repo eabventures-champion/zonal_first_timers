@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateChurchGroupRequest;
 use App\Models\ChurchCategory;
 use App\Models\ChurchGroup;
 use App\Services\ChurchHierarchyService;
+use Illuminate\Http\Request;
 
 class ChurchGroupController extends Controller
 {
@@ -53,5 +54,28 @@ class ChurchGroupController extends Controller
         $this->service->deleteGroup($churchGroup);
         return redirect()->route('admin.church-groups.index')
             ->with('success', 'Church group deleted successfully.');
+    }
+
+    public function checkPastorContact(Request $request)
+    {
+        $contact = $request->contact;
+        $excludeId = $request->exclude_id;
+
+        if (!$contact) {
+            return response()->json(['exists' => false, 'message' => '']);
+        }
+
+        $query = ChurchGroup::where('pastor_contact', $contact);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        $group = $query->first();
+
+        return response()->json([
+            'exists' => (bool) $group,
+            'message' => $group ? "This contact is already assigned to group \"{$group->name}\" (Pastor: {$group->pastor_name})." : '',
+        ]);
     }
 }

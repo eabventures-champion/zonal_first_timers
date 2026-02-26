@@ -29,7 +29,32 @@
                     @error('name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5" x-data="{
+                        pastorContactError: '',
+                        pastorContactChecking: false,
+                        async checkPastorContact(contact) {
+                            if (!contact || contact.length < 3) {
+                                this.pastorContactError = '';
+                                return;
+                            }
+                            this.pastorContactChecking = true;
+                            try {
+                                const response = await fetch('{{ route('admin.church-groups.check-pastor-contact') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                    },
+                                    body: JSON.stringify({ contact, exclude_id: {{ $churchGroup->id }} })
+                                });
+                                const data = await response.json();
+                                this.pastorContactError = data.exists ? data.message : '';
+                            } catch (e) {
+                                this.pastorContactError = '';
+                            }
+                            this.pastorContactChecking = false;
+                        }
+                    }">
                     <div>
                         <label for="pastor_name" class="block text-sm font-medium text-gray-700 mb-1">Name of Pastor</label>
                         <input type="text" name="pastor_name" id="pastor_name"
@@ -42,7 +67,12 @@
                             Pastor</label>
                         <input type="text" name="pastor_contact" id="pastor_contact"
                             value="{{ old('pastor_contact', $churchGroup->pastor_contact) }}"
-                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            x-on:input.debounce.500ms="checkPastorContact($el.value)"
+                            :class="pastorContactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'"
+                            class="w-full rounded-lg shadow-sm text-sm">
+                        <p x-show="pastorContactError" x-text="pastorContactError" class="mt-1 text-xs text-red-600"
+                            x-cloak></p>
+                        <p x-show="pastorContactChecking" class="mt-1 text-xs text-gray-400" x-cloak>Checking...</p>
                         @error('pastor_contact') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>

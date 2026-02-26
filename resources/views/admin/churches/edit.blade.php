@@ -31,7 +31,32 @@
                     @error('name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5" x-data="{
+                        leaderContactError: '',
+                        leaderContactChecking: false,
+                        async checkLeaderContact(contact) {
+                            if (!contact || contact.length < 3) {
+                                this.leaderContactError = '';
+                                return;
+                            }
+                            this.leaderContactChecking = true;
+                            try {
+                                const response = await fetch('{{ route('admin.churches.check-leader-contact') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                    },
+                                    body: JSON.stringify({ contact, exclude_id: {{ $church->id }} })
+                                });
+                                const data = await response.json();
+                                this.leaderContactError = data.exists ? data.message : '';
+                            } catch (e) {
+                                this.leaderContactError = '';
+                            }
+                            this.leaderContactChecking = false;
+                        }
+                    }">
                     <div>
                         <label for="leader_name" class="block text-sm font-medium text-gray-700 mb-1">Name of leader</label>
                         <input type="text" name="leader_name" id="leader_name"
@@ -44,22 +69,27 @@
                             leader</label>
                         <input type="text" name="leader_contact" id="leader_contact"
                             value="{{ old('leader_contact', $church->leader_contact) }}"
-                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            x-on:input.debounce.500ms="checkLeaderContact($el.value)"
+                            :class="leaderContactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'"
+                            class="w-full rounded-lg shadow-sm text-sm">
+                        <p x-show="leaderContactError" x-text="leaderContactError" class="mt-1 text-xs text-red-600"
+                            x-cloak></p>
+                        <p x-show="leaderContactChecking" class="mt-1 text-xs text-gray-400" x-cloak>Checking...</p>
                         @error('leader_contact') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
 
                 <div class="mb-6" x-data="{ 
-                        open: false, 
-                        selectedId: '{{ old('retaining_officer_id', $church->retaining_officer_id) }}',
-                        selectedName: '{{ old('retaining_officer_id', $church->retaining_officer_id) ? ($officers->firstWhere('id', old('retaining_officer_id', $church->retaining_officer_id))->name ?? 'None') : 'None' }}',
-                        officers: {{ Js::from($officers->map(fn($o) => [
+                            open: false, 
+                            selectedId: '{{ old('retaining_officer_id', $church->retaining_officer_id) }}',
+                            selectedName: '{{ old('retaining_officer_id', $church->retaining_officer_id) ? ($officers->firstWhere('id', old('retaining_officer_id', $church->retaining_officer_id))->name ?? 'None') : 'None' }}',
+                            officers: {{ Js::from($officers->map(fn($o) => [
         'id' => $o->id,
         'name' => $o->name,
         'church' => $o->church->name ?? null
     ])) }}
-                    }">
+                        }">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Retaining Officer</label>
                     <input type="hidden" name="retaining_officer_id" :value="selectedId">
 

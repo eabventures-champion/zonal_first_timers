@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreChurchGroupRequest extends FormRequest
 {
@@ -17,7 +18,13 @@ class StoreChurchGroupRequest extends FormRequest
             'church_category_id' => 'required|exists:church_categories,id',
             'name' => 'required|string|max:255',
             'pastor_name' => 'nullable|string|max:255',
-            'pastor_contact' => 'nullable|string|max:255',
+            'pastor_contact' => [
+                'required_unless:pastor_name,Highly Esteemed Pastor Lisa Ma',
+                'nullable',
+                'string',
+                'max:255',
+                'unique:church_groups,pastor_contact',
+            ],
         ];
     }
 }

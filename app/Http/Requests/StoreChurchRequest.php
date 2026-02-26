@@ -19,7 +19,7 @@ class StoreChurchRequest extends FormRequest
             'churches' => 'required|array|min:1',
             'churches.*.name' => 'required|string|max:255',
             'churches.*.leader_name' => 'nullable|string|max:255',
-            'churches.*.leader_contact' => 'nullable|string|max:255',
+            'churches.*.leader_contact' => 'nullable|string|max:255|distinct|unique:churches,leader_contact',
         ];
     }
 }
