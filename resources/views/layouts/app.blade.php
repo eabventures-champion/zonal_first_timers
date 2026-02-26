@@ -146,20 +146,37 @@
 
             {{-- User Info --}}
             <div class="border-t border-white/10 px-4 py-4 overflow-hidden bg-slate-900/50">
-                <div class="flex items-center gap-3">
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 group">
                     <div
-                        class="w-8 h-8 rounded-full bg-indigo-500/30 flex items-center justify-center text-xs font-semibold text-indigo-300 shrink-0 border border-indigo-500/20">
+                        class="w-8 h-8 rounded-full bg-indigo-500/30 flex items-center justify-center text-xs font-semibold text-indigo-300 shrink-0 border border-indigo-500/20 group-hover:bg-indigo-500/50 transition-colors">
                         {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}
                     </div>
                     <div class="flex-1 min-w-0" x-show="!sidebarMinimized"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 -translate-x-2"
                         x-transition:enter-end="opacity-100 translate-x-0">
-                        <p class="text-xs font-bold truncate">{{ auth()->user()->name }}</p>
+                        <p class="text-xs font-bold truncate group-hover:text-indigo-300 transition-colors">
+                            {{ auth()->user()->name }}</p>
                         <p class="text-[9px] text-slate-400 uppercase tracking-widest">
                             {{ auth()->user()->roles->pluck('name')->implode(' & ') ?: 'User' }}
                         </p>
                     </div>
+                </a>
+
+                {{-- Logout Button (visible in sidebar) --}}
+                <div x-show="!sidebarMinimized" x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-3">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit"
+                            class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-semibold shadow-lg shadow-red-500/20 hover:from-red-600 hover:to-rose-700 hover:shadow-red-500/30 transition-all duration-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Logout
+                        </button>
+                    </form>
                 </div>
             </div>
         </aside>
@@ -219,11 +236,11 @@
                             </template>
                         </button>
 
-                        <div class="h-6 w-px bg-gray-200 dark:bg-slate-800 mx-1"></div>
+                        <div class="h-6 w-px bg-gray-200 dark:bg-slate-800 mx-1 hidden sm:block"></div>
 
                         <a href="{{ route('profile.edit') }}"
-                            class="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200">Profile</a>
-                        <form method="POST" action="{{ route('logout') }}">
+                            class="hidden sm:block text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200">Profile</a>
+                        <form method="POST" action="{{ route('logout') }}" class="hidden sm:block">
                             @csrf
                             <button type="submit"
                                 class="text-sm text-gray-500 dark:text-slate-400 hover:text-red-600">Logout</button>

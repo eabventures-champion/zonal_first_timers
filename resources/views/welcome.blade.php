@@ -117,7 +117,7 @@
                     </a>
                 @else
                     <a href="{{ route('login') }}"
-                        class="px-8 py-3 rounded-full bg-indigo-600 text-white font-bold text-sm transition hover:bg-indigo-700 hover:scale-105 shadow-2xl shadow-indigo-500/40">
+                        class="hidden sm:block px-8 py-3 rounded-full bg-indigo-600 text-white font-bold text-sm transition hover:bg-indigo-700 hover:scale-105 shadow-2xl shadow-indigo-500/40">
                         Member Login
                     </a>
                 @endauth
