@@ -28,14 +28,14 @@
     @endif
 
     {{-- Stats Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <x-stats-card label="Total Churches" :value="$stats['total_churches']" color="indigo" />
         <x-stats-card label="Total First Timers" :value="$stats['total_first_timers']" color="sky" />
         <x-stats-card label="New First Timers" :value="$stats['new_first_timers']" color="amber" />
         <x-stats-card label="Retained as Members" :value="$stats['total_members']" color="emerald" />
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <x-stats-card label="Developing" :value="$stats['developing']" color="violet" />
         <x-stats-card label="Categories" :value="$stats['total_categories']" color="orange" />
         <x-stats-card label="Groups" :value="$stats['total_groups']" color="teal" />
@@ -78,14 +78,13 @@
 
 
         {{-- Upcoming Birthdays —— Grouped by Church Group --}}
-        <div
-            class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col h-full"
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col h-full"
             x-data="{
-                    showModal: false,
-                    selected: null,
-                    open(person) { this.selected = person; this.showModal = true; },
-                    close() { this.showModal = false; this.selected = null; }
-                }">
+                        showModal: false,
+                        selected: null,
+                        open(person) { this.selected = person; this.showModal = true; },
+                        close() { this.showModal = false; this.selected = null; }
+                    }">
             <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">🎂 Birthday Reminders</h3>
                 <span class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">This Month &
@@ -114,26 +113,27 @@
                         <div x-show="expanded" x-collapse class="divide-y divide-gray-50 dark:divide-slate-800/50">
                             @foreach($people as $person)
                                 <div @click="open({
-                                                    full_name: '{{ addslashes($person->full_name) }}',
-                                                    date_of_birth: '{{ \Carbon\Carbon::parse($person->date_of_birth)->format('M d') }}',
-                                                    primary_contact: '{{ addslashes($person->primary_contact ?? 'N/A') }}',
-                                                    type: '{{ $person->type }}',
-                                                    status: '{{ addslashes($person->status ?? '') }}',
-                                                    church_name: '{{ addslashes($person->church_name) }}',
-                                                    group_name: '{{ addslashes($person->group_name) }}',
-                                                    days_until: {{ $person->days_until }},
-                                                    already_passed: {{ $person->already_passed ? 'true' : 'false' }}
-                                                })"
+                                                                full_name: '{{ addslashes($person->full_name) }}',
+                                                                date_of_birth: '{{ \Carbon\Carbon::parse($person->date_of_birth)->format('M d') }}',
+                                                                primary_contact: '{{ addslashes($person->primary_contact ?? 'N/A') }}',
+                                                                type: '{{ $person->type }}',
+                                                                status: '{{ addslashes($person->status ?? '') }}',
+                                                                church_name: '{{ addslashes($person->church_name) }}',
+                                                                group_name: '{{ addslashes($person->group_name) }}',
+                                                                days_until: {{ $person->days_until }},
+                                                                already_passed: {{ $person->already_passed ? 'true' : 'false' }}
+                                                            })"
                                     class="flex items-center justify-between px-5 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer {{ $person->already_passed ? 'opacity-50' : '' }}">
                                     <div class="flex items-center gap-3">
                                         <div
                                             class="w-8 h-8 rounded-full flex items-center justify-center text-sm
-                                                        {{ $person->days_until === 0 ? 'bg-pink-100 dark:bg-pink-500/10' : ($person->already_passed ? 'bg-gray-100 dark:bg-slate-800' : 'bg-indigo-50 dark:bg-indigo-500/10') }}">
+                                                                    {{ $person->days_until === 0 ? 'bg-pink-100 dark:bg-pink-500/10' : ($person->already_passed ? 'bg-gray-100 dark:bg-slate-800' : 'bg-indigo-50 dark:bg-indigo-500/10') }}">
                                             {{ $person->days_until === 0 ? '🎉' : '🎂' }}
                                         </div>
                                         <div class="min-w-0">
                                             <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                                {{ $person->full_name }}</p>
+                                                {{ $person->full_name }}
+                                            </p>
                                             <p class="text-[11px] text-gray-500 dark:text-slate-400">
                                                 {{ \Carbon\Carbon::parse($person->date_of_birth)->format('M d') }} ·
                                                 <span
@@ -388,180 +388,23 @@
 
     @if(count($monthlyTrend) > 0)
         @push('scripts')
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    const trendData = @json($monthlyTrend);
-                    const targetValue = {{ \App\Models\Setting::get('monthly_registration_target', 30) }};
-
-                    const months = trendData.labels;
-                    const categorySeries = trendData.series;
-                    const targetCounts = months.map(() => targetValue);
-
-                    const initialMode = localStorage.getItem('trendChartMode') === 'bars' ? 'bar' : 'area';
-
-                    // Colors for categories
-                    const categoryColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#f43f5e', '#06b6d4'];
-
-                    const getSeries = (mode) => {
-                        const series = [...categorySeries];
-                        if (mode === 'bar') {
-                            series.push({
-                                name: 'Target',
-                                type: 'column',
-                                data: targetCounts,
-                                color: '#94a3b8'
-                            });
-                        } else {
-                            // In area mode, maybe show target as a line?
-                            series.push({
-                                name: 'Target',
-                                type: 'line',
-                                data: targetCounts,
-                                color: '#94a3b8'
-                            });
-                        }
-                        return series;
-                    };
-
-                    const options = {
-                        series: getSeries(initialMode),
-                        chart: {
-                            type: initialMode === 'bar' ? 'bar' : 'area',
-                            height: 320,
-                            stacked: true,
-                            toolbar: { show: false },
-                            zoom: { enabled: false },
-                            animations: {
-                                enabled: true,
-                                easing: 'easeinout',
-                                speed: 800,
-                            }
-                        },
-                        stroke: {
-                            width: initialMode === 'area' ? 3 : 0,
-                            curve: 'smooth'
-                        },
-                        colors: [...categoryColors.slice(0, categorySeries.length), '#94a3b8'],
-                        plotOptions: {
-                            bar: {
-                                horizontal: false,
-                                columnWidth: '35%',
-                                borderRadius: 4,
-                            },
-                        },
-                        dataLabels: { enabled: false },
-                        xaxis: {
-                            categories: months,
-                            axisBorder: { show: false },
-                            axisTicks: { show: false },
-                            labels: {
-                                hideOverlappingLabels: true,
-                                style: {
-                                    colors: '#94a3b8',
-                                    fontSize: '11px',
-                                    fontWeight: 600,
-                                }
-                            }
-                        },
-                        yaxis: {
-                            labels: {
-                                style: {
-                                    colors: '#94a3b8',
-                                    fontSize: '11px',
-                                    fontWeight: 600,
-                                }
-                            }
-                        },
-                        grid: {
-                            borderColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9',
-                            strokeDashArray: 4,
-                            padding: { left: 10, right: 10 }
-                        },
-                        fill: {
-                            type: initialMode === 'area' ? 'gradient' : 'solid',
-                            opacity: 1
-                        },
-                        tooltip: {
-                            theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
-                            shared: true,
-                            intersect: false,
-                            y: {
-                                formatter: function (val, { series, seriesIndex, dataPointIndex, w }) {
-                                    if (w.config.series[seriesIndex].name === 'Target') {
-                                        return val;
-                                    }
-
-                                    // Calculate total for this month (excluding target)
-                                    let monthTotal = 0;
-                                    for (let i = 0; i < categorySeries.length; i++) {
-                                        monthTotal += series[i][dataPointIndex];
-                                    }
-
-                                    const percentage = monthTotal > 0 ? ((val / monthTotal) * 100).toFixed(1) : 0;
-                                    const targetPercent = ((monthTotal / targetValue) * 100).toFixed(0);
-
-                                    if (seriesIndex === categorySeries.length - 1) {
-                                        // Add a summary line in the last category tooltip
-                                        return `${val} (${percentage}%) <br><small class="text-gray-400">Total: ${monthTotal} (${targetPercent}% of target)</small>`;
-                                    }
-
-                                    return `${val} (${percentage}%)`;
-                                }
-                            }
-                        },
-                        legend: {
-                            show: true,
-                            position: 'top',
-                            horizontalAlign: 'right',
-                            labels: { colors: '#94a3b8' }
-                        }
-                    };
-
-                    const chart = new ApexCharts(document.querySelector("#trendChart"), options);
-
-                    setTimeout(() => {
-                        chart.render();
-                        window.dispatchEvent(new Event('resize'));
-                    }, 100);
-
-                    const resizeObserver = new ResizeObserver(() => {
-                        if (chart && typeof chart.windowResize === 'function') {
-                            chart.windowResize();
-                        }
-                    });
-                    const chartImpactContainer = document.querySelector("#trendChart");
-                    if (chartImpactContainer) {
-                        resizeObserver.observe(chartImpactContainer);
-                    }
-
-                    window.addEventListener('toggle-chart', (e) => {
-                        const newType = e.detail;
-                        const newSeries = getSeries(newType);
-
-                        chart.updateOptions({
-                            chart: { type: newType === 'area' ? 'area' : 'bar' },
-                            series: newSeries,
-                            stroke: { width: newType === 'area' ? 3 : 0 },
-                            fill: {
-                                type: newType === 'area' ? 'gradient' : 'solid'
-                            }
-                        });
-
-                        setTimeout(() => {
-                            chart.windowResize();
-                            window.dispatchEvent(new Event('resize'));
-                        }, 50);
-                    });
-
-                    window.addEventListener('storage', (e) => {
-                        if (e.key === 'darkMode') {
-                            chart.updateOptions({
-                                tooltip: { theme: e.newValue === 'true' ? 'dark' : 'light' },
-                                grid: { borderColor: e.newValue === 'true' ? '#1e293b' : '#f1f5f9' }
-                            });
-                        }
-                    });
-                });
+            <script>     document.addEventListener('DOMContentLoaded', function () {         const trendData = @json($monthlyTrend);         const targetValue = {{ \App\Models\Setting::get('monthly_registration_target', 30) }};
+                     const months = trendData.labels;         const categorySeries = trendData.series;         const targetCounts = months.map(() => targetValue);
+                     const initialMode = localStorage.getItem('trendChartMode') === 'bars' ? 'bar' : 'area';
+                     // Colors for categories         const categoryColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#f43f5e', '#06b6d4'];
+                     const getSeries = (mode) => {             const series = [...categorySeries];             if (mode === 'bar') {                 series.push({                     name: 'Target',                     type: 'column',                     data: targetCounts,                     color: '#94a3b8'                 });             } else {                 // In area mode, maybe show target as a line?                 series.push({                     name: 'Target',                     type: 'line',                     data: targetCounts,                     color: '#94a3b8'                 });             }             return series;         };
+                     const options = {             series: getSeries(initialMode),             chart: {                 type: initialMode === 'bar' ? 'bar' : 'area',                 height: 320,                 stacked: true,                 toolbar: { show: false },                 zoom: { enabled: false },                 animations: {                     enabled: true,                     easing: 'easeinout',                     speed: 800,                 }             },             stroke: {                 width: initialMode === 'area' ? 3 : 0,                 curve: 'smooth'             },             colors: [...categoryColors.slice(0, categorySeries.length), '#94a3b8'],             plotOptions: {                 bar: {                     horizontal: false,                     columnWidth: '35%',                     borderRadius: 4,                 },             },             dataLabels: { enabled: false },             xaxis: {                 categories: months,                 axisBorder: { show: false },                 axisTicks: { show: false },                 labels: {                     hideOverlappingLabels: true,                     style: {                         colors: '#94a3b8',                         fontSize: '11px',                         fontWeight: 600,                     }                 }             },             yaxis: {                 labels: {                     style: {                         colors: '#94a3b8',                         fontSize: '11px',                         fontWeight: 600,                     }                 }             },             grid: {                 borderColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9',                 strokeDashArray: 4,                 padding: { left: 10, right: 10 }             },             fill: {                 type: initialMode === 'area' ? 'gradient' : 'solid',                 opacity: 1             },             tooltip: {                 theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',                 shared: true,                 intersect: false,                 y: {                     formatter: function (val, { series, seriesIndex, dataPointIndex, w }) {                         if (w.config.series[seriesIndex].name === 'Target') {                             return val;                         }
+                                     // Calculate total for this month (excluding target)                         let monthTotal = 0;                         for (let i = 0; i < categorySeries.length; i++) {                             monthTotal += series[i][dataPointIndex];                         }
+                                     const percentage = monthTotal > 0 ? ((val / monthTotal) * 100).toFixed(1) : 0;                         const targetPercent = ((monthTotal / targetValue) * 100).toFixed(0);
+                                     if (seriesIndex === categorySeries.length - 1) {                             // Add a summary line in the last category tooltip                             return `${val} (${percentage}%) <br><small class="text-gray-400">Total: ${monthTotal} (${targetPercent}% of target)</small>`;                         }
+                                     return `${val} (${percentage}%)`;                     }                 }             },             legend: {                 show: true,                 position: 'top',                 horizontalAlign: 'right',                 labels: { colors: '#94a3b8' }             }         };
+                     const chart = new ApexCharts(document.querySelector("#trendChart"), options);
+                     setTimeout(() => {             chart.render();             window.dispatchEvent(new Event('resize'));         }, 100);
+                     const resizeObserver = new ResizeObserver(() => {             if (chart && typeof chart.windowResize === 'function') {                 chart.windowResize();             }         });         const chartImpactContainer = document.querySelector("#trendChart");         if (chartImpactContainer) {             resizeObserver.observe(chartImpactContainer);         }
+                     window.addEventListener('toggle-chart', (e) => {             const newType = e.detail;             const newSeries = getSeries(newType);
+                         chart.updateOptions({                 chart: { type: newType === 'area' ? 'area' : 'bar' },                 series: newSeries,                 stroke: { width: newType === 'area' ? 3 : 0 },                 fill: {                     type: newType === 'area' ? 'gradient' : 'solid'                 }             });
+                         setTimeout(() => {                 chart.windowResize();                 window.dispatchEvent(new Event('resize'));             }, 50);         });
+                     window.addEventListener('storage', (e) => {             if (e.key === 'darkMode') {                 chart.updateOptions({                     tooltip: { theme: e.newValue === 'true' ? 'dark' : 'light' },                     grid: { borderColor: e.newValue === 'true' ? '#1e293b' : '#f1f5f9' }                 });             }         });     });
             </script>
         @endpush
     @endif
@@ -685,9 +528,11 @@
                                                     <div class="flex items-center justify-between mb-3">
                                                         <div>
                                                             <h4 class="text-sm font-bold text-gray-900 dark:text-slate-200">
-                                                                {{ $church['name'] }}</h4>
+                                                                {{ $church['name'] }}
+                                                            </h4>
                                                             <p class="text-[10px] text-gray-500 dark:text-slate-500 font-medium">RO:
-                                                                {{ $church['retaining_officer'] }}</p>
+                                                                {{ $church['retaining_officer'] }}
+                                                            </p>
                                                         </div>
                                                         <div class="text-right">
                                                             <div
@@ -702,7 +547,8 @@
                                                         <div
                                                             class="bg-white dark:bg-slate-900/60 p-1.5 rounded-lg text-center border border-gray-100 dark:border-slate-800/40">
                                                             <div class="text-[11px] font-bold text-gray-700 dark:text-slate-300">
-                                                                {{ $church['total_first_timers'] }}</div>
+                                                                {{ $church['total_first_timers'] }}
+                                                            </div>
                                                             <div
                                                                 class="text-[8px] text-gray-400 dark:text-slate-500 uppercase tracking-tighter font-bold">
                                                                 Total</div>
@@ -710,7 +556,8 @@
                                                         <div
                                                             class="bg-amber-50 dark:bg-amber-900/20 p-1.5 rounded-lg text-center border border-amber-100 dark:border-amber-800/40">
                                                             <div class="text-[11px] font-bold text-amber-700 dark:text-amber-400">
-                                                                {{ $church['new'] }}</div>
+                                                                {{ $church['new'] }}
+                                                            </div>
                                                             <div
                                                                 class="text-[8px] text-amber-600 dark:text-amber-500 uppercase tracking-tighter font-bold">
                                                                 New</div>
@@ -718,7 +565,8 @@
                                                         <div
                                                             class="bg-blue-50 dark:bg-blue-900/20 p-1.5 rounded-lg text-center border border-blue-100 dark:border-blue-800/40">
                                                             <div class="text-[11px] font-bold text-blue-700 dark:text-blue-400">
-                                                                {{ $church['developing'] }}</div>
+                                                                {{ $church['developing'] }}
+                                                            </div>
                                                             <div
                                                                 class="text-[8px] text-blue-600 dark:text-blue-500 uppercase tracking-tighter font-bold">
                                                                 Dev</div>
@@ -726,7 +574,8 @@
                                                         <div
                                                             class="bg-emerald-50 dark:bg-emerald-900/20 p-1.5 rounded-lg text-center border border-emerald-100 dark:border-emerald-800/40">
                                                             <div class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                                                                {{ $church['members'] }}</div>
+                                                                {{ $church['members'] }}
+                                                            </div>
                                                             <div
                                                                 class="text-[8px] text-emerald-600 dark:text-emerald-500 uppercase tracking-tighter font-bold">
                                                                 Ret</div>
@@ -742,9 +591,9 @@
                     </div>
                 </div>
             @empty
-            <div class="py-12 text-center text-gray-400 dark:text-slate-600">
-                <p class="text-sm">No data found.</p>
-            </div>
+                <div class="py-12 text-center text-gray-400 dark:text-slate-600">
+                    <p class="text-sm">No data found.</p>
+                </div>
             @endforelse
         </div>
     </div>

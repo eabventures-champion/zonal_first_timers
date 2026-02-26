@@ -15,11 +15,13 @@
 @endphp
 
 <div
-    class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-5 hover:shadow-md transition-all duration-200">
+    class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-4 sm:p-5 hover:shadow-md transition-all duration-200">
     <div class="flex items-center justify-between">
         <div>
-            <p class="text-sm font-medium text-gray-500 dark:text-slate-400">{{ $label }}</p>
-            <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-slate-100">{{ $value }}</p>
+            <p class="text-[10px] sm:text-xs lg:text-sm font-medium text-gray-500 dark:text-slate-400 leading-tight">
+                {{ $label }}</p>
+            <p class="mt-0.5 text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-slate-100">{{ $value }}
+            </p>
             @if($trend)
                 <p class="mt-1 text-xs {{ $trend > 0 ? 'text-emerald-600' : 'text-rose-600' }}">
                     {{ $trend > 0 ? '↑' : '↓' }} {{ abs($trend) }}%
@@ -27,7 +29,7 @@
             @endif
         </div>
         <div
-            class="w-12 h-12 rounded-xl bg-gradient-to-br {{ $gradient }} flex items-center justify-center text-white shadow-lg shadow-{{ $color }}-500/20">
+            class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br {{ $gradient }} flex items-center justify-center text-white shadow-lg shadow-{{ $color }}-500/20">
             @if($icon)
                 {!! $icon !!}
             @else
