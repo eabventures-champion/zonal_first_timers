@@ -51,9 +51,13 @@
 
                     <div x-show="expandedCategory" x-collapse class="p-6 space-y-8">
                         @foreach($category->groups as $group)
-                            <div>
-                                <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            <div x-data="{ expandedGroup: true }">
+                                <h3 @click="expandedGroup = !expandedGroup" 
+                                    class="cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2 hover:text-indigo-600 transition-colors">
+                                    <svg class="w-3 h-3 text-slate-400 transition-transform duration-200"
+                                        :class="{'rotate-180': !expandedGroup}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
                                     <span>{{ $group->name }}</span>
                                     @php
                                         $groupBringerCount = $group->churches->sum(fn($c) => $c->bringers->sum(fn($b) => $b->firstTimers->count()));
@@ -70,93 +74,95 @@
                                     </span>
                                 </h3>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                                    @foreach($group->churches as $church)
-                                        @php
-                                            $bringerCount = $church->bringers->sum(fn($b) => $b->firstTimers->count());
-                                        @endphp
-                                        <div
-                                            class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
+                                <div x-show="expandedGroup" x-collapse>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                                        @foreach($group->churches as $church)
+                                            @php
+                                                $bringerCount = $church->bringers->sum(fn($b) => $b->firstTimers->count());
+                                            @endphp
                                             <div
-                                                class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-700 pb-3">
-                                                <h4 class="font-bold text-sm text-slate-800 dark:text-white">{{ $church->name }}</h4>
-                                                @php
-                                                    $churchMemberCount = $church->bringers->sum(fn($b) => $b->members->count());
-                                                @endphp
-                                                <div class="flex items-center gap-2">
-                                                    <span
-                                                        class="px-2 py-0.5 bg-black text-white text-[10px] font-bold rounded-full shadow-sm"
-                                                        title="Total Members in Church">
-                                                        {{ $churchMemberCount }} M
-                                                    </span>
-                                                    <span
-                                                        class="px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-bold rounded-full shadow-sm"
-                                                        title="Total First Timers in Church">
-                                                        {{ $bringerCount }} FT
-                                                    </span>
+                                                class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
+                                                <div
+                                                    class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-700 pb-3">
+                                                    <h4 class="font-bold text-sm text-slate-800 dark:text-white">{{ $church->name }}</h4>
+                                                    @php
+                                                        $churchMemberCount = $church->bringers->sum(fn($b) => $b->members->count());
+                                                    @endphp
+                                                    <div class="flex items-center gap-2">
+                                                        <span
+                                                            class="px-2 py-0.5 bg-black text-white text-[10px] font-bold rounded-full shadow-sm"
+                                                            title="Total Members in Church">
+                                                            {{ $churchMemberCount }} M
+                                                        </span>
+                                                        <span
+                                                            class="px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-bold rounded-full shadow-sm"
+                                                            title="Total First Timers in Church">
+                                                            {{ $bringerCount }} FT
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="space-y-1">
+                                                    @forelse($church->bringers as $bringer)
+                                                                    @php
+                                                                        $firstTimerCount = $bringer->firstTimers->count();
+                                                                        $memberCount = $bringer->members->count();
+                                                                    @endphp
+                                                                    <div
+                                                                        class="flex items-center justify-between py-2 px-2 hover:bg-white dark:hover:bg-slate-900 rounded-md transition-colors group">
+                                                                        <div class="flex items-center gap-2">
+                                                                            <span
+                                                                                class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{{ $bringer->name }}</span>
+                                                                             @if($bringer->is_ro)
+                                                                                 <span
+                                                                                     class="px-2 py-0.5 text-[9px] bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 rounded-full font-bold uppercase transition-all duration-300">RO &middot; Bringer</span>
+                                                                             @endif
+                                                                             @if($bringer->user && $bringer->user->hasRole('Member'))
+                                                                                 <span
+                                                                                     class="px-2 py-0.5 text-[9px] bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full font-bold uppercase">Member</span>
+                                                                             @endif
+                                                                         </div>
+
+                                                                        <div class="flex items-center gap-1 cursor-pointer"
+                                                                            @click="openModal('{{ addslashes($bringer->name) }}', {{ 
+                                                                                                                                                                                                                                                                                                                                                                                 collect($bringer->firstTimers->map(fn($ft) => [
+                                                            'name' => $ft->full_name,
+                                                            'contact' => $ft->primary_contact ?? 'N/A',
+                                                            'date' => $ft->date_of_visit ? $ft->date_of_visit->format('M d, Y') : '',
+                                                            'status' => 'First Timer'
+                                                        ]))->merge($bringer->members->map(fn($m) => [
+                                                                        'name' => $m->full_name,
+                                                                        'contact' => $m->primary_contact ?? 'N/A',
+                                                                        'date' => $m->migrated_at ? $m->migrated_at->format('M d, Y') : ($m->date_of_visit ? $m->date_of_visit->format('M d, Y') : ''),
+                                                                        'status' => 'Retained'
+                                                                    ]))->toJson() 
+                                                                                                                                                                                                                                                                                                                                                                             }})">
+                                                                            <span
+                                                                                class="px-2.5 py-1 bg-black text-white text-[10px] font-bold rounded-full transition-colors shadow-sm"
+                                                                                title="Members">
+                                                                                {{ $memberCount }} M
+                                                                            </span>
+                                                                            <span
+                                                                                class="px-2.5 py-1 bg-slate-700 hover:bg-indigo-600 dark:bg-slate-700 dark:hover:bg-indigo-600 text-white text-[10px] font-bold rounded-full transition-colors shadow-sm"
+                                                                                title="First Timers">
+                                                                                {{ $firstTimerCount }} FT
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                    @empty
+                                                        <p class="text-xs text-slate-400 dark:text-slate-500 italic">No bringers registered yet.
+                                                        </p>
+                                                    @endforelse
                                                 </div>
                                             </div>
+                                        @endforeach
+                                    </div>
 
-                                            <div class="space-y-1">
-                                                @forelse($church->bringers as $bringer)
-                                                                @php
-                                                                    $firstTimerCount = $bringer->firstTimers->count();
-                                                                    $memberCount = $bringer->members->count();
-                                                                @endphp
-                                                                <div
-                                                                    class="flex items-center justify-between py-2 px-2 hover:bg-white dark:hover:bg-slate-900 rounded-md transition-colors group">
-                                                                    <div class="flex items-center gap-2">
-                                                                        <span
-                                                                            class="font-semibold text-xs text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{{ $bringer->name }}</span>
-                                                                         @if($bringer->is_ro)
-                                                                             <span
-                                                                                 class="px-2 py-0.5 text-[9px] bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 rounded-full font-bold uppercase transition-all duration-300">RO &middot; Bringer</span>
-                                                                         @endif
-                                                                         @if($bringer->user && $bringer->user->hasRole('Member'))
-                                                                             <span
-                                                                                 class="px-2 py-0.5 text-[9px] bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full font-bold uppercase">Member</span>
-                                                                         @endif
-                                                                     </div>
-
-                                                                    <div class="flex items-center gap-1 cursor-pointer"
-                                                                        @click="openModal('{{ addslashes($bringer->name) }}', {{ 
-                                                                                                                                                                                                                                                                                                                                                                            collect($bringer->firstTimers->map(fn($ft) => [
-                                                        'name' => $ft->full_name,
-                                                        'contact' => $ft->primary_contact ?? 'N/A',
-                                                        'date' => $ft->date_of_visit ? $ft->date_of_visit->format('M d, Y') : '',
-                                                        'status' => 'First Timer'
-                                                    ]))->merge($bringer->members->map(fn($m) => [
-                                                                    'name' => $m->full_name,
-                                                                    'contact' => $m->primary_contact ?? 'N/A',
-                                                                    'date' => $m->migrated_at ? $m->migrated_at->format('M d, Y') : ($m->date_of_visit ? $m->date_of_visit->format('M d, Y') : ''),
-                                                                    'status' => 'Retained'
-                                                                ]))->toJson() 
-                                                                                                                                                                                                                                                                                                                                                                        }})">
-                                                                        <span
-                                                                            class="px-2.5 py-1 bg-black text-white text-[10px] font-bold rounded-full transition-colors shadow-sm"
-                                                                            title="Members">
-                                                                            {{ $memberCount }} M
-                                                                        </span>
-                                                                        <span
-                                                                            class="px-2.5 py-1 bg-slate-700 hover:bg-indigo-600 dark:bg-slate-700 dark:hover:bg-indigo-600 text-white text-[10px] font-bold rounded-full transition-colors shadow-sm"
-                                                                            title="First Timers">
-                                                                            {{ $firstTimerCount }} FT
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                @empty
-                                                    <p class="text-xs text-slate-400 dark:text-slate-500 italic">No bringers registered yet.
-                                                    </p>
-                                                @endforelse
-                                            </div>
-                                        </div>
-                                    @endforeach
+                                    @if($group->churches->isEmpty())
+                                        <p class="text-xs text-slate-400 dark:text-slate-500 italic mt-2">No churches or bringers
+                                            registered in this group yet.</p>
+                                    @endif
                                 </div>
-
-                                @if($group->churches->isEmpty())
-                                    <p class="text-xs text-slate-400 dark:text-slate-500 italic mt-2">No churches or bringers
-                                        registered in this group yet.</p>
-                                @endif
                             </div>
                         @endforeach
                     </div>
