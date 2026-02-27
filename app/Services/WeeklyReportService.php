@@ -44,6 +44,7 @@ class WeeklyReportService
 
     public function getReportData($month, $year, $groupId = null, $churchId = null)
     {
+        $weeksInMonth = $this->getWeeksInMonth($month, $year);
         $churchQuery = Church::with(['group.category']);
 
         if ($churchId) {
@@ -88,20 +89,26 @@ class WeeklyReportService
             $churchName = $church->name;
 
             if (!isset($data[$catName])) {
-                $data[$catName] = [];
+                $data[$catName] = [
+                    'groups' => [],
+                    'weeks' => array_fill_keys(array_keys($weeksInMonth), 0),
+                    'total' => 0
+                ];
             }
-            if (!isset($data[$catName][$groupName])) {
-                $data[$catName][$groupName] = [];
+            if (!isset($data[$catName]['groups'][$groupName])) {
+                $data[$catName]['groups'][$groupName] = [
+                    'churches' => [],
+                    'weeks' => array_fill_keys(array_keys($weeksInMonth), 0),
+                    'total' => 0
+                ];
             }
-            if (!isset($data[$catName][$groupName][$churchName])) {
-                $data[$catName][$groupName][$churchName] = [
-                    'weeks' => [],
+            if (!isset($data[$catName]['groups'][$groupName]['churches'][$churchName])) {
+                $data[$catName]['groups'][$groupName]['churches'][$churchName] = [
+                    'weeks' => array_fill_keys(array_keys($weeksInMonth), 0),
                     'total' => 0
                 ];
             }
         }
-
-        $weeksInMonth = $this->getWeeksInMonth($month, $year);
 
         foreach ($allFirstTimers as $ft) {
             $church = $churches->firstWhere('id', $ft->church_id);
@@ -129,33 +136,24 @@ class WeeklyReportService
                 continue;
             }
 
-            if (!isset($data[$catName][$groupName][$churchName]['weeks'][$assignedWeek])) {
-                $data[$catName][$groupName][$churchName]['weeks'][$assignedWeek] = 0;
-            }
+            // Church data
+            $data[$catName]['groups'][$groupName]['churches'][$churchName]['weeks'][$assignedWeek]++;
+            $data[$catName]['groups'][$groupName]['churches'][$churchName]['total']++;
 
-            $data[$catName][$groupName][$churchName]['weeks'][$assignedWeek]++;
-            $data[$catName][$groupName][$churchName]['total']++;
-        }
+            // Group totals
+            $data[$catName]['groups'][$groupName]['weeks'][$assignedWeek]++;
+            $data[$catName]['groups'][$groupName]['total']++;
 
-        // guarantee all weeks are set to 0 even if missed
-        foreach ($data as $catName => $groups) {
-            foreach ($groups as $groupName => $churches_arr) {
-                foreach ($churches_arr as $churchName => $churchStats) {
-                    foreach ($weeksInMonth as $weekNum => $weekDates) {
-                        if (!isset($churchStats['weeks'][$weekNum])) {
-                            $data[$catName][$groupName][$churchName]['weeks'][$weekNum] = 0;
-                        }
-                    }
-                    ksort($data[$catName][$groupName][$churchName]['weeks']); // sort weeks
-                }
-            }
+            // Category totals
+            $data[$catName]['weeks'][$assignedWeek]++;
+            $data[$catName]['total']++;
         }
 
         ksort($data); // sort categories
-        foreach ($data as $catName => &$groups) {
-            ksort($groups); // sort groups
-            foreach ($groups as $groupName => &$churches_arr) {
-                ksort($churches_arr); // sort churches
+        foreach ($data as $catName => &$catData) {
+            ksort($catData['groups']); // sort groups
+            foreach ($catData['groups'] as $groupName => &$groupData) {
+                ksort($groupData['churches']); // sort churches
             }
         }
 

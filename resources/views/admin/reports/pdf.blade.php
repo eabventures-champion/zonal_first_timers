@@ -57,6 +57,19 @@
             background-color: #f1f5f9;
             font-weight: bold;
         }
+
+        .group-row {
+            background-color: #f8fafc;
+        }
+
+        .category-total {
+            background-color: #eff6ff;
+            border-top: 2px solid #3b82f6;
+        }
+
+        .text-right {
+            text-align: right;
+        }
     </style>
 </head>
 
@@ -79,12 +92,23 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($reportData as $catName => $groups)
-                @foreach($groups as $groupName => $churches)
-                    @foreach($churches as $churchName => $stats)
+            @foreach($reportData as $catName => $catData)
+                @foreach($catData['groups'] as $groupName => $groupData)
+                    {{-- Group Header Row --}}
+                    <tr class="group-row">
+                        <td class="text-left">{{ $catName }}</td>
+                        <td class="text-left"><strong>{{ $groupName }}</strong></td>
+                        <td class="text-left italic">Group Totals</td>
+                        @foreach($groupData['weeks'] as $weekCount)
+                            <td><strong>{{ $weekCount }}</strong></td>
+                        @endforeach
+                        <td class="total-col">{{ $groupData['total'] }}</td>
+                    </tr>
+
+                    @foreach($groupData['churches'] as $churchName => $stats)
                         <tr>
-                            <td class="text-left">{{ $catName }}</td>
-                            <td class="text-left">{{ $groupName }}</td>
+                            <td class="text-left" style="color: #94a3b8;">{{ $catName }}</td>
+                            <td class="text-left" style="color: #94a3b8;">{{ $groupName }}</td>
                             <td class="text-left">{{ $churchName }}</td>
                             @foreach($stats['weeks'] as $weekCount)
                                 <td>{{ $weekCount }}</td>
@@ -93,6 +117,15 @@
                         </tr>
                     @endforeach
                 @endforeach
+
+                {{-- Category Grand Total --}}
+                <tr class="category-total">
+                    <td colspan="3" class="text-right"><strong>{{ strtoupper($catName) }} GRAND TOTAL</strong></td>
+                    @foreach($catData['weeks'] as $weekCount)
+                        <td><strong>{{ $weekCount }}</strong></td>
+                    @endforeach
+                    <td class="total-col" style="background-color: #1e293b; color: white;">{{ $catData['total'] }}</td>
+                </tr>
             @endforeach
         </tbody>
     </table>

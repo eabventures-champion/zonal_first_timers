@@ -114,38 +114,77 @@
                                 Total</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
-                        @forelse($reportData as $catName => $groups_data)
-                            @foreach($groups_data as $groupName => $churches_data)
-                                @foreach($churches_data as $churchName => $stats)
-                                    <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                                        <td class="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">{{ $catName }}</td>
-                                        <td class="py-3 px-4 text-sm text-gray-500 dark:text-slate-400">{{ $groupName }}</td>
-                                        <td class="py-3 px-4 text-sm text-gray-500 dark:text-slate-400">{{ $churchName }}</td>
+                    @forelse($reportData as $catName => $catData)
+                        @foreach($catData['groups'] as $groupName => $groupData)
+                            <tbody x-data="{ expanded: true }" class="divide-y divide-gray-100 dark:divide-slate-800">
+                                <tr class="bg-gray-50/30 dark:bg-slate-800/20">
+                                    <td class="py-3 px-4 text-sm font-bold text-gray-900 dark:text-white">{{ $catName }}</td>
+                                    <td class="py-3 px-4 text-sm font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer flex items-center gap-2" @click="expanded = !expanded">
+                                        <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                        {{ $groupName }}
+                                    </td>
+                                    <td class="py-3 px-4 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase italic">Group Total</td>
+                                    
+                                    @foreach($groupData['weeks'] as $weekCount)
+                                        <td class="py-3 px-4 text-sm text-center font-bold text-gray-900 dark:text-white">
+                                            {{ $weekCount }}
+                                        </td>
+                                    @endforeach
+
+                                    <td class="py-3 px-4 text-sm font-black text-center text-gray-900 dark:text-white bg-gray-100/50 dark:bg-slate-800/50 border-l border-gray-100 dark:border-slate-800">
+                                        {{ $groupData['total'] }}
+                                    </td>
+                                </tr>
+
+                                {{-- Church Rows --}}
+                                @foreach($groupData['churches'] as $churchName => $stats)
+                                    <tr x-show="expanded" x-transition class="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                                        <td class="py-3 px-4 text-sm text-gray-400 dark:text-slate-600">{{ $catName }}</td>
+                                        <td class="py-3 px-4 text-sm text-gray-400 dark:text-slate-600 pl-8">{{ $groupName }}</td>
+                                        <td class="py-3 px-4 text-sm text-gray-500 dark:text-slate-400 font-medium">{{ $churchName }}</td>
 
                                         @foreach($stats['weeks'] as $weekCount)
-                                            <td
-                                                class="py-3 px-4 text-sm text-center font-medium {{ $weekCount > 0 ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/30 dark:bg-indigo-500/5' : 'text-gray-400 dark:text-slate-600' }}">
+                                            <td class="py-3 px-4 text-sm text-center font-medium {{ $weekCount > 0 ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/30 dark:bg-indigo-500/5' : 'text-gray-400 dark:text-slate-600' }}">
                                                 {{ $weekCount }}
                                             </td>
                                         @endforeach
 
-                                        <td
-                                            class="py-3 px-4 text-sm font-bold text-center text-gray-900 dark:text-white bg-gray-50/30 dark:bg-slate-800/30 border-l border-gray-100 dark:border-slate-800">
+                                        <td class="py-3 px-4 text-sm font-bold text-center text-gray-900 dark:text-white bg-gray-50/30 dark:bg-slate-800/30 border-l border-gray-100 dark:border-slate-800">
                                             {{ $stats['total'] }}
                                         </td>
                                     </tr>
                                 @endforeach
-                            @endforeach
-                        @empty
+                            </tbody>
+                        @endforeach
+
+                        <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
+                            {{-- Category Grand Total Row --}}
+                            <tr class="bg-indigo-50/50 dark:bg-indigo-900/10 border-t-2 border-indigo-100 dark:border-indigo-900/50">
+                                <td colspan="3" class="py-4 px-4 text-sm font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-wider text-right">
+                                    {{ $catName }} GRAND TOTAL
+                                </td>
+                                @foreach($catData['weeks'] as $weekCount)
+                                    <td class="py-4 px-4 text-sm text-center font-black text-indigo-700 dark:text-indigo-300">
+                                        {{ $weekCount }}
+                                    </td>
+                                @endforeach
+                                <td class="py-4 px-4 text-sm font-black text-center text-white bg-indigo-600 dark:bg-indigo-500">
+                                    {{ $catData['total'] }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    @empty
+                        <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
                             <tr>
                                 <td colspan="{{ 4 + count($weeksInMonth) }}"
                                     class="py-8 px-4 text-center text-gray-500 dark:text-slate-400">
                                     No report data available for the selected period.
                                 </td>
                             </tr>
-                        @endforelse
-                    </tbody>
+                        </tbody>
+                    @endforelse
                 </table>
             </div>
         </div>
