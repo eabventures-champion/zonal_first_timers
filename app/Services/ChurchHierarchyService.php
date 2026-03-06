@@ -70,8 +70,12 @@ class ChurchHierarchyService
             'category'
         ])
             ->join('church_categories', 'church_groups.church_category_id', '=', 'church_categories.id')
-            ->orderByRaw("CASE WHEN church_categories.name = 'MAIN CHURCH' THEN 0 ELSE 1 END")
-            ->orderBy('church_categories.name')
+            ->orderByRaw("CASE 
+                WHEN church_groups.name IN ('AVENOR', 'LAA') THEN 0 
+                WHEN church_categories.name = 'MAIN CHURCH' THEN 1 
+                ELSE 2 
+            END")
+            ->orderBy('church_groups.name')
             ->select('church_groups.*')
             ->get();
     }

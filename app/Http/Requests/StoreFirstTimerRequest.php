@@ -44,7 +44,23 @@ class StoreFirstTimerRequest extends FormRequest
                 Rule::unique('first_timers', 'email')
             ],
             'bringer_name' => ['nullable', 'string', 'max:255'],
-            'bringer_contact' => ['nullable', 'string', 'min:10', 'max:20'],
+            'bringer_contact' => [
+                'nullable',
+                'string',
+                'min:10',
+                'max:20',
+                function ($attribute, $value, $fail) {
+                    $churchId = $this->church_id ?? auth()->user()->church_id;
+                    if (!$churchId)
+                        return;
+
+                    $existingBringer = \App\Models\Bringer::where('contact', $value)->first();
+                    if ($existingBringer && $existingBringer->church_id != $churchId) {
+                        $churchName = $existingBringer->church->name ?? 'another church';
+                        $fail("The bringer '{$existingBringer->name}' is already registered with {$churchName}. A bringer cannot be associated with multiple churches.");
+                    }
+                }
+            ],
             'born_again' => ['required', 'boolean'],
             'water_baptism' => ['required', 'boolean'],
             'prayer_requests' => ['nullable', 'string', 'max:2000'],

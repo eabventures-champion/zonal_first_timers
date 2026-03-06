@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\FirstTimer;
 use App\Services\FirstTimerService;
 use App\Services\FoundationSchoolService;
+use App\Exports\FirstTimerTemplateExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class FirstTimerController extends Controller
@@ -91,5 +93,10 @@ class FirstTimerController extends Controller
         $foundationProgress = $this->foundationService->getStudentProgress($firstTimer);
 
         return view('retaining-officer.first-timers.show', compact('firstTimer', 'foundationProgress'));
+    }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new FirstTimerTemplateExport, 'first_timers_import_template.csv', \Maatwebsite\Excel\Excel::CSV);
     }
 }

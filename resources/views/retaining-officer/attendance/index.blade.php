@@ -114,46 +114,65 @@
                                 </td>
                                 @foreach($sundays as $sunday)
                                     @php
-                                        $attended = $data['weeks'][$sunday['week_number']] ?? false;
+                                        $record = $data['weeks'][$sunday['week_number']] ?? null;
+                                        $attended = $record['status'] ?? null === 'attended';
                                         $exists = isset($data['weeks'][$sunday['week_number']]);
+                                        $status = $record['status'] ?? 'clear';
                                         $key = $data['id'] . '-' . $sunday['week_number'];
                                     @endphp
                                     <td class="px-3 py-4 text-center">
-                                        <button 
-                                            @if($data['is_readonly']) disabled @endif
-                                            @click="toggle({{ $data['id'] }}, {{ $data['is_member'] ? 'true' : 'false' }}, {{ $sunday['week_number'] }}, '{{ $sunday['date'] }}', {{ $attended ? 'true' : 'false' }})"
-                                            :class="loading['{{ $key }}'] || {{ $data['is_readonly'] ? 'true' : 'false' }} ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'"
-                                            class="inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200 relative group/btn"
-                                            title="{{ $data['is_readonly'] ? 'Record locked (Retained)' : \Carbon\Carbon::parse($sunday['date'])->format('l, M d, Y') }}">
-                                            
-                                            @if($attended)
-                                                <div class="bg-emerald-500 dark:bg-emerald-600 text-white p-1 rounded-md shadow-sm shadow-emerald-200 dark:shadow-none">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                </div>
-                                            @elseif($exists && !$attended)
-                                                <div class="bg-red-500 dark:bg-red-600 text-white p-1 rounded-md shadow-sm shadow-red-200 dark:shadow-none">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </div>
-                                            @else
-                                                <div class="border-2 border-dashed border-gray-200 dark:border-slate-700 text-gray-300 dark:text-slate-600 p-1 rounded-md group-hover/btn:border-indigo-300 dark:group-hover/btn:border-indigo-500 group-hover/btn:text-indigo-400">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                                    </svg>
-                                                </div>
-                                            @endif
+                                        <div class="flex flex-col items-center gap-1">
+                                            <button 
+                                                @if($data['is_readonly']) disabled @endif
+                                                @click="toggle({{ $data['id'] }}, {{ $data['is_member'] ? 'true' : 'false' }}, {{ $sunday['week_number'] }}, '{{ $sunday['date'] }}', {{ $status === 'attended' ? 'true' : 'false' }})"
+                                                :class="loading['{{ $key }}'] || {{ $data['is_readonly'] ? 'true' : 'false' }} ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'"
+                                                class="inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200 relative group/btn"
+                                                title="{{ $data['is_readonly'] ? 'Record locked (Retained)' : \Carbon\Carbon::parse($sunday['date'])->format('l, M d, Y') }}">
+                                                
+                                                @if($status === 'attended')
+                                                    <div class="bg-emerald-500 dark:bg-emerald-600 text-white p-1 rounded-md shadow-sm shadow-emerald-200 dark:shadow-none">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </div>
+                                                @elseif($status === 'absent')
+                                                    <div class="bg-red-500 dark:bg-red-600 text-white p-1 rounded-md shadow-sm shadow-red-200 dark:shadow-none">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </div>
+                                                @else
+                                                    <div class="border-2 border-dashed border-gray-200 dark:border-slate-700 text-gray-300 dark:text-slate-600 p-1 rounded-md group-hover/btn:border-indigo-300 dark:group-hover/btn:border-indigo-500 group-hover/btn:text-indigo-400">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                        </svg>
+                                                    </div>
+                                                @endif
 
-                                            {{-- Spinner --}}
-                                            <div x-show="loading['{{ $key }}']" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-900/50 rounded-lg">
-                                                <svg class="animate-spin h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24">
-                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                            </div>
-                                        </button>
+                                                <div x-show="loading['{{ $key }}']" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-900/50 rounded-lg">
+                                                    <svg class="animate-spin h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                </div>
+                                            </button>
+
+                                            @if($status !== 'clear')
+                                                <span class="text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase">
+                                                    {{ $record['formatted_date'] }}
+                                                </span>
+                                            @elseif(!$data['is_readonly'])
+                                                <input type="date" 
+                                                    class="hidden" 
+                                                    x-ref="date_ro_{{ $key }}"
+                                                    @change="toggle({{ $data['id'] }}, {{ $data['is_member'] ? 'true' : 'false' }}, {{ $sunday['week_number'] }}, $event.target.value, false)"
+                                                >
+                                                <button @click="$refs.date_ro_{{ $key }}.showPicker()" 
+                                                    class="text-[8px] text-gray-400 hover:text-indigo-500 font-bold uppercase tracking-tighter transition-colors">
+                                                    Other Day
+                                                </button>
+                                            @endif
+                                        </div>
                                     </td>
                                 @endforeach
                             </tr>

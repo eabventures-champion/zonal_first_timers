@@ -11,6 +11,8 @@ use App\Models\FirstTimer;
 use App\Models\User;
 use App\Services\FirstTimerService;
 use App\Services\FoundationSchoolService;
+use App\Exports\FirstTimerTemplateExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class FirstTimerController extends Controller
@@ -34,6 +36,12 @@ class FirstTimerController extends Controller
             return $categoryGroup->groupBy(function ($ft) {
                 return $ft->church?->name ?? 'Unassigned Churches';
             });
+        })->sortKeysUsing(function ($a, $b) {
+            if ($a === 'ZONAL CHURCH')
+                return -1;
+            if ($b === 'ZONAL CHURCH')
+                return 1;
+            return strcasecmp($a, $b);
         });
 
         return view('admin.first-timers.index', compact('groupedFirstTimers', 'churches', 'filters'));
@@ -99,8 +107,9 @@ class FirstTimerController extends Controller
 
     public function importForm()
     {
-        $churches = Church::all();
-        return view('admin.first-timers.import', compact('churches'));
+        $groups = \App\Models\ChurchGroup::with('churches')->orderBy('name')->get();
+        $churches = Church::orderBy('name')->get();
+        return view('admin.first-timers.import', compact('groups', 'churches'));
     }
 
     public function import(ImportFirstTimersRequest $request)
@@ -165,5 +174,10 @@ class FirstTimerController extends Controller
             'exists' => $exists,
             'message' => $exists ? "This phone number is already registered to {$name} ({$foundType})." : ''
         ]);
+    }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new FirstTimerTemplateExport, 'first_timers_import_template.csv', \Maatwebsite\Excel\Excel::CSV);
     }
 }

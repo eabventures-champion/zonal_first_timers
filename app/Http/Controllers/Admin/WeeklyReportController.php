@@ -39,7 +39,9 @@ class WeeklyReportController extends Controller
         $years = range(now()->year - 2, now()->year);
 
         // For group and church dropdowns
-        $groups = ChurchGroup::orderBy('name')->get();
+        $groups = ChurchGroup::orderByRaw("CASE WHEN name IN ('AVENOR', 'LAA') THEN 0 ELSE 1 END")
+            ->orderBy('name')
+            ->get();
         $churches = Church::orderBy('name')->get();
 
         return view('admin.reports.weekly', compact(

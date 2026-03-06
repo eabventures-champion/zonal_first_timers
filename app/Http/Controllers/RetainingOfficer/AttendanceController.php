@@ -80,7 +80,11 @@ class AttendanceController extends Controller
             return $group->map(function ($person) {
                 $weeks = [];
                 foreach ($person->weeklyAttendances as $wa) {
-                    $weeks[$wa->week_number] = $wa->attended;
+                    $weeks[$wa->week_number] = [
+                        'status' => $wa->attended ? 'attended' : 'absent',
+                        'service_date' => $wa->service_date,
+                        'formatted_date' => \Carbon\Carbon::parse($wa->service_date)->format('D d'),
+                    ];
                 }
                 return [
                     'id' => $person->id,

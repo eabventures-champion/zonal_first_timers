@@ -27,6 +27,25 @@
         @endif
     </div>
 
+    @if(session('import_errors'))
+        <div class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 mb-6 shadow-sm">
+            <div class="flex items-center gap-2 mb-3 text-red-800 dark:text-red-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-sm font-bold uppercase tracking-wider">Import Errors Found</p>
+            </div>
+            <ul class="space-y-1.5 list-none">
+                @foreach(session('import_errors') as $err)
+                    <li class="flex items-start gap-2 text-xs text-red-700 dark:text-red-300">
+                        <span class="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"></span>
+                        <span class="font-medium">{{ $err }}</span>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div
         class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
         <div class="overflow-x-auto">

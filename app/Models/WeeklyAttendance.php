@@ -37,11 +37,12 @@ class WeeklyAttendance extends Model
         }
 
         $dateString = $date->toDateString();
-        $weekNumber = count($sundays); // Default to last Sunday window
+        $weekNumber = 1; // Default to week 1 (before first Sunday)
 
         foreach ($sundays as $index => $sundayDate) {
-            if ($dateString <= $sundayDate) {
+            if ($dateString >= $sundayDate) {
                 $weekNumber = $index + 1;
+            } else {
                 break;
             }
         }

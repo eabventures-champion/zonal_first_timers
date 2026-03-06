@@ -6,7 +6,17 @@
     <div class="max-w-2xl">
         <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
             <div class="mb-6">
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">CSV Import</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">CSV Import</h3>
+                    <a href="{{ route('ro.first-timers.template') }}"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-[11px] font-bold rounded-lg transition duration-200">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download Template
+                    </a>
+                </div>
                 <p class="text-sm text-gray-500">Upload a CSV file to bulk register first timers for your church. The CSV
                     must include
                     headers matching the database fields.</p>
@@ -20,7 +30,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('ro.first-timers.import') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ route('ro.first-timers.import.store') }}" enctype="multipart/form-data">
                 @csrf
 
                 <div class="mb-6">

@@ -72,6 +72,7 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
     // Route::post('first-timers/check-contact', [Admin\FirstTimerController::class, 'checkContact'])->name('first-timers.check-contact'); // Moved to shared
     Route::get('first-timers/import', [Admin\FirstTimerController::class, 'importForm'])->name('first-timers.import');
     Route::post('first-timers/import', [Admin\FirstTimerController::class, 'import'])->name('first-timers.import.store');
+    Route::get('first-timers/template', [Admin\FirstTimerController::class, 'downloadTemplate'])->name('first-timers.template');
     Route::resource('first-timers', Admin\FirstTimerController::class);
 
     // Foundation School
@@ -132,6 +133,7 @@ Route::middleware(['auth', 'role:Retaining Officer'])->prefix('retaining-officer
     Route::post('first-timers', [RetainingOfficer\FirstTimerController::class, 'store'])->name('first-timers.store');
     Route::get('first-timers/import', [RetainingOfficer\FirstTimerController::class, 'importForm'])->name('first-timers.import.form');
     Route::post('first-timers/import', [RetainingOfficer\FirstTimerController::class, 'import'])->name('first-timers.import.store');
+    Route::get('first-timers/template', [RetainingOfficer\FirstTimerController::class, 'downloadTemplate'])->name('first-timers.template');
     Route::get('first-timers/{firstTimer}', [RetainingOfficer\FirstTimerController::class, 'show'])->name('first-timers.show');
 
     // Foundation School (scoped)

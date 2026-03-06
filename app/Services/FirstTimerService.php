@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
@@ -99,7 +101,16 @@ class FirstTimerService
                 $churchId = $data['church_id'];
 
                 if ($bringerName && $bringerContact) {
-                    // Find or create person by contact (ensuring uniqueness)
+                    $churchId = $data['church_id'];
+
+                    // Bringer-Church Restriction: Ensure bringer doesn't belong to another church
+                    $existingBringer = \App\Models\Bringer::where('contact', $bringerContact)->first();
+                    if ($existingBringer && $existingBringer->church_id != $churchId) {
+                        $existingChurch = $existingBringer->church->name ?? 'another church';
+                        throw new \Exception("The bringer '{$existingBringer->name}' (Contact: {$bringerContact}) is already registered with '{$existingChurch}'. A bringer cannot be associated with multiple churches.");
+                    }
+
+                    // Find or create person by contact
                     $bringer = \App\Models\Bringer::updateOrCreate(
                         ['contact' => $bringerContact],
                         [
@@ -339,33 +350,123 @@ class FirstTimerService
 
     public function importFromCsv(UploadedFile $file, int $churchId): array
     {
+        ini_set('auto_detect_line_endings', true);
         $results = ['success' => 0, 'errors' => []];
 
         $handle = fopen($file->getPathname(), 'r');
         $header = fgetcsv($handle);
 
+        if (!$header) {
+            return ['success' => 0, 'errors' => ['The CSV file is empty or invalid.']];
+        }
+
         // Normalize header keys
-        $header = array_map(fn($h) => strtolower(trim(str_replace(' ', '_', $h))), $header);
+        $header = array_map(fn($h) => strtolower(trim(str_replace([' ', "\r", "\n"], ['_', '', ''], $h))), $header);
+
+        \Illuminate\Support\Facades\Log::info("Starting CSV import for church {$churchId}. File: " . $file->getClientOriginalName());
 
         $row = 1;
         while (($line = fgetcsv($handle)) !== false) {
             $row++;
+
+            // Skip empty rows
+            if (empty(array_filter($line))) {
+                continue;
+            }
+
+            if ($row === 2) {
+                \Illuminate\Support\Facades\Log::info("Sample data from Row 2: " . implode(', ', $line));
+            }
+
+            $currentData = [];
             try {
-                $data = array_combine($header, $line);
-                $data['church_id'] = $churchId;
-                $data['born_again'] = strtolower($data['born_again'] ?? 'no') === 'yes';
-                $data['water_baptism'] = strtolower($data['water_baptism'] ?? 'no') === 'yes';
-                $data['status'] = $data['status'] ?? 'New';
-                $data['created_by'] = Auth::id();
+                // Ensure column count matches header
+                if (count($header) !== count($line)) {
+                    $results['errors'][] = "Row {$row}: Column count mismatch. Expected " . count($header) . " columns, but found " . count($line) . ".";
+                    continue;
+                }
+
+                $currentData = array_combine($header, $line);
+
+                // Trim and nullify empty strings
+                foreach ($currentData as $key => $val) {
+                    $val = trim((string) $val);
+                    $currentData[$key] = $val === '' ? null : $val;
+                }
+
+                $currentData['church_id'] = $churchId;
+                $currentData['born_again'] = strtolower($currentData['born_again'] ?? 'no') === 'yes';
+                $currentData['water_baptism'] = strtolower($currentData['water_baptism'] ?? 'no') === 'yes';
+                $currentData['status'] = $currentData['status'] ?? 'New';
+                $currentData['created_by'] = Auth::id();
 
                 $church = Church::find($churchId);
-                $data['retaining_officer_id'] = $church?->retaining_officer_id;
+                $currentData['retaining_officer_id'] = $church?->retaining_officer_id;
 
-                $this->create($data);
+                $currentData['date_of_visit'] = $this->parseDate($currentData['date_of_visit'] ?? null);
+                if (isset($currentData['date_of_birth']) && $currentData['date_of_birth']) {
+                    $currentData['date_of_birth'] = $this->parseDate($currentData['date_of_birth']);
+                } else {
+                    unset($currentData['date_of_birth']);
+                }
 
+                // Bringer-Church Restriction check for import
+                $bringerContact = $currentData['bringer_contact'] ?? null;
+                if ($bringerContact) {
+                    $existingBringer = \App\Models\Bringer::where('contact', $bringerContact)->first();
+                    if ($existingBringer && $existingBringer->church_id != $churchId) {
+                        $existingChurch = $existingBringer->church->name ?? 'another church';
+                        $results['errors'][] = "Row {$row}: The bringer '{$existingBringer->name}' (Contact: {$bringerContact}) is already registered with '{$existingChurch}'. A bringer cannot be associated with multiple churches.";
+                        continue;
+                    }
+                }
+
+                // Row-level validation
+                $validator = Validator::make($currentData, [
+                    'full_name' => 'required|string|max:255',
+                    'primary_contact' => [
+                        'required',
+                        'string',
+                        'min:10',
+                        'max:20',
+                        Rule::unique('first_timers', 'primary_contact'),
+                        Rule::unique('members', 'primary_contact'),
+                        Rule::unique('users', 'phone'),
+                    ],
+                    'email' => [
+                        'nullable',
+                        'email',
+                        Rule::unique('first_timers', 'email'),
+                        Rule::unique('members', 'email'),
+                        Rule::unique('users', 'email'),
+                    ],
+                    'gender' => 'required|in:Male,Female',
+                    'residential_address' => 'required|string|max:1000',
+                    'date_of_visit' => 'required|date',
+                ], [
+                    'primary_contact.unique' => 'Phone number :input already registered.',
+                    'email.unique' => 'Email :input already registered.',
+                    'gender.in' => 'Gender must be Male or Female (got ":input").',
+                ]);
+
+                if ($validator->fails()) {
+                    foreach ($validator->errors()->getMessages() as $field => $messages) {
+                        foreach ($messages as $message) {
+                            if (str_contains($message, 'already registered')) {
+                                $results['errors'][] = "Row {$row}: " . $this->humanizeDuplicate($field, $currentData[$field]);
+                            } else {
+                                $results['errors'][] = "Row {$row}: {$message}";
+                            }
+                        }
+                    }
+                    continue;
+                }
+
+                $this->create($currentData);
                 $results['success']++;
-            } catch (\Exception $e) {
-                $results['errors'][] = "Row {$row}: {$e->getMessage()}";
+
+            } catch (\Throwable $e) {
+                $results['errors'][] = "Row {$row}: " . $this->humanizeError($e, $currentData);
             }
         }
 
@@ -477,5 +578,87 @@ class FirstTimerService
         });
 
         return $count;
+    }
+
+    private function humanizeError(\Throwable $e, array $data): string
+    {
+        $message = $e->getMessage();
+
+        // Handle DB integrity constraints (duplicates)
+        if (str_contains($message, '1062 Duplicate entry')) {
+            // Check for the unique index name rather than just the column name, 
+            // since the exception message includes the full SQL query which contains all column names.
+            if (str_contains($message, 'primary_contact_unique')) {
+                return $this->humanizeDuplicate('primary_contact', $data['primary_contact'] ?? 'Unknown');
+            }
+            if (str_contains($message, 'alternate_contact_unique') || str_contains($message, 'first_timers_alternate_contact_unique')) {
+                return "The alternate contact '{$data['alternate_contact']}' is already in use by another person.";
+            }
+            if (str_contains($message, 'email_unique')) {
+                return $this->humanizeDuplicate('email', $data['email'] ?? 'Unknown');
+            }
+            if (str_contains($message, 'users_phone_unique')) {
+                return "The contact number '{$data['primary_contact']}' is already linked to an existing user account.";
+            }
+            return "This record contains duplicate information that already exists.";
+        }
+
+        // Handle specific role check from create method
+        if (str_contains($message, 'belongs to an existing')) {
+            return $message;
+        }
+
+        // Generic technical error catcher
+        return "System error: " . (str_contains($message, 'SQLSTATE') ? "Invalid data format or database restriction." : $message);
+    }
+
+    private function humanizeDuplicate(string $field, $value): string
+    {
+        $existing = FirstTimer::where($field, $value)->first()
+            ?? Member::where('primary_contact', $value)->first();
+
+        if (!$existing && ($field === 'primary_contact' || $field === 'email')) {
+            $userField = ($field === 'primary_contact') ? 'phone' : 'email';
+            $existingUser = User::where($userField, $value)->first();
+
+            if ($existingUser) {
+                $role = $existingUser->getRoleNames()->first() ?? 'User';
+                return "The {$field} '{$value}' is already registered to an existing system user: '{$existingUser->name}' ({$role}).";
+            }
+        }
+
+        if ($existing) {
+            $churchName = $existing->church?->name ?? 'Unknown Church';
+            $bringerName = $existing->bringer?->name ?? 'Unknown Bringer';
+            $type = ($existing instanceof Member) ? 'Member' : 'First Timer';
+            $label = ($field === 'primary_contact' || $field === 'alternate_contact') ? 'Phone number' : 'Email';
+
+            return "{$label} '{$value}' for {$existing->full_name} is already registered as a {$type} in {$churchName} (Brought by: {$bringerName}).";
+        }
+
+        return "{$field} '{$value}' is already in our system (Detailed record could not be found).";
+    }
+
+    private function parseDate($date)
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        // Handle DD/MM/YYYY format specifically if it contains slashes
+        if (str_contains($date, '/')) {
+            try {
+                // Force interpretation as d/m/Y
+                return Carbon::createFromFormat('d/m/Y', $date)->startOfDay();
+            } catch (\Exception $e) {
+                // Fallback to standard parsing if specific format fails
+            }
+        }
+
+        try {
+            return Carbon::parse($date)->startOfDay();
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

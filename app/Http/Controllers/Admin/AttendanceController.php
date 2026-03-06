@@ -27,7 +27,10 @@ class AttendanceController extends Controller
                     'members as members_count'
                 ]);
             }
-        ])->get();
+        ])
+            ->orderByRaw("CASE WHEN name IN ('AVENOR', 'LAA') THEN 0 ELSE 1 END")
+            ->orderBy('name')
+            ->get();
 
         return view('admin.attendance.index', compact('groups'));
     }
@@ -100,7 +103,11 @@ class AttendanceController extends Controller
             return $group->sortByDesc('id')->map(function ($person) {
                 $weeks = [];
                 foreach ($person->weeklyAttendances as $wa) {
-                    $weeks[$wa->week_number] = $wa->attended ? 'attended' : 'absent';
+                    $weeks[$wa->week_number] = [
+                        'status' => $wa->attended ? 'attended' : 'absent',
+                        'service_date' => $wa->service_date,
+                        'formatted_date' => Carbon::parse($wa->service_date)->format('D d'),
+                    ];
                 }
 
                 $isMember = get_class($person) === \App\Models\Member::class;

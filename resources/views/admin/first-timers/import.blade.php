@@ -6,7 +6,17 @@
     <div class="max-w-2xl">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div class="mb-6">
-                <h3 class="text-sm font-semibold text-gray-700 mb-2">CSV Import</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-semibold text-gray-700">CSV Import</h3>
+                    <a href="{{ route('admin.first-timers.template') }}"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[11px] font-bold rounded-lg transition duration-200">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download Template
+                    </a>
+                </div>
                 <p class="text-sm text-gray-500">Upload a CSV file to bulk register first timers. The CSV must include
                     headers matching the database fields.</p>
                 <div class="mt-3 bg-gray-50 rounded-lg p-3">
@@ -22,18 +32,56 @@
             <form method="POST" action="{{ route('admin.first-timers.import.store') }}" enctype="multipart/form-data">
                 @csrf
 
-                <div class="mb-5">
-                    <label for="church_id" class="block text-sm font-medium text-gray-700 mb-1">Church <span
-                            class="text-red-500">*</span></label>
-                    <select name="church_id" id="church_id" required
-                        class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="">Select Church</option>
-                        @foreach($churches as $church)
-                            <option value="{{ $church->id }}">{{ $church->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('church_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <label for="group_id" class="block text-sm font-medium text-gray-700 mb-1">Group</label>
+                        <select id="group_id"
+                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            onchange="filterChurches(this.value)">
+                            <option value="">All Groups</option>
+                            @foreach($groups as $group)
+                                <option value="{{ $group->id }}">{{ $group->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="church_id" class="block text-sm font-medium text-gray-700 mb-1">Church <span
+                                class="text-red-500">*</span></label>
+                        <select name="church_id" id="church_id" required
+                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Select Church</option>
+                            @foreach($churches as $church)
+                                <option value="{{ $church->id }}" data-group-id="{{ $church->church_group_id }}">
+                                    {{ $church->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('church_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
                 </div>
+
+                <script>
+                    function filterChurches(groupId) {
+                        const churchSelect = document.getElementById('church_id');
+                        const options = churchSelect.querySelectorAll('option');
+
+                        churchSelect.value = ''; // Reset selection
+
+                        options.forEach(option => {
+                            if (option.value === '') return; // Skip "Select Church"
+
+                            const optionGroupId = option.getAttribute('data-group-id');
+                            if (!groupId || optionGroupId === groupId) {
+                                option.style.display = '';
+                                option.disabled = false;
+                            } else {
+                                option.style.display = 'none';
+                                option.disabled = true;
+                            }
+                        });
+                    }
+                </script>
 
                 <div class="mb-6">
                     <label for="csv_file" class="block text-sm font-medium text-gray-700 mb-1">CSV File <span

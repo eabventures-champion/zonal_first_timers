@@ -149,11 +149,31 @@ class WeeklyReportService
             $data[$catName]['total']++;
         }
 
-        ksort($data); // sort categories
+        // Sort categories
+        uksort($data, function ($a, $b) {
+            if ($a === 'ZONAL CHURCH')
+                return -1;
+            if ($b === 'ZONAL CHURCH')
+                return 1;
+            return strcasecmp($a, $b);
+        });
+
         foreach ($data as $catName => &$catData) {
-            ksort($catData['groups']); // sort groups
+            // Sort groups
+            uksort($catData['groups'], function ($a, $b) {
+                $priorityGroups = ['AVENOR', 'LAA'];
+                $aIsPriority = in_array($a, $priorityGroups);
+                $bIsPriority = in_array($b, $priorityGroups);
+
+                if ($aIsPriority && !$bIsPriority)
+                    return -1;
+                if (!$aIsPriority && $bIsPriority)
+                    return 1;
+                return strcasecmp($a, $b);
+            });
+
             foreach ($catData['groups'] as $groupName => &$groupData) {
-                ksort($groupData['churches']); // sort churches
+                ksort($groupData['churches']);
             }
         }
 
