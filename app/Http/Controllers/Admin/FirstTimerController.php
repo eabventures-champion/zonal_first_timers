@@ -25,9 +25,8 @@ class FirstTimerController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['church_id', 'status', 'search', 'date_from', 'date_to']);
-        $firstTimers = $this->service->getAll($filters, false); // Fetch all for grouped view
-        $churches = Church::all();
+        $firstTimers = $this->service->getAll([], false); // Fetch all for grouped view
+        $churches = Church::orderBy('name')->get();
 
         // Group by category then church for structured view
         $groupedFirstTimers = $firstTimers->groupBy(function ($ft) {
@@ -44,7 +43,7 @@ class FirstTimerController extends Controller
             return strcasecmp($a, $b);
         });
 
-        return view('admin.first-timers.index', compact('groupedFirstTimers', 'churches', 'filters'));
+        return view('admin.first-timers.index', compact('groupedFirstTimers', 'churches'), ['filters' => []]);
     }
 
     public function create()

@@ -86,7 +86,7 @@
                 <th class="text-left">Group</th>
                 <th class="text-left">Church</th>
                 @foreach($weeksInMonth as $week)
-                    <th>{{ strtoupper($week['start']) }}</th>
+                    <th>{{ strtoupper($week['start'] . ' - ' . $week['end']) }}</th>
                 @endforeach
                 <th class="total-col">Total</th>
             </tr>

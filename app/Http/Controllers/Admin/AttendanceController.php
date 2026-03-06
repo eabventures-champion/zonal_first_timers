@@ -48,6 +48,11 @@ class AttendanceController extends Controller
         for ($d = 1; $d <= $daysInMonth; $d++) {
             $currentDate = Carbon::createFromDate($year, $month, $d);
             if ($currentDate->isSunday()) {
+                // If this Sunday is in the future, don't show the week
+                if ($currentDate->isFuture() && !$currentDate->isToday()) {
+                    continue;
+                }
+
                 $sundays[] = [
                     'week_number' => count($sundays) + 1,
                     'date' => $currentDate->toDateString(),
@@ -60,8 +65,17 @@ class AttendanceController extends Controller
         $monthEnd = $monthStart->copy()->endOfMonth();
 
         // 1. Fetch current newcomers (in first_timers table)
-        // We show ALL newcomers for this church so they can backfill/record anytime
+        // We show newcomers for this church who haven't been approved as members yet
         $newcomers = FirstTimer::where('church_id', $church->id)
+            ->whereNull('membership_approved_at')
+            ->where(function ($query) use ($monthStart, $monthEnd, $month, $year) {
+                // Include if they joined on/before the target month
+                $query->where('date_of_visit', '<=', $monthEnd)
+                    // OR they already have records in this specific month
+                    ->orWhereHas('weeklyAttendances', function ($q) use ($month, $year) {
+                    $q->where('month', $month)->where('year', $year);
+                });
+            })
             ->with([
                 'weeklyAttendances' => function ($q) use ($month, $year) {
                     $q->where('month', $month)->where('year', $year);
@@ -102,8 +116,9 @@ class AttendanceController extends Controller
         })->map(function ($group) {
             return $group->sortByDesc('id')->map(function ($person) {
                 $weeks = [];
-                foreach ($person->weeklyAttendances as $wa) {
-                    $weeks[$wa->week_number] = [
+                foreach ($person->weeklyAttendances->sortBy('service_date') as $wa) {
+                    $weeks[$wa->week_number][] = [
+                        'id' => $wa->id,
                         'status' => $wa->attended ? 'attended' : 'absent',
                         'service_date' => $wa->service_date,
                         'formatted_date' => Carbon::parse($wa->service_date)->format('D d'),
@@ -117,7 +132,7 @@ class AttendanceController extends Controller
                     'row_id' => ($isMember ? 'm_' : 'ft_') . $person->id,
                     'name' => $person->full_name,
                     'is_member' => $isMember,
-                    'is_readonly' => ($isMember || $person->total_attended >= 6),
+                    'is_readonly' => ($person->total_attended >= 6),
                     'total_attended' => $person->total_attended,
                     'weeks' => $weeks,
                     'join_date' => Carbon::parse($person->date_of_visit)->format('M d, Y'),
@@ -130,6 +145,8 @@ class AttendanceController extends Controller
 
     public function toggle(Request $request)
     {
+        \Log::info('Admin Attendance Toggle Request:', $request->all());
+
         $val = $request->validate([
             'id' => 'required',
             'is_member' => 'required|boolean',
@@ -159,7 +176,8 @@ class AttendanceController extends Controller
 
         $query['church_id'] = $person->church_id;
 
-        if ($val['is_member'] || $person->weeklyAttendances()->where('attended', true)->count() >= 6) {
+        $attendedCount = $person->weeklyAttendances()->where('attended', true)->count();
+        if ($attendedCount >= 6) {
             return response()->json([
                 'success' => false,
                 'message' => 'Attendance recording is locked for this person.'
@@ -173,23 +191,42 @@ class AttendanceController extends Controller
                 'week_number' => $val['week_number'],
                 'first_timer_id' => $query['first_timer_id'],
                 'member_id' => $query['member_id'],
-            ])->delete();
+            ])->whereDate('service_date', $val['service_date'])->forceDelete();
         } else {
-            $attendance = WeeklyAttendance::updateOrCreate(
-                [
-                    'month' => $val['month'],
-                    'year' => $val['year'],
-                    'week_number' => $val['week_number'],
-                    'first_timer_id' => $query['first_timer_id'],
-                    'member_id' => $query['member_id'],
-                ],
-                [
+            // Check for a soft-deleted record first and restore it
+            $trashed = WeeklyAttendance::withTrashed()->where([
+                'month' => $val['month'],
+                'year' => $val['year'],
+                'week_number' => $val['week_number'],
+                'first_timer_id' => $query['first_timer_id'],
+                'member_id' => $query['member_id'],
+            ])->whereDate('service_date', $val['service_date'])->first();
+
+            if ($trashed && $trashed->trashed()) {
+                $trashed->restore();
+                $trashed->update([
                     'church_id' => $person->church_id,
-                    'service_date' => $val['service_date'],
                     'attended' => $val['status'] === 'attended',
+                    'notes' => null,
                     'recorded_by' => auth()->id(),
-                ]
-            );
+                ]);
+            } else {
+                WeeklyAttendance::updateOrCreate(
+                    [
+                        'month' => $val['month'],
+                        'year' => $val['year'],
+                        'week_number' => $val['week_number'],
+                        'service_date' => $val['service_date'],
+                        'first_timer_id' => $query['first_timer_id'],
+                        'member_id' => $query['member_id'],
+                    ],
+                    [
+                        'church_id' => $person->church_id,
+                        'attended' => $val['status'] === 'attended',
+                        'recorded_by' => auth()->id(),
+                    ]
+                );
+            }
         }
 
         // Update the date_of_visit (join date) to be the earliest recorded attendance date

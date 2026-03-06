@@ -3,13 +3,74 @@
 @section('page-title', 'Members')
 
 @section('content')
+    <div x-data="{ 
+                filtersOpen: false,
+                search: '',
+                dateFrom: '',
+                dateTo: '',
+                selectedChurchId: '',
+                resetFilters() {
+                    this.search = '';
+                    this.dateFrom = '';
+                    this.dateTo = '';
+                    this.selectedChurchId = '';
+                },
+                expandedGroups: new Set(),
+                toggleGroup(name) {
+                    if (this.expandedGroups.has(name)) {
+                        this.expandedGroups.delete(name);
+                    } else {
+                        this.expandedGroups.add(name);
+                    }
+                },
+                shouldShowRecord(m) {
+                    const s = this.search.toLowerCase();
+                    const matchesSearch = !this.search || 
+                        (m.name && m.name.toLowerCase().includes(s)) || 
+                        (m.phone && m.phone.toLowerCase().includes(s)) ||
+                        (m.church && m.church.toLowerCase().includes(s)) ||
+                        (m.group_name && m.group_name.toLowerCase().includes(s));
+
+                    const matchesChurch = !this.selectedChurchId || m.church_id == this.selectedChurchId;
+
+                    let matchesDate = true;
+                    if (this.dateFrom || this.dateTo) {
+                        const visitDate = new Date(m.visit_date);
+                        visitDate.setHours(0,0,0,0);
+
+                        if (this.dateFrom) {
+                            const dFrom = new Date(this.dateFrom);
+                            dFrom.setHours(0,0,0,0);
+                            matchesDate = matchesDate && visitDate >= dFrom;
+                        }
+                        if (this.dateTo) {
+                            const dTo = new Date(this.dateTo);
+                            dTo.setHours(0,0,0,0);
+                            matchesDate = matchesDate && visitDate <= dTo;
+                        }
+                    }
+                    return matchesSearch && matchesDate && matchesChurch;
+                },
+                shouldShowGroup(groupName, members) {
+                    if (!this.hasActiveFilters()) return true;
+                    const s = this.search.toLowerCase();
+                    const nameMatch = groupName.toLowerCase().includes(s);
+                    const recordMatch = members.some(m => this.shouldShowRecord(m));
+                    return nameMatch || recordMatch;
+                },
+                hasActiveFilters() {
+                    return !!(this.search || this.selectedChurchId || this.dateFrom || this.dateTo);
+                },
+                showHistory: false, 
+                historyName: '', 
+                historyDates: [] 
+            }">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <p class="text-sm text-gray-500">Manage all church members</p>
     </div>
 
     {{-- Filters --}}
-    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-4 mb-6"
-        x-data="{ filtersOpen: false }">
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-4 mb-6">
         <div class="flex items-center justify-between lg:hidden mb-4" @click="filtersOpen = !filtersOpen">
             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -23,64 +84,51 @@
             </button>
         </div>
 
-        <form method="GET" action="{{ route('admin.members.index') }}"
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 items-center gap-3"
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 items-center gap-3"
             :class="filtersOpen ? 'grid' : 'hidden lg:grid'">
-            <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search name, phone..."
+            <input type="text" x-model="search"
+                placeholder="Search name, phone..."
                 class="rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500 w-full">
 
-            <select name="church_id"
+            <select x-model="selectedChurchId"
                 class="rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500 w-full">
                 <option value="">All Churches</option>
                 @foreach($churches as $church)
-                    <option value="{{ $church->id }}" {{ ($filters['church_id'] ?? '') == $church->id ? 'selected' : '' }}>
-                        {{ $church->name }}
-                    </option>
+                    <option value="{{ $church->id }}">{{ $church->name }}</option>
                 @endforeach
             </select>
 
             <div class="sm:col-span-1 lg:col-span-1">
                 <label class="block lg:hidden text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">From</label>
-                <input type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}"
+                <input type="date" x-model="dateFrom"
                     class="rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500 w-full">
             </div>
 
             <div class="sm:col-span-1 lg:col-span-1">
                 <label class="block lg:hidden text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">To</label>
-                <input type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}"
+                <input type="date" x-model="dateTo"
                     class="rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500 w-full">
             </div>
 
             <div class="flex gap-2">
-                <button type="submit"
-                    class="flex-1 px-4 py-2 bg-gray-800 dark:bg-indigo-600 text-white text-sm rounded-lg hover:bg-gray-900 dark:hover:bg-indigo-700 transition font-medium">Filter</button>
-                @if(count(array_filter($filters)) > 0)
-                    <a href="{{ route('admin.members.index') }}"
-                        class="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 text-sm rounded-lg transition flex items-center justify-center font-medium"
-                        title="Clear all filters">
-                        Clear
-                    </a>
-                @endif
+                <button @click="resetFilters()"
+                    class="flex-1 px-4 py-2 bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-400 text-sm rounded-lg transition font-medium border border-gray-200 dark:border-slate-700">
+                    Reset
+                </button>
             </div>
-        </form>
+        </div>
     </div>
 
-    {{-- Table --}}
-    <div x-data="{ 
-                                                    expandedGroups: new Set(),
-                                                    toggleGroup(name) {
-                                                        if (this.expandedGroups.has(name)) {
-                                                            this.expandedGroups.delete(name);
-                                                        } else {
-                                                            this.expandedGroups.add(name);
-                                                        }
-                                                    },
-                                                    showHistory: false, 
-                                                    historyName: '', 
-                                                    historyDates: [] 
-                                                }" class="space-y-8">
+    <div class="space-y-8">
         @forelse($groupedMembers as $groupName => $groupItems)
-            <div class="space-y-3">
+            <div class="space-y-3" x-show="shouldShowGroup('{{ addslashes($groupName) }}', @js($groupItems->map(fn($m) => [
+                'name' => $m->full_name,
+                'phone' => $m->primary_contact,
+                'church' => $m->church->name ?? '',
+                'church_id' => $m->church_id,
+                'visit_date' => $m->date_of_visit?->format('Y-m-d'),
+                'group_name' => $groupName
+            ])))">
                 <div class="flex items-center gap-2 px-1">
                     <button @click="toggleGroup('{{ $groupName }}')"
                         class="flex items-center gap-2 hover:opacity-70 transition text-left">
@@ -100,7 +148,7 @@
                     <div class="flex-1 border-t border-gray-100 dark:border-slate-800 ml-2"></div>
                 </div>
 
-                <div x-show="expandedGroups.has('{{ $groupName }}')" x-collapse
+                <div x-show="expandedGroups.has('{{ $groupName }}') || hasActiveFilters()" x-collapse
                     class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
 
                     {{-- Desktop Table --}}
@@ -111,25 +159,41 @@
                                     <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Name</th>
                                     <!-- <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Contact</th> -->
                                     <th class="px-6 py-3 text-left font-medium text-gray-500 dark:text-slate-400">Church</th>
-                                    <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Attendance</th>
-                                    <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Foundation School Status</th>
-                                    <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Approved On</th>
+                                    <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Attendance
+                                    </th>
+                                    <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Foundation
+                                        School Status</th>
+                                    <th class="px-6 py-3 text-center font-medium text-gray-500 dark:text-slate-400">Approved On
+                                    </th>
                                     <th class="px-6 py-3 text-right font-medium text-gray-500 dark:text-slate-400">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
                                 @foreach($groupItems as $m)
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors" x-show="shouldShowRecord(@js([
+                                        'name' => $m->full_name,
+                                        'phone' => $m->primary_contact,
+                                        'church' => $m->church->name ?? '',
+                                        'church_id' => $m->church_id,
+                                        'visit_date' => $m->date_of_visit?->format('Y-m-d'),
+                                        'group_name' => $groupName
+                                    ]))">
                                         <td class="px-6 py-3">
                                             <div class="flex items-center gap-2">
                                                 <span class="font-medium text-gray-900 dark:text-white">{{ $m->full_name }}</span>
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                                                <span
+                                                    class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                                                     {{ $m->total_attended }} {{ Str::plural('Service', $m->total_attended) }}
                                                 </span>
                                             </div>
-                                            <div class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">{{ $m->status }}</div>
-                                            <div class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">{{ $m->primary_contact }}</div>
-                                            <div class="text-[10px] text-gray-400 dark:text-slate-500">First Visit: {{ $m->date_of_visit?->format('M d, Y') }}</div>
+                                            <div
+                                                class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">
+                                                {{ $m->status }}</div>
+                                            <div
+                                                class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wider font-bold">
+                                                {{ $m->primary_contact }}</div>
+                                            <div class="text-[10px] text-gray-400 dark:text-slate-500">First Visit:
+                                                {{ $m->date_of_visit?->format('M d, Y') }}</div>
                                         </td>
                                         <!-- <td class="px-6 py-3 text-gray-500 dark:text-slate-400">{{ $m->primary_contact }}</td> -->
                                         <td class="px-6 py-3 text-gray-500 dark:text-slate-400">
@@ -139,11 +203,13 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-3 text-center">
-                                            <button type="button" @click="historyName = '{{ $m->full_name }}'; historyDates = {{ json_encode($m->attendance_dates) }}; showHistory = true"
+                                            <button type="button"
+                                                @click="historyName = '{{ $m->full_name }}'; historyDates = {{ json_encode($m->attendance_dates) }}; showHistory = true"
                                                 class="inline-flex items-center gap-1.5 px-2 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition cursor-pointer">
                                                 <span class="text-xs font-bold">{{ $m->total_attended }}</span>
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>
                                             </button>
                                         </td>
@@ -157,11 +223,13 @@
                                                 $fsStatus = $m->foundation_school_status;
                                             @endphp
                                             <div class="flex flex-col items-center gap-1">
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase {{ $fsColors[$fsStatus] ?? 'bg-gray-50 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400' }}">
+                                                <span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase {{ $fsColors[$fsStatus] ?? 'bg-gray-50 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400' }}">
                                                     {{ $fsStatus }}
                                                 </span>
                                                 @if($fsStatus === 'in-progress')
-                                                    <span class="text-[10px] text-blue-600 dark:text-blue-400 font-medium italic">{{ $m->current_foundation_level }}</span>
+                                                    <span
+                                                        class="text-[10px] text-blue-600 dark:text-blue-400 font-medium italic">{{ $m->current_foundation_level }}</span>
                                                 @endif
                                             </div>
                                         </td>
@@ -169,8 +237,10 @@
                                             {{ $m->membership_approved_at?->format('M d, Y') ?? '—' }}
                                         </td>
                                         <td class="px-6 py-3 text-right space-x-1">
-                                            <a href="{{ route('admin.members.show', $m) }}" class="text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300 text-xs font-medium px-2 py-1">View</a>
-                                            <a href="{{ route('admin.members.edit', $m) }}" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 text-xs font-medium px-2 py-1">Edit</a>
+                                            <a href="{{ route('admin.members.show', $m) }}"
+                                                class="text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300 text-xs font-medium px-2 py-1">View</a>
+                                            <a href="{{ route('admin.members.edit', $m) }}"
+                                                class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 text-xs font-medium px-2 py-1">Edit</a>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -181,10 +251,18 @@
                     {{-- Mobile Card List --}}
                     <div class="md:hidden divide-y divide-gray-100 dark:divide-slate-800">
                         @foreach($groupItems as $m)
-                            <div class="p-4 space-y-4">
+                            <div class="p-4 space-y-4" x-show="shouldShowRecord(@js([
+                                'name' => $m->full_name,
+                                'phone' => $m->primary_contact,
+                                'church' => $m->church->name ?? '',
+                                'church_id' => $m->church_id,
+                                'visit_date' => $m->date_of_visit?->format('Y-m-d'),
+                                'group_name' => $groupName
+                            ]))">
                                 <div class="flex items-start justify-between">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-xs shrink-0">
+                                        <div
+                                            class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-xs shrink-0">
                                             {{ strtoupper(substr($m->full_name, 0, 2)) }}
                                         </div>
                                         <div>
@@ -192,34 +270,48 @@
                                             <p class="text-[11px] text-gray-500 dark:text-slate-400">{{ $m->primary_contact }}</p>
                                         </div>
                                     </div>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                                         {{ $m->status }}
                                     </span>
                                 </div>
 
                                 <div class="grid grid-cols-2 gap-3 pb-2">
-                                    <div class="bg-gray-50 dark:bg-slate-800/50 p-2 rounded-lg border border-gray-100 dark:border-slate-800/50">
-                                        <p class="text-[9px] text-gray-400 dark:text-slate-500 uppercase tracking-widest font-bold mb-1">Attendance</p>
-                                        <button type="button" @click="historyName = '{{ $m->full_name }}'; historyDates = {{ json_encode($m->attendance_dates) }}; showHistory = true"
+                                    <div
+                                        class="bg-gray-50 dark:bg-slate-800/50 p-2 rounded-lg border border-gray-100 dark:border-slate-800/50">
+                                        <p
+                                            class="text-[9px] text-gray-400 dark:text-slate-500 uppercase tracking-widest font-bold mb-1">
+                                            Attendance</p>
+                                        <button type="button"
+                                            @click="historyName = '{{ $m->full_name }}'; historyDates = {{ json_encode($m->attendance_dates) }}; showHistory = true"
                                             class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                                             <span class="text-xs font-bold">{{ $m->total_attended }} Services</span>
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                             </svg>
                                         </button>
                                     </div>
-                                    <div class="bg-gray-50 dark:bg-slate-800/50 p-2 rounded-lg border border-gray-100 dark:border-slate-800/50">
-                                        <p class="text-[9px] text-gray-400 dark:text-slate-500 uppercase tracking-widest font-bold mb-1">FS Status</p>
+                                    <div
+                                        class="bg-gray-50 dark:bg-slate-800/50 p-2 rounded-lg border border-gray-100 dark:border-slate-800/50">
+                                        <p
+                                            class="text-[9px] text-gray-400 dark:text-slate-500 uppercase tracking-widest font-bold mb-1">
+                                            FS Status</p>
                                         <span class="text-[11px] font-bold text-gray-700 dark:text-slate-300">
                                             {{ $m->foundation_school_status === 'in-progress' ? ($m->current_foundation_level ?: 'In Progress') : ucfirst($m->foundation_school_status) }}
                                         </span>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-slate-800/50">
+                                <div
+                                    class="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-slate-800/50">
                                     <div class="flex flex-col gap-0.5">
-                                        <div class="flex items-center gap-1.5 text-[10px] text-gray-400 dark:text-slate-500 font-medium">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                        <div
+                                            class="flex items-center gap-1.5 text-[10px] text-gray-400 dark:text-slate-500 font-medium">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
                                             {{ $m->church->name ?? '—' }}
                                         </div>
                                         <div class="text-[9px] text-gray-400 dark:text-slate-600 italic pl-4">
@@ -227,11 +319,21 @@
                                         </div>
                                     </div>
                                     <div class="flex gap-2">
-                                        <a href="{{ route('admin.members.show', $m) }}" class="p-2 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-lg transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                        <a href="{{ route('admin.members.show', $m) }}"
+                                            class="p-2 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-lg transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
                                         </a>
-                                        <a href="{{ route('admin.members.edit', $m) }}" class="p-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                        <a href="{{ route('admin.members.edit', $m) }}"
+                                            class="p-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
                                         </a>
                                     </div>
                                 </div>
@@ -310,6 +412,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
     </div>
 @endsection

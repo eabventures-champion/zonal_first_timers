@@ -20,16 +20,15 @@ class MemberController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['church_id', 'search', 'date_from', 'date_to']);
-        $members = $this->service->getMembers($filters, false); // Fetch all for grouped view
-        $churches = Church::all();
+        $members = $this->service->getMembers([], false); // Fetch all for grouped view
+        $churches = Church::orderBy('name')->get();
 
         // Group by group name for structured view
         $groupedMembers = $members->groupBy(function ($m) {
             return $m->church->group->name ?? 'Unassigned Groups';
         });
 
-        return view('admin.members.index', compact('groupedMembers', 'churches', 'filters'));
+        return view('admin.members.index', compact('groupedMembers', 'churches'), ['filters' => []]);
     }
 
     public function show(Member $member)

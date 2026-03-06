@@ -20,6 +20,11 @@ class WeeklyReportService
         // and ends on the first Saturday of the month.
         $weekNum = 1;
         while ($current <= $endOfMonth) {
+            // Do not present a week if it hasn't started yet
+            if ($current->isFuture() && !$current->isToday()) {
+                break;
+            }
+
             $endOfWeek = $current->copy()->endOfWeek(Carbon::SATURDAY)->endOfDay();
             if ($endOfWeek > $endOfMonth) {
                 $endOfWeek = $endOfMonth->copy();

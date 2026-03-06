@@ -38,6 +38,7 @@ class SidebarComposer
                 return $q->where('church_id', $churchId);
             })->count(),
             'users' => User::count(),
+            'retaining_officers' => User::role('Retaining Officer')->count(),
             'pending_approvals' => Member::whereNull('acknowledged_at')
                 ->when($isRO && $churchId, function ($q) use ($churchId) {
                     return $q->where('church_id', $churchId);

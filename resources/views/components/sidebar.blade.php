@@ -160,6 +160,22 @@
     </a>
 
     @if($isSuperAdmin)
+        <a href="{{ route('admin.retaining-officers.index') }}"
+            class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 {{ request()->routeIs('admin.retaining-officers.*') ? 'active' : '' }}">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 translate-x-1" x-transition:enter-end="opacity-100 translate-x-0">Retaining
+                Officers</span>
+            <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-black text-white rounded-full"
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100">
+                {{ $sidebarCounts['retaining_officers'] ?? 0 }}
+            </span>
+        </a>
+
         <a href="{{ route('admin.users.index') }}"
             class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

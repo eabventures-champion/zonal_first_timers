@@ -49,6 +49,10 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
         Route::get('reports/weekly', [Admin\WeeklyReportController::class, 'index'])->name('reports.weekly');
         Route::get('reports/weekly/excel', [Admin\WeeklyReportController::class, 'exportExcel'])->name('reports.weekly.excel');
         Route::get('reports/weekly/pdf', [Admin\WeeklyReportController::class, 'exportPdf'])->name('reports.weekly.pdf');
+
+        // Retaining Officers Directory
+        Route::get('retaining-officers', [Admin\RetainingOfficerController::class, 'index'])->name('retaining-officers.index');
+
         // Trash Management
         Route::get('/trash', [\App\Http\Controllers\Admin\TrashController::class, 'index'])->name('trash.index');
         Route::post('/trash/{type}/{id}/restore', [\App\Http\Controllers\Admin\TrashController::class, 'restore'])->name('trash.restore');

@@ -4,7 +4,22 @@
 @section('page-title', 'Weekly First Timers Report')
 
 @section('content')
-    <div class="space-y-6">
+    <div class="space-y-6" x-data="{ 
+        tableSearch: '',
+        shouldShowRow(data) {
+            if (!this.tableSearch) return true;
+            const s = this.tableSearch.toLowerCase();
+            return data.category.toLowerCase().includes(s) || 
+                   data.group.toLowerCase().includes(s) || 
+                   data.church.toLowerCase().includes(s);
+        },
+        shouldShowGroup(catName, groupName, churches) {
+            if (!this.tableSearch) return true;
+            const s = this.tableSearch.toLowerCase();
+            if (catName.toLowerCase().includes(s) || groupName.toLowerCase().includes(s)) return true;
+            return Object.keys(churches).some(cName => cName.toLowerCase().includes(s));
+        }
+    }">
         <!-- Header & Actions -->
         <div
             class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800">
@@ -16,20 +31,20 @@
             <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                 <form method="GET" action="{{ route('admin.reports.weekly') }}"
                     class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                    <select name="month"
+                    <select name="month" @change="$el.form.submit()"
                         class="rounded-lg border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-sm focus:ring-indigo-500 focus:border-indigo-500 dark:text-white shadow-sm">
                         @foreach($months as $m => $name)
                             <option value="{{ $m }}" {{ $month == $m ? 'selected' : '' }}>{{ $name }}</option>
                         @endforeach
                     </select>
-                    <select name="year"
+                    <select name="year" @change="$el.form.submit()"
                         class="rounded-lg border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-sm focus:ring-indigo-500 focus:border-indigo-500 dark:text-white shadow-sm">
                         @foreach($years as $y)
                             <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
                         @endforeach
                     </select>
 
-                    <select name="group_id" id="group_id"
+                    <select name="group_id" id="group_id" @change="$el.form.submit()"
                         class="rounded-lg border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-sm focus:ring-indigo-500 focus:border-indigo-500 dark:text-white shadow-sm">
                         <option value="">All Groups</option>
                         @foreach($groups as $group)
@@ -39,7 +54,7 @@
                         @endforeach
                     </select>
 
-                    <select name="church_id" id="church_id"
+                    <select name="church_id" id="church_id" @change="$el.form.submit()"
                         class="rounded-lg border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-sm focus:ring-indigo-500 focus:border-indigo-500 dark:text-white shadow-sm">
                         <option value="">All Churches</option>
                         @foreach($churches as $church)
@@ -87,6 +102,19 @@
             </div>
         </div>
 
+        {{-- Table Search --}}
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm">
+            <div class="relative max-w-xs">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </span>
+                <input type="text" x-model="tableSearch" placeholder="Filter report table..." 
+                    class="block w-full pl-10 pr-3 py-1.5 border border-gray-200 dark:border-slate-700 rounded-lg leading-5 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm transition-all">
+            </div>
+        </div>
+
         <!-- Report Table -->
         <div
             class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
@@ -106,7 +134,7 @@
                             @foreach($weeksInMonth as $week)
                                 <th
                                     class="py-3 px-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider text-center">
-                                    {{ strtoupper($week['start']) }}
+                                    {{ strtoupper($week['start'] . ' - ' . $week['end']) }}
                                 </th>
                             @endforeach
                             <th
@@ -117,7 +145,7 @@
                     @forelse($reportData as $catName => $catData)
                         @foreach($catData['groups'] as $groupName => $groupData)
                             <tbody x-data="{ expanded: true }" class="divide-y divide-gray-100 dark:divide-slate-800">
-                                <tr class="bg-gray-50/30 dark:bg-slate-800/20">
+                                <tr class="bg-gray-50/30 dark:bg-slate-800/20" x-show="shouldShowGroup('{{ addslashes($catName) }}', '{{ addslashes($groupName) }}', @js($groupData['churches']))">
                                     <td class="py-3 px-4 text-sm font-bold text-gray-900 dark:text-white">{{ $catName }}</td>
                                     <td class="py-3 px-4 text-sm font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer flex items-center gap-2" @click="expanded = !expanded">
                                         <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +168,7 @@
 
                                 {{-- Church Rows --}}
                                 @foreach($groupData['churches'] as $churchName => $stats)
-                                    <tr x-show="expanded" x-transition class="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <tr x-show="expanded && shouldShowRow(@js(['category' => $catName, 'group' => $groupName, 'church' => $churchName]))" x-transition class="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
                                         <td class="py-3 px-4 text-sm text-gray-400 dark:text-slate-600">{{ $catName }}</td>
                                         <td class="py-3 px-4 text-sm text-gray-400 dark:text-slate-600 pl-8">{{ $groupName }}</td>
                                         <td class="py-3 px-4 text-sm text-gray-500 dark:text-slate-400 font-medium">{{ $churchName }}</td>
@@ -159,7 +187,7 @@
                             </tbody>
                         @endforeach
 
-                        <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
+                        <tbody class="divide-y divide-gray-100 dark:divide-slate-800" x-show="!tableSearch">
                             {{-- Category Grand Total Row --}}
                             <tr class="bg-indigo-50/50 dark:bg-indigo-900/10 border-t-2 border-indigo-100 dark:border-indigo-900/50">
                                 <td colspan="3" class="py-4 px-4 text-sm font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-wider text-right">
