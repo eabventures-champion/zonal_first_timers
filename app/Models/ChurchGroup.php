@@ -43,4 +43,21 @@ class ChurchGroup extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    // ── Scopes ─────────────────────────────────────────────
+
+    /**
+     * Order groups with pinning AVENOR and LAA at the top.
+     */
+    public function scopeOrdered($query)
+    {
+        return $query->leftJoin('church_categories', 'church_groups.church_category_id', '=', 'church_categories.id')
+            ->orderByRaw("CASE 
+                WHEN church_groups.name IN ('AVENOR', 'LAA') THEN 0 
+                WHEN church_categories.name = 'MAIN CHURCH' THEN 1 
+                ELSE 2 
+            END")
+            ->orderBy('church_groups.name')
+            ->select('church_groups.*');
+    }
 }

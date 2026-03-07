@@ -28,7 +28,7 @@ class ChurchController extends Controller
 
     public function create()
     {
-        $groups = ChurchGroup::with('category')->get();
+        $groups = ChurchGroup::ordered()->with('category')->get();
         $officers = User::role('Retaining Officer')->with('church')->get();
         return view('admin.churches.create', compact('groups', 'officers'));
     }
@@ -67,7 +67,7 @@ class ChurchController extends Controller
 
     public function edit(Church $church)
     {
-        $groups = ChurchGroup::with('category')->get();
+        $groups = ChurchGroup::ordered()->with('category')->get();
         $officers = User::role('Retaining Officer')->with('church')->get();
         return view('admin.churches.edit', compact('church', 'groups', 'officers'));
     }
