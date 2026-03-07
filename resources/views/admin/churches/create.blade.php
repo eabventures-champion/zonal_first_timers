@@ -13,80 +13,80 @@
             </form>
 
             <form method="POST" action="{{ route('admin.churches.store') }}" x-data="{ 
-                                        entries: {{ old('churches') ? Js::from(old('churches')) : '[{ name: \'\', leader_name: \'\', leader_contact: \'\' }]' }},
-                                        contactErrors: {},
-                                        contactChecking: {},
-                                        nameErrors: {},
-                                        nameChecking: {},
-                                        addEntry() {
-                                            this.entries.push({ name: '', leader_name: '', leader_contact: '' });
-                                        },
-                                        removeEntry(index) {
-                                            if (this.entries.length > 1) {
-                                                this.entries.splice(index, 1);
-                                                delete this.contactErrors[index];
-                                                delete this.contactChecking[index];
-                                                delete this.nameErrors[index];
-                                                delete this.nameChecking[index];
-                                            }
-                                        },
-                                        async checkChurchName(index, name) {
-                                            this.nameErrors[index] = '';
-                                            if (!name || name.length < 2) {
-                                                return;
-                                            }
-                                            this.nameChecking[index] = true;
-                                            try {
-                                                const response = await fetch('{{ route('admin.churches.check-church-name') }}', {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                                    },
-                                                    body: JSON.stringify({ name })
-                                                });
-                                                const data = await response.json();
-                                                this.nameErrors[index] = data.exists ? data.message : '';
-                                            } catch (e) {
-                                                this.nameErrors[index] = '';
-                                            } finally {
-                                                this.nameChecking[index] = false;
-                                            }
-                                        },
-                                        async checkLeaderContact(index, contact) {
-                                            this.contactErrors[index] = '';
-                                            if (!contact || contact.length < 3) {
-                                                return;
-                                            }
-                                            this.contactChecking[index] = true;
-                                            try {
-                                                const response = await fetch('{{ route('admin.churches.check-leader-contact') }}', {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                                    },
-                                                    body: JSON.stringify({ contact })
-                                                });
-                                                const data = await response.json();
-                                                this.contactErrors[index] = data.exists ? data.message : '';
-                                            } catch (e) {
-                                                this.contactErrors[index] = '';
-                                            } finally {
-                                                this.contactChecking[index] = false;
-                                            }
-                                        },
-                                        hasAnyErrors() {
-                                            return Object.values(this.nameErrors).some(err => err && err.length > 0) || 
-                                                   Object.values(this.contactErrors).some(err => err && err.length > 0) ||
-                                                   Object.values(this.nameChecking).some(checking => checking) ||
-                                                   Object.values(this.contactChecking).some(checking => checking);
-                                        }
-                                    }">
+                                                entries: {{ old('churches') ? Js::from(old('churches')) : '[{ name: \'\', leader_name: \'\', leader_contact: \'\' }]' }},
+                                                contactErrors: {},
+                                                contactChecking: {},
+                                                nameErrors: {},
+                                                nameChecking: {},
+                                                addEntry() {
+                                                    this.entries.push({ name: '', leader_name: '', leader_contact: '' });
+                                                },
+                                                removeEntry(index) {
+                                                    if (this.entries.length > 1) {
+                                                        this.entries.splice(index, 1);
+                                                        delete this.contactErrors[index];
+                                                        delete this.contactChecking[index];
+                                                        delete this.nameErrors[index];
+                                                        delete this.nameChecking[index];
+                                                    }
+                                                },
+                                                async checkChurchName(index, name) {
+                                                    this.nameErrors[index] = '';
+                                                    if (!name || name.length < 2) {
+                                                        return;
+                                                    }
+                                                    this.nameChecking[index] = true;
+                                                    try {
+                                                        const response = await fetch('{{ route('admin.churches.check-church-name') }}', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                                            },
+                                                            body: JSON.stringify({ name })
+                                                        });
+                                                        const data = await response.json();
+                                                        this.nameErrors[index] = data.exists ? data.message : '';
+                                                    } catch (e) {
+                                                        this.nameErrors[index] = '';
+                                                    } finally {
+                                                        this.nameChecking[index] = false;
+                                                    }
+                                                },
+                                                async checkLeaderContact(index, contact) {
+                                                    this.contactErrors[index] = '';
+                                                    if (!contact || contact.length < 3) {
+                                                        return;
+                                                    }
+                                                    this.contactChecking[index] = true;
+                                                    try {
+                                                        const response = await fetch('{{ route('admin.churches.check-leader-contact') }}', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                                            },
+                                                            body: JSON.stringify({ contact })
+                                                        });
+                                                        const data = await response.json();
+                                                        this.contactErrors[index] = data.exists ? data.message : '';
+                                                    } catch (e) {
+                                                        this.contactErrors[index] = '';
+                                                    } finally {
+                                                        this.contactChecking[index] = false;
+                                                    }
+                                                },
+                                                hasAnyErrors() {
+                                                    return Object.values(this.nameErrors).some(err => err && err.length > 0) || 
+                                                           Object.values(this.contactErrors).some(err => err && err.length > 0) ||
+                                                           Object.values(this.nameChecking).some(checking => checking) ||
+                                                           Object.values(this.contactChecking).some(checking => checking);
+                                                }
+                                            }">
                 @csrf
 
                 <!-- Bulk Upload Section -->
-                <div class="mb-8 pb-8 border-b border-gray-100 dark:border-slate-800">
+                <div class="mb-12 pb-12 border-b border-gray-100 dark:border-slate-800">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
                             <div
@@ -108,7 +108,7 @@
                         </a>
                     </div>
 
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 mb-6">
                         <div class="flex-1">
                             <input type="file" name="excel_file" form="import_form" required
                                 class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-500/10 dark:file:text-indigo-400">
@@ -242,15 +242,15 @@
                 </div>
 
                 <div class="mb-6" x-data="{ 
-                                                open: false, 
-                                                selectedId: '{{ old('retaining_officer_id') }}',
-                                                selectedName: '{{ old('retaining_officer_id') ? ($officers->firstWhere('id', old('retaining_officer_id'))->name ?? 'None') : 'None' }}',
-                                                officers: {{ Js::from($officers->map(fn($o) => [
+                                                        open: false, 
+                                                        selectedId: '{{ old('retaining_officer_id') }}',
+                                                        selectedName: '{{ old('retaining_officer_id') ? ($officers->firstWhere('id', old('retaining_officer_id'))->name ?? 'None') : 'None' }}',
+                                                        officers: {{ Js::from($officers->map(fn($o) => [
         'id' => $o->id,
         'name' => $o->name,
         'church' => $o->church->name ?? null
     ])) }}
-                                            }">
+                                                    }">
                     <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Retaining Officer
                         (Shared for all entries)</label>
                     <input type="hidden" name="retaining_officer_id" :value="selectedId">
