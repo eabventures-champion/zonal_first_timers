@@ -6,7 +6,58 @@
 @section('content')
     <div class="max-w-2xl">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <form method="POST" action="{{ route('admin.churches.update', $church) }}">
+            <form method="POST" action="{{ route('admin.churches.update', $church) }}" x-data="{
+                        nameError: '',
+                        nameChecking: false,
+                        leaderContactError: '',
+                        leaderContactChecking: false,
+                        async checkChurchName(name) {
+                            this.nameError = '';
+                            if (!name || name.length < 2) {
+                                return;
+                            }
+                            this.nameChecking = true;
+                            try {
+                                const response = await fetch('{{ route('admin.churches.check-church-name') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                    },
+                                    body: JSON.stringify({ name, exclude_id: {{ $church->id }} })
+                                });
+                                const data = await response.json();
+                                this.nameError = data.exists ? data.message : '';
+                            } catch (e) {
+                                this.nameError = '';
+                            } finally {
+                                this.nameChecking = false;
+                            }
+                        },
+                        async checkLeaderContact(contact) {
+                            this.leaderContactError = '';
+                            if (!contact || contact.length < 3) {
+                                return;
+                            }
+                            this.leaderContactChecking = true;
+                            try {
+                                const response = await fetch('{{ route('admin.churches.check-leader-contact') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                    },
+                                    body: JSON.stringify({ contact, exclude_id: {{ $church->id }} })
+                                });
+                                const data = await response.json();
+                                this.leaderContactError = data.exists ? data.message : '';
+                            } catch (e) {
+                                this.leaderContactError = '';
+                            } finally {
+                                this.leaderContactChecking = false;
+                            }
+                        }
+                    }">
                 @csrf @method('PUT')
 
                 <div class="mb-5">
@@ -27,36 +78,15 @@
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Church Name <span
                             class="text-red-500">*</span></label>
                     <input type="text" name="name" id="name" value="{{ old('name', $church->name) }}" required
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        x-on:input.debounce.500ms="checkChurchName($el.value)"
+                        :class="nameError.length > 0 ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm'"
+                        class="w-full rounded-lg text-sm">
+                    <p x-show="nameError.length > 0" x-text="nameError" class="mt-1 text-xs text-red-600" x-cloak></p>
+                    <p x-show="nameChecking" class="mt-1 text-xs text-gray-400" x-cloak>Checking...</p>
                     @error('name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5" x-data="{
-                        leaderContactError: '',
-                        leaderContactChecking: false,
-                        async checkLeaderContact(contact) {
-                            if (!contact || contact.length < 3) {
-                                this.leaderContactError = '';
-                                return;
-                            }
-                            this.leaderContactChecking = true;
-                            try {
-                                const response = await fetch('{{ route('admin.churches.check-leader-contact') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                    },
-                                    body: JSON.stringify({ contact, exclude_id: {{ $church->id }} })
-                                });
-                                const data = await response.json();
-                                this.leaderContactError = data.exists ? data.message : '';
-                            } catch (e) {
-                                this.leaderContactError = '';
-                            }
-                            this.leaderContactChecking = false;
-                        }
-                    }">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                     <div>
                         <label for="leader_name" class="block text-sm font-medium text-gray-700 mb-1">Name of leader</label>
                         <input type="text" name="leader_name" id="leader_name"
@@ -70,10 +100,10 @@
                         <input type="text" name="leader_contact" id="leader_contact"
                             value="{{ old('leader_contact', $church->leader_contact) }}"
                             x-on:input.debounce.500ms="checkLeaderContact($el.value)"
-                            :class="leaderContactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'"
+                            :class="leaderContactError.length > 0 ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'"
                             class="w-full rounded-lg shadow-sm text-sm">
-                        <p x-show="leaderContactError" x-text="leaderContactError" class="mt-1 text-xs text-red-600"
-                            x-cloak></p>
+                        <p x-show="leaderContactError.length > 0" x-text="leaderContactError"
+                            class="mt-1 text-xs text-red-600" x-cloak></p>
                         <p x-show="leaderContactChecking" class="mt-1 text-xs text-gray-400" x-cloak>Checking...</p>
                         @error('leader_contact') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
@@ -81,15 +111,15 @@
 
 
                 <div class="mb-6" x-data="{ 
-                            open: false, 
-                            selectedId: '{{ old('retaining_officer_id', $church->retaining_officer_id) }}',
-                            selectedName: '{{ old('retaining_officer_id', $church->retaining_officer_id) ? ($officers->firstWhere('id', old('retaining_officer_id', $church->retaining_officer_id))->name ?? 'None') : 'None' }}',
-                            officers: {{ Js::from($officers->map(fn($o) => [
+                                    open: false, 
+                                    selectedId: '{{ old('retaining_officer_id', $church->retaining_officer_id) }}',
+                                    selectedName: '{{ old('retaining_officer_id', $church->retaining_officer_id) ? ($officers->firstWhere('id', old('retaining_officer_id', $church->retaining_officer_id))->name ?? 'None') : 'None' }}',
+                                    officers: {{ Js::from($officers->map(fn($o) => [
         'id' => $o->id,
         'name' => $o->name,
         'church' => $o->church->name ?? null
     ])) }}
-                        }">
+                                }">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Retaining Officer</label>
                     <input type="hidden" name="retaining_officer_id" :value="selectedId">
 
@@ -143,13 +173,14 @@
 
                 <div class="flex items-center gap-3">
                     <button type="submit"
-                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition">Update
+                        :disabled="nameError.length > 0 || leaderContactError.length > 0 || nameChecking || leaderContactChecking"
+                        :class="(nameError.length > 0 || leaderContactError.length > 0 || nameChecking || leaderContactChecking) ? 'opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'"
+                        class="px-5 py-2.5 text-white text-sm font-medium rounded-lg shadow-sm transition">Update
                         Church</button>
                     <a href="{{ route('admin.churches.index') }}"
                         class="text-sm text-gray-500 hover:text-gray-700">Cancel</a>
                 </div>
+            </form>
         </div>
-        </form>
-    </div>
     </div>
 @endsection

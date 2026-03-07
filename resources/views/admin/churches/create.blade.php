@@ -6,8 +6,133 @@
 @section('content')
     <div class="max-w-2xl">
         <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
-            <form method="POST" action="{{ route('admin.churches.store') }}">
+            <!-- Hidden form for bulk upload -->
+            <form id="import_form" method="POST" action="{{ route('admin.churches.import') }}" enctype="multipart/form-data"
+                class="hidden">
                 @csrf
+            </form>
+
+            <form method="POST" action="{{ route('admin.churches.store') }}" x-data="{ 
+                                        entries: {{ old('churches') ? Js::from(old('churches')) : '[{ name: \'\', leader_name: \'\', leader_contact: \'\' }]' }},
+                                        contactErrors: {},
+                                        contactChecking: {},
+                                        nameErrors: {},
+                                        nameChecking: {},
+                                        addEntry() {
+                                            this.entries.push({ name: '', leader_name: '', leader_contact: '' });
+                                        },
+                                        removeEntry(index) {
+                                            if (this.entries.length > 1) {
+                                                this.entries.splice(index, 1);
+                                                delete this.contactErrors[index];
+                                                delete this.contactChecking[index];
+                                                delete this.nameErrors[index];
+                                                delete this.nameChecking[index];
+                                            }
+                                        },
+                                        async checkChurchName(index, name) {
+                                            this.nameErrors[index] = '';
+                                            if (!name || name.length < 2) {
+                                                return;
+                                            }
+                                            this.nameChecking[index] = true;
+                                            try {
+                                                const response = await fetch('{{ route('admin.churches.check-church-name') }}', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                                    },
+                                                    body: JSON.stringify({ name })
+                                                });
+                                                const data = await response.json();
+                                                this.nameErrors[index] = data.exists ? data.message : '';
+                                            } catch (e) {
+                                                this.nameErrors[index] = '';
+                                            } finally {
+                                                this.nameChecking[index] = false;
+                                            }
+                                        },
+                                        async checkLeaderContact(index, contact) {
+                                            this.contactErrors[index] = '';
+                                            if (!contact || contact.length < 3) {
+                                                return;
+                                            }
+                                            this.contactChecking[index] = true;
+                                            try {
+                                                const response = await fetch('{{ route('admin.churches.check-leader-contact') }}', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                                    },
+                                                    body: JSON.stringify({ contact })
+                                                });
+                                                const data = await response.json();
+                                                this.contactErrors[index] = data.exists ? data.message : '';
+                                            } catch (e) {
+                                                this.contactErrors[index] = '';
+                                            } finally {
+                                                this.contactChecking[index] = false;
+                                            }
+                                        },
+                                        hasAnyErrors() {
+                                            return Object.values(this.nameErrors).some(err => err && err.length > 0) || 
+                                                   Object.values(this.contactErrors).some(err => err && err.length > 0) ||
+                                                   Object.values(this.nameChecking).some(checking => checking) ||
+                                                   Object.values(this.contactChecking).some(checking => checking);
+                                        }
+                                    }">
+                @csrf
+
+                <!-- Bulk Upload Section -->
+                <div class="mb-8 pb-8 border-b border-gray-100 dark:border-slate-800">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-sm font-bold text-gray-800 dark:text-slate-200">Bulk Upload (Excel)</h3>
+                        </div>
+                        <a href="{{ route('admin.churches.download-template') }}"
+                            class="inline-flex items-center px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-xs font-bold rounded-lg transition-colors border border-emerald-100 dark:border-emerald-500/20">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download Template
+                        </a>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                            <input type="file" name="excel_file" form="import_form" required
+                                class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-500/10 dark:file:text-indigo-400">
+                        </div>
+                        <button type="submit" form="import_form"
+                            class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
+                            Import Now
+                        </button>
+                    </div>
+
+                    @if(session('import_errors'))
+                        <div
+                            class="mt-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-lg">
+                            <p class="text-xs font-bold text-red-700 dark:text-red-400 mb-1">Import Errors:</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                @foreach(session('import_errors') as $error)
+                                    <li class="text-[10px] text-red-600 dark:text-red-400/80">{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Existing Manual Form -->
 
                 <div class="mb-5">
                     <label for="church_group_id"
@@ -25,43 +150,7 @@
                     @error('church_group_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <div x-data="{ 
-                        entries: {{ old('churches') ? Js::from(old('churches')) : '[{ name: \'\', leader_name: \'\', leader_contact: \'\' }]' }},
-                        contactErrors: {},
-                        contactChecking: {},
-                        addEntry() {
-                            this.entries.push({ name: '', leader_name: '', leader_contact: '' });
-                        },
-                        removeEntry(index) {
-                            if (this.entries.length > 1) {
-                                this.entries.splice(index, 1);
-                                delete this.contactErrors[index];
-                                delete this.contactChecking[index];
-                            }
-                        },
-                        async checkLeaderContact(index, contact) {
-                            if (!contact || contact.length < 3) {
-                                this.contactErrors[index] = '';
-                                return;
-                            }
-                            this.contactChecking[index] = true;
-                            try {
-                                const response = await fetch('{{ route('admin.churches.check-leader-contact') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                    },
-                                    body: JSON.stringify({ contact })
-                                });
-                                const data = await response.json();
-                                this.contactErrors[index] = data.exists ? data.message : '';
-                            } catch (e) {
-                                this.contactErrors[index] = '';
-                            }
-                            this.contactChecking[index] = false;
-                        }
-                    }" class="mb-6">
+                <div class="mb-6">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
                             <div
@@ -101,7 +190,13 @@
                                         <span class="text-red-500">*</span></label>
                                     <input type="text" :name="'churches[' + index + '][name]'" :id="'name_' + index"
                                         x-model="entry.name" required
-                                        class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                        x-on:input.debounce.500ms="checkChurchName(index, $el.value)"
+                                        :class="nameErrors[index] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500'"
+                                        class="w-full rounded-lg shadow-sm text-sm">
+                                    <p x-show="nameErrors[index]" x-text="nameErrors[index]"
+                                        class="mt-1 text-xs text-red-600" x-cloak></p>
+                                    <p x-show="nameChecking[index]" class="mt-1 text-xs text-gray-400" x-cloak>
+                                        Checking...</p>
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -147,15 +242,15 @@
                 </div>
 
                 <div class="mb-6" x-data="{ 
-                            open: false, 
-                            selectedId: '{{ old('retaining_officer_id') }}',
-                            selectedName: '{{ old('retaining_officer_id') ? ($officers->firstWhere('id', old('retaining_officer_id'))->name ?? 'None') : 'None' }}',
-                            officers: {{ Js::from($officers->map(fn($o) => [
+                                                open: false, 
+                                                selectedId: '{{ old('retaining_officer_id') }}',
+                                                selectedName: '{{ old('retaining_officer_id') ? ($officers->firstWhere('id', old('retaining_officer_id'))->name ?? 'None') : 'None' }}',
+                                                officers: {{ Js::from($officers->map(fn($o) => [
         'id' => $o->id,
         'name' => $o->name,
         'church' => $o->church->name ?? null
     ])) }}
-                        }">
+                                            }">
                     <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Retaining Officer
                         (Shared for all entries)</label>
                     <input type="hidden" name="retaining_officer_id" :value="selectedId">
@@ -209,14 +304,16 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button type="submit"
-                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition">Create
-                        Churches</button>
+                    <button type="submit" :disabled="hasAnyErrors()"
+                        :class="hasAnyErrors() ? 'opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'"
+                        class="px-5 py-2.5 text-white text-sm font-medium rounded-lg shadow-sm transition">
+                        Create Churches
+                    </button>
                     <a href="{{ route('admin.churches.index') }}"
                         class="text-sm text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300">Cancel</a>
                 </div>
+            </form>
         </div>
-        </form>
-    </div>
     </div>
 @endsection
+```

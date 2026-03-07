@@ -78,4 +78,27 @@ class ChurchGroupController extends Controller
             'message' => $group ? "This contact is already assigned to group \"{$group->name}\" (Pastor: {$group->pastor_name})." : '',
         ]);
     }
+
+    public function checkGroupName(Request $request)
+    {
+        $name = $request->name;
+        $excludeId = $request->exclude_id;
+
+        if (!$name) {
+            return response()->json(['exists' => false, 'message' => '']);
+        }
+
+        $query = ChurchGroup::where('name', $name);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json([
+            'exists' => $exists,
+            'message' => $exists ? "The group name \"{$name}\" already exists." : '',
+        ]);
+    }
 }

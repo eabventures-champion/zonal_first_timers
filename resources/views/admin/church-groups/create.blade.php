@@ -5,7 +5,58 @@
 @section('content')
     <div class="max-w-2xl">
         <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
-            <form method="POST" action="{{ route('admin.church-groups.store') }}">
+            <form method="POST" action="{{ route('admin.church-groups.store') }}" x-data="{
+                        nameError: '',
+                        nameChecking: false,
+                        pastorContactError: '',
+                        pastorContactChecking: false,
+                        async checkGroupName(name) {
+                            this.nameError = '';
+                            if (!name || name.length < 2) {
+                                return;
+                            }
+                            this.nameChecking = true;
+                            try {
+                                const response = await fetch('{{ route('admin.church-groups.check-group-name') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                    },
+                                    body: JSON.stringify({ name })
+                                });
+                                const data = await response.json();
+                                this.nameError = data.exists ? data.message : '';
+                            } catch (e) {
+                                this.nameError = '';
+                            } finally {
+                                this.nameChecking = false;
+                            }
+                        },
+                        async checkPastorContact(contact) {
+                            this.pastorContactError = '';
+                            if (!contact || contact.length < 3) {
+                                return;
+                            }
+                            this.pastorContactChecking = true;
+                            try {
+                                const response = await fetch('{{ route('admin.church-groups.check-pastor-contact') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                    },
+                                    body: JSON.stringify({ contact })
+                                });
+                                const data = await response.json();
+                                this.pastorContactError = data.exists ? data.message : '';
+                            } catch (e) {
+                                this.pastorContactError = '';
+                            } finally {
+                                this.pastorContactChecking = false;
+                            }
+                        }
+                    }">
                 @csrf
 
                 <div class="mb-5">
@@ -26,36 +77,15 @@
                     <label for="name" class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Group Name
                         <span class="text-red-500">*</span></label>
                     <input type="text" name="name" id="name" value="{{ old('name') }}" required
-                        class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        x-on:input.debounce.500ms="checkGroupName($el.value)"
+                        :class="nameError.length > 0 ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-500'"
+                        class="w-full rounded-lg dark:bg-slate-800 dark:text-white shadow-sm text-sm">
+                    <p x-show="nameError.length > 0" x-text="nameError" class="mt-1 text-xs text-red-600" x-cloak></p>
+                    <p x-show="nameChecking" class="mt-1 text-xs text-gray-400" x-cloak>Checking...</p>
                     @error('name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5" x-data="{
-                        pastorContactError: '',
-                        pastorContactChecking: false,
-                        async checkPastorContact(contact) {
-                            if (!contact || contact.length < 3) {
-                                this.pastorContactError = '';
-                                return;
-                            }
-                            this.pastorContactChecking = true;
-                            try {
-                                const response = await fetch('{{ route('admin.church-groups.check-pastor-contact') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                    },
-                                    body: JSON.stringify({ contact })
-                                });
-                                const data = await response.json();
-                                this.pastorContactError = data.exists ? data.message : '';
-                            } catch (e) {
-                                this.pastorContactError = '';
-                            }
-                            this.pastorContactChecking = false;
-                        }
-                    }">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                     <div>
                         <label for="pastor_name"
                             class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Name of Pastor</label>
@@ -69,10 +99,10 @@
                             Pastor</label>
                         <input type="text" name="pastor_contact" id="pastor_contact" value="{{ old('pastor_contact') }}"
                             x-on:input.debounce.500ms="checkPastorContact($el.value)"
-                            :class="pastorContactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-500'"
+                            :class="pastorContactError.length > 0 ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-500'"
                             class="w-full rounded-lg dark:bg-slate-800 dark:text-white shadow-sm text-sm">
-                        <p x-show="pastorContactError" x-text="pastorContactError" class="mt-1 text-xs text-red-600"
-                            x-cloak></p>
+                        <p x-show="pastorContactError.length > 0" x-text="pastorContactError"
+                            class="mt-1 text-xs text-red-600" x-cloak></p>
                         <p x-show="pastorContactChecking" class="mt-1 text-xs text-gray-400" x-cloak>Checking...</p>
                         @error('pastor_contact') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
@@ -80,7 +110,9 @@
 
                 <div class="flex items-center gap-3">
                     <button type="submit"
-                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition">Create
+                        :disabled="nameError.length > 0 || pastorContactError.length > 0 || nameChecking || pastorContactChecking"
+                        :class="(nameError.length > 0 || pastorContactError.length > 0 || nameChecking || pastorContactChecking) ? 'opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'"
+                        class="px-5 py-2.5 text-white text-sm font-medium rounded-lg shadow-sm transition">Create
                         Group</button>
                     <a href="{{ route('admin.church-groups.index') }}"
                         class="text-sm text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300">Cancel</a>

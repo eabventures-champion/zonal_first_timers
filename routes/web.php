@@ -64,9 +64,13 @@ Route::middleware(['auth', 'role:Super Admin,Admin'])->prefix('admin')->name('ad
     // Church Hierarchy
     Route::resource('church-categories', Admin\ChurchCategoryController::class)->except(['show']);
     Route::resource('church-groups', Admin\ChurchGroupController::class)->except(['show']);
+    Route::post('church-groups/check-group-name', [Admin\ChurchGroupController::class, 'checkGroupName'])->name('church-groups.check-group-name');
     Route::post('church-groups/check-pastor-contact', [Admin\ChurchGroupController::class, 'checkPastorContact'])->name('church-groups.check-pastor-contact');
-    Route::resource('churches', Admin\ChurchController::class);
     Route::post('churches/check-leader-contact', [Admin\ChurchController::class, 'checkLeaderContact'])->name('churches.check-leader-contact');
+    Route::post('churches/check-church-name', [Admin\ChurchController::class, 'checkChurchName'])->name('churches.check-church-name');
+    Route::get('churches/download-template', [Admin\ChurchController::class, 'downloadTemplate'])->name('churches.download-template');
+    Route::post('churches/import', [Admin\ChurchController::class, 'import'])->name('churches.import');
+    Route::resource('churches', Admin\ChurchController::class);
 
     // First Timers & Members
     Route::get('members', [Admin\MemberController::class, 'index'])->name('members.index');

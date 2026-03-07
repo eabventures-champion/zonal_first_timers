@@ -16,7 +16,12 @@ class UpdateChurchGroupRequest extends FormRequest
     {
         return [
             'church_category_id' => 'required|exists:church_categories,id',
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('church_groups', 'name')->ignore($this->route('church_group')),
+            ],
             'pastor_name' => 'nullable|string|max:255',
             'pastor_contact' => [
                 'required_unless:pastor_name,Highly Esteemed Pastor Lisa Ma',

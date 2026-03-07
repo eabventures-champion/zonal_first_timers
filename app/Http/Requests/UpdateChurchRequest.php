@@ -16,7 +16,12 @@ class UpdateChurchRequest extends FormRequest
     {
         return [
             'church_group_id' => 'required|exists:church_groups,id',
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('churches', 'name')->ignore($this->route('church')),
+            ],
             'leader_name' => 'nullable|string|max:255',
             'leader_contact' => [
                 'nullable',

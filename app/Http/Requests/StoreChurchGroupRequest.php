@@ -16,7 +16,7 @@ class StoreChurchGroupRequest extends FormRequest
     {
         return [
             'church_category_id' => 'required|exists:church_categories,id',
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:church_groups,name',
             'pastor_name' => 'nullable|string|max:255',
             'pastor_contact' => [
                 'required_unless:pastor_name,Highly Esteemed Pastor Lisa Ma',
