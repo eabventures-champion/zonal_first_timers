@@ -58,6 +58,6 @@ class ChurchGroup extends Model
                 ELSE 2 
             END")
             ->orderBy('church_groups.name')
-            ->select('church_groups.*');
+            ->addSelect('church_groups.*');
     }
 }
