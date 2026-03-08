@@ -4,19 +4,39 @@
 
 @section('content')
     <div x-data="{ 
-                modalOpen: false, 
-                currentGroup: '',
-                churches: [],
-                openChurchesModal(groupName, groupChurches) {
-                    this.currentGroup = groupName;
-                    this.churches = groupChurches;
-                    this.modalOpen = true;
-                }
-            }">
-        <div class="flex items-center justify-between mb-6">
-            <p class="text-sm text-gray-500 hidden sm:block">Manage church groups within categories</p>
+                    modalOpen: false, 
+                    currentGroup: '',
+                    churches: [],
+                    search: '',
+                    openChurchesModal(groupName, groupChurches) {
+                        this.currentGroup = groupName;
+                        this.churches = groupChurches;
+                        this.modalOpen = true;
+                    },
+                    shouldShowGroup(group) {
+                        if (!this.search) return true;
+                        const s = this.search.toLowerCase();
+                        return (group.name && group.name.toLowerCase().includes(s)) || 
+                               (group.category && group.category.toLowerCase().includes(s)) ||
+                               (group.pastor && group.pastor.toLowerCase().includes(s));
+                    },
+                    visibleGroupsCount() {
+                        return document.querySelectorAll('tbody tr[x-show]:not([style*=\'display: none\'])').length;
+                    }
+                }">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div class="flex-1 w-full max-w-md relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" x-model="search" placeholder="Search groups, categories, pastors..."
+                    class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none dark:text-white">
+            </div>
             <a href="{{ route('admin.church-groups.create') }}"
-                class="inline-flex items-center gap-1.5 px-3 py-2 sm:gap-2 sm:px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium rounded-lg shadow-sm transition">
+                class="inline-flex items-center gap-1.5 px-3 py-2 sm:gap-2 sm:px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium rounded-lg shadow-sm transition shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -43,11 +63,16 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
                         @forelse($groups as $i => $group)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors" x-show="shouldShowGroup({ 
+                                            name: '{{ addslashes($group->name) }}', 
+                                            category: '{{ addslashes($group->category->name ?? '') }}', 
+                                            pastor: '{{ addslashes($group->pastor_name ?? '') }}' 
+                                        })">
                                 <td class="px-3 sm:px-6 py-3 text-gray-400 dark:text-slate-500">{{ $i + 1 }}</td>
                                 <td class="px-3 sm:px-6 py-3 font-medium text-gray-900 dark:text-white">{{ $group->name }}</td>
                                 <td class="px-3 sm:px-6 py-3 text-gray-500 dark:text-slate-400">
-                                    {{ $group->category->name ?? '—' }}</td>
+                                    {{ $group->category->name ?? '—' }}
+                                </td>
                                 <td class="px-3 sm:px-6 py-3">
                                     <div class="text-gray-900 dark:text-white font-medium">{{ $group->pastor_name ?? '—' }}
                                     </div>
@@ -84,6 +109,26 @@
                                 </td>
                             </tr>
                         @endforelse
+                        <tr x-show="search && visibleGroupsCount() === 0" x-cloak>
+                            <td colspan="6" class="px-3 sm:px-6 py-12 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div
+                                        class="w-16 h-16 bg-gray-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
+                                        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-1">No groups match your
+                                        search</h3>
+                                    <p class="text-xs text-gray-500">Try adjusting your keywords or clearing the search.</p>
+                                    <button @click="search = ''"
+                                        class="mt-4 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">Clear
+                                        search</button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
