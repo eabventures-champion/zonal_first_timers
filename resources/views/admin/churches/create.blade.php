@@ -99,7 +99,7 @@
                             <h3 class="text-sm font-bold text-gray-800 dark:text-slate-200">Bulk Upload (Excel)</h3>
                         </div>
                         <a href="{{ route('admin.churches.download-template') }}"
-                            class="inline-flex items-center px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-xs font-bold rounded-lg transition-colors border border-emerald-100 dark:border-emerald-500/20">
+                            class="inline-flex items-center px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-xs font-bold rounded-lg transition-colors border border-emerald-100 dark:border-emerald-500/20">
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -108,7 +108,7 @@
                         </a>
                     </div>
 
-                    <div class="flex items-center gap-3 mb-6">
+                    <div class="flex items-center gap-3">
                         <div class="flex-1">
                             <input type="file" name="excel_file" form="import_form" required
                                 class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-500/10 dark:file:text-indigo-400">
