@@ -152,7 +152,7 @@ class FirstTimerService
                         $isFTorMember = \App\Models\Member::where('primary_contact', $bringerContact)->exists() ||
                             \App\Models\FirstTimer::where('primary_contact', $bringerContact)->exists();
 
-                        if ($isFTorMember && !$user->hasRole('Member')) {
+                        if ($isFTorMember && !$user->hasRole('Member') && !$user->isAdminStaff()) {
                             $user->assignRole('Member');
                         }
 
@@ -200,7 +200,7 @@ class FirstTimerService
                     'church_id' => $firstTimer->church_id,
                 ]
             );
-            if (!$user->hasRole('Member')) {
+            if (!$user->hasRole('Member') && !$user->isAdminStaff()) {
                 $user->assignRole('Member');
             }
 

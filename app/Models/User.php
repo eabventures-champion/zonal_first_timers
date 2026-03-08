@@ -122,16 +122,14 @@ class User extends Authenticatable
      */
     public function isBringer(): bool
     {
-        // Direct link via user_id
-        if ($this->bringer) {
+        // Direct link via user_id - check if it's NOT just an RO fallback
+        if ($this->bringer && !$this->bringer->is_ro) {
             return true;
         }
 
-        // RO bringers may not have user_id linked — check by church + is_ro
-        if ($this->hasRole('Retaining Officer') && $this->church_id) {
-            return Bringer::where('church_id', $this->church_id)
-                ->where('is_ro', true)
-                ->exists();
+        // If they have the explicit role, they are a bringer
+        if ($this->hasRole('Bringer')) {
+            return true;
         }
 
         return false;
@@ -162,6 +160,11 @@ class User extends Authenticatable
     public function isRetainingOfficer(): bool
     {
         return $this->hasRole('Retaining Officer');
+    }
+
+    public function isAdminStaff(): bool
+    {
+        return $this->hasAnyRole(['Super Admin', 'Admin', 'Retaining Officer']);
     }
 
     public function isOtherChurchRO(): bool

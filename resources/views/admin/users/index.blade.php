@@ -28,35 +28,35 @@
     </div>
 
     <div x-data="{ 
-                        search: '',
-                        selectedRole: '',
-                        selectedStatus: '',
-                        resetFilters() {
-                            this.search = '';
-                            this.selectedRole = '';
-                            this.selectedStatus = '';
-                        },
-                        shouldShowUser(user) {
-                            const s = this.search.toLowerCase();
-                            const matchesSearch = !this.search || 
-                                user.name.toLowerCase().includes(s) || 
-                                user.email.toLowerCase().includes(s) ||
-                                (user.phone && user.phone.toLowerCase().includes(s));
+                            search: '',
+                            selectedRole: '',
+                            selectedStatus: '',
+                            resetFilters() {
+                                this.search = '';
+                                this.selectedRole = '';
+                                this.selectedStatus = '';
+                            },
+                            shouldShowUser(user) {
+                                const s = this.search.toLowerCase();
+                                const matchesSearch = !this.search || 
+                                    user.name.toLowerCase().includes(s) || 
+                                    user.email.toLowerCase().includes(s) ||
+                                    (user.phone && user.phone.toLowerCase().includes(s));
 
-                            const matchesRole = !this.selectedRole || user.roles.includes(this.selectedRole);
+                                const matchesRole = !this.selectedRole || user.roles.includes(this.selectedRole);
 
-                            let matchesStatus = true;
-                            if (this.selectedStatus) {
-                                if (this.selectedStatus === 'ft') {
-                                    matchesStatus = user.is_ft;
-                                } else if (this.selectedStatus === 'retained') {
-                                    matchesStatus = user.is_retained;
+                                let matchesStatus = true;
+                                if (this.selectedStatus) {
+                                    if (this.selectedStatus === 'ft') {
+                                        matchesStatus = user.is_ft;
+                                    } else if (this.selectedStatus === 'retained') {
+                                        matchesStatus = user.is_retained;
+                                    }
                                 }
-                            }
 
-                            return matchesSearch && matchesRole && matchesStatus;
-                        }
-                    }">
+                                return matchesSearch && matchesRole && matchesStatus;
+                            }
+                        }">
         {{-- Search & Filter Bar --}}
         <div
             class="mb-8 p-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
@@ -158,23 +158,26 @@
                                                     {{ $role->name }}
                                                 </span>
                                             @endforeach
-                                            @if($user->isBringer() && $user->hasRole('Retaining Officer') && !$user->hasRole('Bringer'))
+                                            @if($user->isBringer() && !$user->hasRole('Bringer'))
                                                 <span
                                                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400">
                                                     Bringer
                                                 </span>
                                             @endif
-                                            @if($user->hasRole('Member') && $user->firstTimer && !$user->member)
-                                                <span
-                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 uppercase">
-                                                    FT
-                                                </span>
-                                            @endif
-                                            @if($user->hasRole('Member') && $user->member)
-                                                <span
-                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 uppercase">
-                                                    Retained
-                                                </span>
+
+                                            @if(!$user->isAdminStaff())
+                                                @if($user->hasRole('Member') && $user->firstTimer && !$user->member)
+                                                    <span
+                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 uppercase">
+                                                        FT
+                                                    </span>
+                                                @endif
+                                                @if($user->hasRole('Member') && $user->member)
+                                                    <span
+                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 uppercase">
+                                                        Retained
+                                                    </span>
+                                                @endif
                                             @endif
                                         </td>
                                         <td class="px-6 py-3 text-gray-500 dark:text-slate-400">{{ $user->church->name ?? '—' }}
@@ -230,18 +233,18 @@
 
                     if (checkedCount > 0) {
                         bulkDeleteBtn.innerHTML = `
-                                                                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                                                                </svg>
-                                                                                                                Delete Selected (${checkedCount})
-                                                                                                            `;
+                                                                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                                                                        </svg>
+                                                                                                                        Delete Selected (${checkedCount})
+                                                                                                                    `;
                     } else {
                         bulkDeleteBtn.innerHTML = `
-                                                                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                                                                </svg>
-                                                                                                                Delete Selected
-                                                                                                            `;
+                                                                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                                                                        </svg>
+                                                                                                                        Delete Selected
+                                                                                                                    `;
                     }
                 }
 
