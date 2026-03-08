@@ -35,8 +35,8 @@ class SyncBringersToUsersSeeder extends Seeder
                 $this->command->info("Created user for: " . $bringer->name);
             }
 
-            // Ensure they have the Bringer role
-            if (!$user->hasRole('Bringer')) {
+            // Ensure they have the Bringer role (but not if they are admin staff)
+            if (!$user->hasRole('Bringer') && !$user->isAdminStaff()) {
                 $user->assignRole('Bringer');
             }
 

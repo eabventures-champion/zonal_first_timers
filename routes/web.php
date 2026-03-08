@@ -10,6 +10,39 @@ Route::get('/', function () {
     return view('welcome', compact('settings'));
 });
 
+// Temporary one-time cleanup route – remove after use
+Route::get('/cleanup-admin-roles', function () {
+    if (!auth()->check() || !auth()->user()->hasRole('Super Admin')) {
+        abort(403);
+    }
+
+    $output = '<h2>Role Cleanup Results</h2>';
+    $count = 0;
+
+    $users = \App\Models\User::with('roles')->get();
+    foreach ($users as $user) {
+        $roles = $user->getRoleNames();
+        $isAdmin = $roles->intersect(['Super Admin', 'Admin', 'Retaining Officer'])->isNotEmpty();
+
+        if ($isAdmin) {
+            if ($roles->contains('Bringer')) {
+                $user->removeRole('Bringer');
+                $output .= "<p>✅ Removed <b>Bringer</b> from {$user->name}</p>";
+                $count++;
+            }
+            if ($roles->contains('Member')) {
+                $user->removeRole('Member');
+                $output .= "<p>✅ Removed <b>Member</b> from {$user->name}</p>";
+                $count++;
+            }
+        }
+    }
+
+    $output .= "<br><b>Total role removals: {$count}</b>";
+    $output .= '<br><br><a href="/admin/users">← Back to User Management</a>';
+    return $output;
+})->middleware(['auth']);
+
 // ── Role-based dashboard redirect ────────────────────────
 Route::get('/dashboard', function () {
     $user = auth()->user();
