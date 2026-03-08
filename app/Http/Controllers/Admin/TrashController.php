@@ -11,6 +11,32 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class TrashController extends Controller
 {
+    /**
+     * Get the accurate total trash count (used by SidebarComposer).
+     * Applies the same deduplication logic as index().
+     */
+    public static function getTotalTrashCount(): int
+    {
+        $trashedMembers = Member::onlyTrashed()->get();
+        $trashedFTs = FirstTimer::onlyTrashed()->get();
+        $memberUserIds = $trashedMembers->pluck('user_id')->filter()->toArray();
+        $ftUserIds = $trashedFTs->pluck('user_id')->filter()->toArray();
+        $coveredUserIds = array_unique(array_merge($memberUserIds, $ftUserIds));
+
+        // Filter FTs same as index() — hide FTs that have a corresponding Member
+        $visibleFTs = $trashedFTs->filter(function ($ft) use ($memberUserIds) {
+            if ($ft->user_id && in_array($ft->user_id, $memberUserIds))
+                return false;
+            if ($ft->user_id && Member::where('user_id', $ft->user_id)->exists())
+                return false;
+            return true;
+        });
+
+        $trashedUserCount = User::onlyTrashed()->whereNotIn('id', $coveredUserIds)->count();
+
+        return $trashedMembers->count() + $visibleFTs->count() + $trashedUserCount;
+    }
+
     public function index(Request $request)
     {
         // Get all trashed members
@@ -35,11 +61,27 @@ class TrashController extends Controller
                 return $ft;
             });
 
+        // Get all trashed users (that don't already appear via Member/FT)
+        $memberUserIds = $members->pluck('user_id')->filter()->toArray();
+        $ftUserIds = $firstTimers->pluck('user_id')->filter()->toArray();
+        $coveredUserIds = array_unique(array_merge($memberUserIds, $ftUserIds));
+
+        $trashedUsers = User::onlyTrashed()
+            ->with('church')
+            ->whereNotIn('id', $coveredUserIds)
+            ->latest('deleted_at')
+            ->get()
+            ->map(function ($u) {
+                $u->trash_type = 'user';
+                $u->display_status = 'User Account';
+                $u->full_name = $u->name;
+                $u->primary_contact = $u->phone ?? $u->email;
+                return $u;
+            });
+
         // Merge and Filter: If a user has both a trashed FT and a trashed Member,
         // we likely only want to see the Member one (since it's the more recent state).
         // Or if the FT record was trashed during promotion, it's just a shell.
-        $memberUserIds = $members->pluck('user_id')->filter()->toArray();
-
         $unifiedItems = $members->concat(
             $firstTimers->filter(function ($ft) use ($memberUserIds) {
                 // Hide FT record if there is a Member record (active or trashed) for this user
@@ -52,7 +94,7 @@ class TrashController extends Controller
                 }
                 return true;
             })
-        )->sortByDesc('deleted_at');
+        )->concat($trashedUsers)->sortByDesc('deleted_at');
 
         // Manual Pagination for the merged collection
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
@@ -72,6 +114,12 @@ class TrashController extends Controller
 
     public function restore($type, $id)
     {
+        if ($type === 'user') {
+            $user = User::onlyTrashed()->findOrFail($id);
+            $user->restore();
+            return back()->with('success', 'User account restored successfully.');
+        }
+
         $model = $type === 'member' ? Member::onlyTrashed() : FirstTimer::onlyTrashed();
         $item = $model->findOrFail($id);
 
@@ -91,6 +139,12 @@ class TrashController extends Controller
 
     public function forceDelete($type, $id)
     {
+        if ($type === 'user') {
+            $user = User::onlyTrashed()->findOrFail($id);
+            $user->forceDelete();
+            return back()->with('success', 'User account permanently deleted.');
+        }
+
         $model = $type === 'member' ? Member::onlyTrashed() : FirstTimer::onlyTrashed();
         $item = $model->findOrFail($id);
 
@@ -117,6 +171,16 @@ class TrashController extends Controller
         $count = 0;
         foreach ($selected as $compositeId) {
             [$type, $id] = explode(':', $compositeId);
+
+            if ($type === 'user') {
+                $user = User::onlyTrashed()->find($id);
+                if ($user) {
+                    $user->restore();
+                    $count++;
+                }
+                continue;
+            }
+
             $model = $type === 'member' ? Member::onlyTrashed() : FirstTimer::onlyTrashed();
             $item = $model->find($id);
 
@@ -145,6 +209,16 @@ class TrashController extends Controller
         $count = 0;
         foreach ($selected as $compositeId) {
             [$type, $id] = explode(':', $compositeId);
+
+            if ($type === 'user') {
+                $user = User::onlyTrashed()->find($id);
+                if ($user) {
+                    $user->forceDelete();
+                    $count++;
+                }
+                continue;
+            }
+
             $model = $type === 'member' ? Member::onlyTrashed() : FirstTimer::onlyTrashed();
             $item = $model->find($id);
 

@@ -115,6 +115,11 @@
                                                 class="px-2.5 py-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-lg uppercase">
                                                 {{ $item->display_status }}
                                             </span>
+                                        @elseif($item->trash_type === 'user')
+                                            <span
+                                                class="px-2.5 py-1 text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400 rounded-lg uppercase">
+                                                {{ $item->display_status }}
+                                            </span>
                                         @else
                                             <span
                                                 class="px-2.5 py-1 text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400 rounded-lg uppercase">

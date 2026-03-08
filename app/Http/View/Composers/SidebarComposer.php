@@ -44,6 +44,7 @@ class SidebarComposer
                     return $q->where('church_id', $churchId);
                 })
                 ->count(),
+            'trash_count' => \App\Http\Controllers\Admin\TrashController::getTotalTrashCount(),
         ];
 
         $view->with('sidebarCounts', $counts);

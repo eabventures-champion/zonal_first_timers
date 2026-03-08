@@ -627,7 +627,7 @@
                                                         <th class="px-4 py-2 text-center font-medium">Total FT</th>
                                                         <th class="px-4 py-2 text-center font-medium">New FT</th>
                                                         <th class="px-4 py-2 text-center font-medium">Developing</th>
-                                                        <th class="px-4 py-2 text-center font-medium">Members</th>
+                                                        <th class="px-4 py-2 text-center font-medium">Retained</th>
                                                         <th class="px-4 py-2 text-center font-medium">Retention</th>
                                                     </tr>
                                                 </thead>

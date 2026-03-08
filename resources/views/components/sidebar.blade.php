@@ -96,7 +96,7 @@
         </svg>
         <span x-show="!sidebarMinimized" class="whitespace-nowrap" x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-x-1"
-            x-transition:enter-end="opacity-100 translate-x-0">Members</span>
+            x-transition:enter-end="opacity-100 translate-x-0">Retanined Members</span>
         <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-black text-white rounded-full"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100">
@@ -214,6 +214,13 @@
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
             <span x-show="!sidebarMinimized" class="flex-1">System Trash</span>
+            @if(($sidebarCounts['trash_count'] ?? 0) > 0)
+                <span x-show="!sidebarMinimized" class="px-2 py-0.5 text-[10px] font-bold bg-red-600 text-white rounded-full"
+                    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100">
+                    {{ $sidebarCounts['trash_count'] }}
+                </span>
+            @endif
         </a>
 
         <a href="{{ route('admin.homepage-settings.index') }}"
