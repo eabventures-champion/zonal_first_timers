@@ -28,35 +28,36 @@
     </div>
 
     <div x-data="{ 
-                            search: '',
-                            selectedRole: '',
-                            selectedStatus: '',
-                            resetFilters() {
-                                this.search = '';
-                                this.selectedRole = '';
-                                this.selectedStatus = '';
-                            },
-                            shouldShowUser(user) {
-                                const s = this.search.toLowerCase();
-                                const matchesSearch = !this.search || 
-                                    user.name.toLowerCase().includes(s) || 
-                                    user.email.toLowerCase().includes(s) ||
-                                    (user.phone && user.phone.toLowerCase().includes(s));
+                                search: '',
+                                selectedRole: '',
+                                selectedStatus: '',
+                                resetFilters() {
+                                    this.search = '';
+                                    this.selectedRole = '';
+                                    this.selectedStatus = '';
+                                },
+                                shouldShowUser(user) {
+                                    const s = this.search.toLowerCase();
+                                    const matchesSearch = !this.search || 
+                                        user.name.toLowerCase().includes(s) || 
+                                        user.email.toLowerCase().includes(s) ||
+                                        (user.phone && user.phone.toLowerCase().includes(s)) ||
+                                        (user.church && user.church.toLowerCase().includes(s));
 
-                                const matchesRole = !this.selectedRole || user.roles.includes(this.selectedRole);
+                                    const matchesRole = !this.selectedRole || user.roles.includes(this.selectedRole);
 
-                                let matchesStatus = true;
-                                if (this.selectedStatus) {
-                                    if (this.selectedStatus === 'ft') {
-                                        matchesStatus = user.is_ft;
-                                    } else if (this.selectedStatus === 'retained') {
-                                        matchesStatus = user.is_retained;
+                                    let matchesStatus = true;
+                                    if (this.selectedStatus) {
+                                        if (this.selectedStatus === 'ft') {
+                                            matchesStatus = user.is_ft;
+                                        } else if (this.selectedStatus === 'retained') {
+                                            matchesStatus = user.is_retained;
+                                        }
                                     }
-                                }
 
-                                return matchesSearch && matchesRole && matchesStatus;
-                            }
-                        }">
+                                    return matchesSearch && matchesRole && matchesStatus;
+                                }
+                            }">
         {{-- Search & Filter Bar --}}
         <div
             class="mb-8 p-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
@@ -69,7 +70,7 @@
                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-                    <input type="text" x-model="search" placeholder="Search by name, email, or phone..."
+                    <input type="text" x-model="search" placeholder="Search by name, email, phone, or church..."
                         class="block w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-gray-700 dark:text-white">
                 </div>
 
@@ -127,6 +128,7 @@
                                         'name' => $user->name,
                                         'email' => $user->email,
                                         'phone' => $user->phone,
+                                        'church' => $user->church->name ?? '',
                                         'roles' => $user->roles->pluck('name')->toArray(),
                                         'is_ft' => $user->firstTimer && !$user->firstTimer->membership_approved_at,
                                         'is_retained' => (bool) $user->member
@@ -233,18 +235,18 @@
 
                     if (checkedCount > 0) {
                         bulkDeleteBtn.innerHTML = `
-                                                                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                                                                        </svg>
-                                                                                                                        Delete Selected (${checkedCount})
-                                                                                                                    `;
+                                                                                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                                                                                </svg>
+                                                                                                                                Delete Selected (${checkedCount})
+                                                                                                                            `;
                     } else {
                         bulkDeleteBtn.innerHTML = `
-                                                                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                                                                        </svg>
-                                                                                                                        Delete Selected
-                                                                                                                    `;
+                                                                                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                                                                                </svg>
+                                                                                                                                Delete Selected
+                                                                                                                            `;
                     }
                 }
 
