@@ -28,7 +28,7 @@ class AttendanceController extends Controller
                 ]);
             }
         ])
-            ->orderByRaw("CASE WHEN name IN ('AVENOR', 'LAA') THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE WHEN name IN ('CE AVENOR', 'CE LAA') THEN 0 ELSE 1 END")
             ->orderBy('name')
             ->get();
 
