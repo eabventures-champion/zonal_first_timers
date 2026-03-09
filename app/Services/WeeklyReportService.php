@@ -178,7 +178,9 @@ class WeeklyReportService
             });
 
             foreach ($catData['groups'] as $groupName => &$groupData) {
-                ksort($groupData['churches']);
+                uasort($groupData['churches'], function ($a, $b) {
+                    return $b['total'] <=> $a['total'];
+                });
             }
         }
 
