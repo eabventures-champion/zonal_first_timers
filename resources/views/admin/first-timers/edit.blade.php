@@ -29,7 +29,8 @@
                     bringerConfirmed: false,
 
                     canSubmit() {
-                        const isCommonValid = this.fullName && this.fullName.trim() && this.primaryContact && this.primaryContact.trim() && this.selectedChurch && !this.contactError && !this.alternateContactError && !this.isValidating;
+                        const hasContact = (this.primaryContact && this.primaryContact.trim()) || (this.alternateContact && this.alternateContact.trim());
+                        const isCommonValid = this.fullName && this.fullName.trim() && hasContact && this.selectedChurch && !this.contactError && !this.alternateContactError && !this.isValidating;
                         const isBringerValid = this.selectedBringerId || (this.bringerConfirmed && this.bringerName && this.bringerName.trim() && this.bringerContact && this.bringerContact.trim() && !this.bringerContactError);
                         return isCommonValid && isBringerValid;
                     },
@@ -185,10 +186,10 @@
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
                         @error('email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
-                    <div>
+                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Primary Contact <span
-                                class="text-red-500">*</span></label>
-                        <input type="text" name="primary_contact" required x-model="primaryContact"
+                                class="text-[10px] text-gray-400 font-normal">(Required if no alternate)</span></label>
+                        <input type="text" name="primary_contact" x-model="primaryContact"
                             @input.debounce.500ms="checkContact()" minlength="10" maxlength="20"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
                             :class="contactError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''">
@@ -204,9 +205,8 @@
                         <p x-show="alternateContactError" x-text="alternateContactError" class="mt-1 text-xs text-red-600" style="display: none;"></p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Gender <span
-                                class="text-red-500">*</span></label>
-                        <select name="gender" required
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Gender</label>
+                        <select name="gender"
                             class="w-full rounded-lg border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="Male" {{ old('gender', $firstTimer->gender) === 'Male' ? 'selected' : '' }}>Male
                             </option>

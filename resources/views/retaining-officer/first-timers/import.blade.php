@@ -20,13 +20,25 @@
                 <p class="text-sm text-gray-500">Upload a CSV file to bulk register first timers for your church. The CSV
                     must include
                     headers matching the database fields.</p>
-                <div class="mt-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg p-3">
-                    <p class="text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">Required columns:</p>
-                    <code
-                        class="text-xs text-gray-500">full_name, primary_contact, email, gender, residential_address, date_of_visit</code>
-                    <p class="text-xs font-medium text-gray-600 dark:text-slate-400 mt-2 mb-1">Optional columns:</p>
-                    <code
-                        class="text-xs text-gray-500">alternate_contact, date_of_birth, occupation, marital_status, bringer_name, bringer_contact, born_again, water_baptism, church_event, prayer_requests</code>
+                <div
+                    class="mt-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg p-4 border border-gray-100 dark:border-slate-700">
+                    <p class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Required
+                        columns (12):</p>
+                    <div class="flex flex-wrap gap-1.5 mb-3">
+                        @foreach(['date_of_visit', 'group_church', 'church', 'full_name', 'primary_contact', 'birthday', 'occupation', 'marital_status', 'church_event', 'residential_address', 'bringer_name', 'bringer_contact'] as $col)
+                            <span
+                                class="px-2 py-1 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400 text-[10px] rounded border border-gray-200 dark:border-slate-600 font-mono">{{ $col }}</span>
+                        @endforeach
+                    </div>
+
+                    <p class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Optional
+                        columns (6):</p>
+                    <div class="flex flex-wrap gap-1.5">
+                        @foreach(['email', 'alternate_contact', 'gender', 'born_again', 'water_baptism', 'prayer_requests'] as $col)
+                            <span
+                                class="px-2 py-1 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400 text-[10px] rounded border border-gray-200 dark:border-slate-600 font-mono">{{ $col }}</span>
+                        @endforeach
+                    </div>
                 </div>
             </div>
 

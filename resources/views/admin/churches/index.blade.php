@@ -15,33 +15,37 @@
     </div>
 
     <div x-data="{ 
-            search: '',
-            expandedGroups: new Set(),
-            toggleGroup(name) {
-                if (this.expandedGroups.has(name)) {
-                    this.expandedGroups.delete(name);
-                } else {
-                    this.expandedGroups.add(name);
+                search: '',
+                expandedGroups: new Set(),
+                toggleGroup(name) {
+                    if (this.expandedGroups.has(name)) {
+                        this.expandedGroups.delete(name);
+                    } else {
+                        this.expandedGroups.add(name);
+                    }
+                },
+                shouldShowGroup(group) {
+                    if (!this.search) return true;
+                    const s = this.search.toLowerCase();
+                    return group.name.toLowerCase().includes(s) || 
+                           group.churches.some(c => 
+                                c.name.toLowerCase().includes(s) || 
+                                (c.leader_name && c.leader_name.toLowerCase().includes(s)) ||
+                                (c.leader_contact && c.leader_contact.toLowerCase().includes(s)) ||
+                                (c.retaining_officer && c.retaining_officer.name.toLowerCase().includes(s)) ||
+                                (c.retaining_officer && c.retaining_officer.phone && c.retaining_officer.phone.toLowerCase().includes(s))
+                           );
+                },
+                shouldShowChurch(church) {
+                    if (!this.search) return true;
+                    const s = this.search.toLowerCase();
+                    return church.name.toLowerCase().includes(s) || 
+                           (church.leader_name && church.leader_name.toLowerCase().includes(s)) ||
+                           (church.leader_contact && church.leader_contact.toLowerCase().includes(s)) ||
+                           (church.retaining_officer && church.retaining_officer.name.toLowerCase().includes(s)) ||
+                           (church.retaining_officer && church.retaining_officer.phone && church.retaining_officer.phone.toLowerCase().includes(s));
                 }
-            },
-            shouldShowGroup(group) {
-                if (!this.search) return true;
-                const s = this.search.toLowerCase();
-                return group.name.toLowerCase().includes(s) || 
-                       group.churches.some(c => 
-                            c.name.toLowerCase().includes(s) || 
-                            (c.leader_name && c.leader_name.toLowerCase().includes(s)) ||
-                            (c.retaining_officer && c.retaining_officer.name.toLowerCase().includes(s))
-                       );
-            },
-            shouldShowChurch(church) {
-                if (!this.search) return true;
-                const s = this.search.toLowerCase();
-                return church.name.toLowerCase().includes(s) || 
-                       (church.leader_name && church.leader_name.toLowerCase().includes(s)) ||
-                       (church.retaining_officer && church.retaining_officer.name.toLowerCase().includes(s));
-            }
-        }" class="space-y-6">
+            }" class="space-y-6">
         {{-- Search Bar --}}
         <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm">
             <div class="relative max-w-md">
@@ -63,7 +67,11 @@
                     'churches' => $group->churches->map(fn($c) => [
                         'name' => $c->name,
                         'leader_name' => $c->leader_name,
-                        'retaining_officer' => ['name' => $c->retainingOfficer->name ?? 'Unassigned']
+                        'leader_contact' => $c->leader_contact,
+                        'retaining_officer' => [
+                            'name' => $c->retainingOfficer->name ?? 'Unassigned',
+                            'phone' => $c->retainingOfficer->phone ?? ''
+                        ]
                     ])
                 ]))">
                     <div class="flex items-center gap-2 px-1 text-left">
@@ -90,7 +98,11 @@
                         'churches' => $group->churches->map(fn($c) => [
                             'name' => $c->name,
                             'leader_name' => $c->leader_name,
-                            'retaining_officer' => ['name' => $c->retainingOfficer->name ?? 'Unassigned']
+                            'leader_contact' => $c->leader_contact,
+                            'retaining_officer' => [
+                                'name' => $c->retainingOfficer->name ?? 'Unassigned',
+                                'phone' => $c->retainingOfficer->phone ?? ''
+                            ]
                         ])
                     ])))" x-collapse
                         class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800">
@@ -113,12 +125,15 @@
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
                                     @foreach($group->churches as $church)
-                                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors"
-                                            x-show="shouldShowChurch(@js([
-                                                'name' => $church->name,
-                                                'leader_name' => $church->leader_name,
-                                                'retaining_officer' => ['name' => $church->retainingOfficer->name ?? 'Unassigned']
-                                            ]))">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors" x-show="shouldShowChurch(@js([
+                                            'name' => $church->name,
+                                            'leader_name' => $church->leader_name,
+                                            'leader_contact' => $church->leader_contact,
+                                            'retaining_officer' => [
+                                                'name' => $church->retainingOfficer->name ?? 'Unassigned',
+                                                'phone' => $church->retainingOfficer->phone ?? ''
+                                            ]
+                                        ]))">
                                             <td class="px-6 py-4">
                                                 <div class="font-semibold text-gray-900 dark:text-white">{{ $church->name }}</div>
                                                 <div

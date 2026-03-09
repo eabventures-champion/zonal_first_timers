@@ -19,69 +19,30 @@
                 </div>
                 <p class="text-sm text-gray-500">Upload a CSV file to bulk register first timers. The CSV must include
                     headers matching the database fields.</p>
-                <div class="mt-3 bg-gray-50 rounded-lg p-3">
-                    <p class="text-xs font-medium text-gray-600 mb-1">Required columns:</p>
-                    <code
-                        class="text-xs text-gray-500">full_name, primary_contact, email, gender, residential_address, date_of_visit</code>
-                    <p class="text-xs font-medium text-gray-600 mt-2 mb-1">Optional columns:</p>
-                    <code
-                        class="text-xs text-gray-500">alternate_contact, date_of_birth, occupation, marital_status, bringer_name, bringer_contact, born_again, water_baptism, church_event, prayer_requests</code>
+                <div
+                    class="mt-3 bg-gray-50 rounded-lg p-4 border border-gray-100 dark:bg-slate-800/50 dark:border-slate-700">
+                    <p class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Required
+                        columns (12):</p>
+                    <div class="flex flex-wrap gap-1.5 mb-3">
+                        @foreach(['date_of_visit', 'group_church', 'church', 'full_name', 'primary_contact', 'birthday', 'occupation', 'marital_status', 'church_event', 'residential_address', 'bringer_name', 'bringer_contact'] as $col)
+                            <span
+                                class="px-2 py-1 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400 text-[10px] rounded border border-gray-200 dark:border-slate-600 font-mono">{{ $col }}</span>
+                        @endforeach
+                    </div>
+
+                    <p class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Optional
+                        columns (6):</p>
+                    <div class="flex flex-wrap gap-1.5">
+                        @foreach(['email', 'alternate_contact', 'gender', 'born_again', 'water_baptism', 'prayer_requests'] as $col)
+                            <span
+                                class="px-2 py-1 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400 text-[10px] rounded border border-gray-200 dark:border-slate-600 font-mono">{{ $col }}</span>
+                        @endforeach
+                    </div>
                 </div>
             </div>
 
             <form method="POST" action="{{ route('admin.first-timers.import.store') }}" enctype="multipart/form-data">
                 @csrf
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                    <div>
-                        <label for="group_id" class="block text-sm font-medium text-gray-700 mb-1">Group</label>
-                        <select id="group_id"
-                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            onchange="filterChurches(this.value)">
-                            <option value="">All Groups</option>
-                            @foreach($groups as $group)
-                                <option value="{{ $group->id }}">{{ $group->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="church_id" class="block text-sm font-medium text-gray-700 mb-1">Church <span
-                                class="text-red-500">*</span></label>
-                        <select name="church_id" id="church_id" required
-                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="">Select Church</option>
-                            @foreach($churches as $church)
-                                <option value="{{ $church->id }}" data-group-id="{{ $church->church_group_id }}">
-                                    {{ $church->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('church_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-
-                <script>
-                    function filterChurches(groupId) {
-                        const churchSelect = document.getElementById('church_id');
-                        const options = churchSelect.querySelectorAll('option');
-
-                        churchSelect.value = ''; // Reset selection
-
-                        options.forEach(option => {
-                            if (option.value === '') return; // Skip "Select Church"
-
-                            const optionGroupId = option.getAttribute('data-group-id');
-                            if (!groupId || optionGroupId === groupId) {
-                                option.style.display = '';
-                                option.disabled = false;
-                            } else {
-                                option.style.display = 'none';
-                                option.disabled = true;
-                            }
-                        });
-                    }
-                </script>
 
                 <div class="mb-6">
                     <label for="csv_file" class="block text-sm font-medium text-gray-700 mb-1">CSV File <span

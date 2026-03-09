@@ -57,8 +57,11 @@
                                     class="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-300">Background
                                     Image</label>
                                 @if(isset($settings['hero_background_image']))
-                                    <img src="{{ $settings['hero_background_image']->value }}" alt="Current Background"
-                                        class="mt-2 h-32 w-auto object-cover rounded-md mb-2">
+                                    <img id="hero_bg_preview" src="{{ $settings['hero_background_image']->value }}"
+                                        alt="Current Background" class="mt-2 h-32 w-auto object-cover rounded-md mb-2">
+                                @else
+                                    <img id="hero_bg_preview" src="" alt="Background Preview"
+                                        class="mt-2 h-32 w-auto object-cover rounded-md mb-2 hidden">
                                 @endif
                                 <div class="mt-2">
                                     <input type="file" name="hero_background_image" id="hero_background_image"
@@ -282,3 +285,26 @@
         </form>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const heroBgInput = document.getElementById('hero_background_image');
+            const heroBgPreview = document.getElementById('hero_bg_preview');
+
+            if (heroBgInput && heroBgPreview) {
+                heroBgInput.addEventListener('change', function() {
+                    const file = this.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            heroBgPreview.src = e.target.result;
+                            heroBgPreview.classList.remove('hidden');
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+    </script>
+@endpush

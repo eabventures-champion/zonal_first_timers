@@ -22,7 +22,12 @@
                     </div>
                     <div>
                         <dt class="text-gray-500">Primary Contact</dt>
-                        <dd class="font-medium text-gray-900">{{ $firstTimer->primary_contact }}</dd>
+                        <dd class="font-medium text-gray-900">
+                            {{ $firstTimer->primary_contact }}
+                            @if($firstTimer->alternate_contact)
+                                <div class="text-xs text-gray-500 mt-1">Alt: {{ $firstTimer->alternate_contact }}</div>
+                            @endif
+                        </dd>
                     </div>
                     <div>
                         <dt class="text-gray-500">Gender</dt>

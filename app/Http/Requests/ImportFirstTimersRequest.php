@@ -14,7 +14,7 @@ class ImportFirstTimersRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'church_id' => 'required|exists:churches,id',
+            'church_id' => 'nullable|exists:churches,id',
             'csv_file' => 'required|file|mimes:csv,txt|max:5120',
         ];
     }

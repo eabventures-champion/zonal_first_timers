@@ -84,9 +84,11 @@ class FirstTimerService
     public function create(array $data): FirstTimer
     {
         // Prevent registering existing administrative users as first timers
-        $existingUser = User::where('phone', $data['primary_contact'])->first();
-        if ($existingUser && $existingUser->roles()->whereIn('name', ['Super Admin', 'Admin', 'Retaining Officer'])->exists()) {
-            throw new \Exception("This phone number belongs to an existing " . $existingUser->getRoleNames()->first() . " and cannot be registered as a first timer.");
+        if (!empty($data['primary_contact'])) {
+            $existingUser = User::where('phone', $data['primary_contact'])->first();
+            if ($existingUser && $existingUser->roles()->whereIn('name', ['Super Admin', 'Admin', 'Retaining Officer'])->exists()) {
+                throw new \Exception("This phone number belongs to an existing " . $existingUser->getRoleNames()->first() . " and cannot be registered as a first timer.");
+            }
         }
 
         $data['created_by'] = Auth::id();
@@ -348,7 +350,7 @@ class FirstTimerService
         $firstTimer->delete();
     }
 
-    public function importFromCsv(UploadedFile $file, int $churchId): array
+    public function importFromCsv(UploadedFile $file, ?int $churchId = null): array
     {
         ini_set('auto_detect_line_endings', true);
         $results = ['success' => 0, 'errors' => []];
@@ -363,7 +365,7 @@ class FirstTimerService
         // Normalize header keys
         $header = array_map(fn($h) => strtolower(trim(str_replace([' ', "\r", "\n"], ['_', '', ''], $h))), $header);
 
-        \Illuminate\Support\Facades\Log::info("Starting CSV import for church {$churchId}. File: " . $file->getClientOriginalName());
+        \Illuminate\Support\Facades\Log::info("Starting CSV import. File: " . $file->getClientOriginalName());
 
         $row = 1;
         while (($line = fgetcsv($handle)) !== false) {
@@ -372,10 +374,6 @@ class FirstTimerService
             // Skip empty rows
             if (empty(array_filter($line))) {
                 continue;
-            }
-
-            if ($row === 2) {
-                \Illuminate\Support\Facades\Log::info("Sample data from Row 2: " . implode(', ', $line));
             }
 
             $currentData = [];
@@ -394,29 +392,48 @@ class FirstTimerService
                     $currentData[$key] = $val === '' ? null : $val;
                 }
 
-                $currentData['church_id'] = $churchId;
-                $currentData['born_again'] = strtolower($currentData['born_again'] ?? 'no') === 'yes';
-                $currentData['water_baptism'] = strtolower($currentData['water_baptism'] ?? 'no') === 'yes';
-                $currentData['status'] = $currentData['status'] ?? 'New';
-                $currentData['created_by'] = Auth::id();
+                // Dynamic Church Lookup
+                $groupName = $currentData['group_church'] ?? null;
+                $churchName = $currentData['church'] ?? null;
 
-                $church = Church::find($churchId);
-                $currentData['retaining_officer_id'] = $church?->retaining_officer_id;
-
-                $currentData['date_of_visit'] = $this->parseDate($currentData['date_of_visit'] ?? null);
-                if (isset($currentData['date_of_birth']) && $currentData['date_of_birth']) {
-                    $currentData['date_of_birth'] = $this->parseDate($currentData['date_of_birth']);
-                } else {
-                    unset($currentData['date_of_birth']);
+                if (!$churchName) {
+                    $results['errors'][] = "Row {$row}: Church name is missing.";
+                    continue;
                 }
 
-                // Bringer-Church Restriction check for import
+                $churchQuery = Church::where('name', $churchName);
+                if ($groupName) {
+                    $churchQuery->whereHas('group', function ($q) use ($groupName) {
+                        $q->where('name', $groupName);
+                    });
+                }
+
+                $rowChurch = $churchQuery->first();
+
+                if (!$rowChurch) {
+                    $errorMsg = "Row {$row}: Church '{$churchName}'" . ($groupName ? " in group '{$groupName}'" : "") . " not found.";
+                    $results['errors'][] = $errorMsg;
+                    continue;
+                }
+
+                $currentData['church_id'] = $rowChurch->id;
+                $currentData['retaining_officer_id'] = $rowChurch->retaining_officer_id;
+
+                // Map fields
+                $currentData['date_of_birth'] = $this->parseDate($currentData['birthday'] ?? null, true);
+                $currentData['date_of_visit'] = $this->parseDate($currentData['date_of_visit'] ?? null, false);
+                $currentData['born_again'] = $currentData['born_again'] === null ? null : (strtolower($currentData['born_again'] ?? '') === 'yes');
+                $currentData['water_baptism'] = $currentData['water_baptism'] === null ? null : (strtolower($currentData['water_baptism'] ?? '') === 'yes');
+                $currentData['status'] = 'New';
+                $currentData['created_by'] = Auth::id();
+
+                // Bringer-Church Restriction check
                 $bringerContact = $currentData['bringer_contact'] ?? null;
                 if ($bringerContact) {
                     $existingBringer = \App\Models\Bringer::where('contact', $bringerContact)->first();
-                    if ($existingBringer && $existingBringer->church_id != $churchId) {
+                    if ($existingBringer && $existingBringer->church_id != $rowChurch->id) {
                         $existingChurch = $existingBringer->church->name ?? 'another church';
-                        $results['errors'][] = "Row {$row}: The bringer '{$existingBringer->name}' (Contact: {$bringerContact}) is already registered with '{$existingChurch}'. A bringer cannot be associated with multiple churches.";
+                        $results['errors'][] = "Row {$row}: The bringer '{$existingBringer->name}' (Contact: {$bringerContact}) is already registered with '{$existingChurch}'.";
                         continue;
                     }
                 }
@@ -424,8 +441,10 @@ class FirstTimerService
                 // Row-level validation
                 $validator = Validator::make($currentData, [
                     'full_name' => 'required|string|max:255',
+                    'email' => 'nullable|email|max:255',
                     'primary_contact' => [
-                        'required',
+                        'required_without:alternate_contact',
+                        'nullable',
                         'string',
                         'min:10',
                         'max:20',
@@ -433,31 +452,32 @@ class FirstTimerService
                         Rule::unique('members', 'primary_contact'),
                         Rule::unique('users', 'phone'),
                     ],
-                    'email' => [
+                    'alternate_contact' => [
+                        'required_without:primary_contact',
                         'nullable',
-                        'email',
-                        Rule::unique('first_timers', 'email'),
-                        Rule::unique('members', 'email'),
-                        Rule::unique('users', 'email'),
+                        'string',
+                        'min:10',
+                        'max:20',
                     ],
-                    'gender' => 'required|in:Male,Female',
+                    'gender' => 'nullable|in:Male,Female',
                     'residential_address' => 'required|string|max:1000',
                     'date_of_visit' => 'required|date',
+                    'date_of_birth' => 'required|date',
+                    'occupation' => 'required|string|max:255',
+                    'marital_status' => 'required|string|max:255',
+                    'church_event' => 'required|string|max:255',
+                    'born_again' => 'nullable|boolean',
+                    'water_baptism' => 'nullable|boolean',
+                    'bringer_name' => 'required|string|max:255',
+                    'bringer_contact' => 'required|string|max:20',
                 ], [
-                    'primary_contact.unique' => 'Phone number :input already registered.',
-                    'email.unique' => 'Email :input already registered.',
-                    'gender.in' => 'Gender must be Male or Female (got ":input").',
+                    'primary_contact.unique' => 'Phone number already registered.',
+                    'gender.in' => 'Gender must be Male or Female.',
                 ]);
 
                 if ($validator->fails()) {
-                    foreach ($validator->errors()->getMessages() as $field => $messages) {
-                        foreach ($messages as $message) {
-                            if (str_contains($message, 'already registered')) {
-                                $results['errors'][] = "Row {$row}: " . $this->humanizeDuplicate($field, $currentData[$field]);
-                            } else {
-                                $results['errors'][] = "Row {$row}: {$message}";
-                            }
-                        }
+                    foreach ($validator->errors()->all() as $msg) {
+                        $results['errors'][] = "Row {$row}: {$msg}";
                     }
                     continue;
                 }
@@ -639,26 +659,45 @@ class FirstTimerService
         return "{$field} '{$value}' is already in our system (Detailed record could not be found).";
     }
 
-    private function parseDate($date)
+    private function parseDate($date, $isBirthday = false)
     {
         if (empty($date)) {
             return null;
         }
 
-        // Handle DD/MM/YYYY format specifically if it contains slashes
-        if (str_contains($date, '/')) {
-            try {
-                // Force interpretation as d/m/Y
-                return Carbon::createFromFormat('d/m/Y', $date)->startOfDay();
-            } catch (\Exception $e) {
-                // Fallback to standard parsing if specific format fails
+        if ($isBirthday) {
+            // Handle MM/DD/YYYY format specifically if it contains slashes
+            if (str_contains($date, '/')) {
+                try {
+                    // Force interpretation as m/d/Y and override year to 2000
+                    $carbon = Carbon::createFromFormat('m/d/Y', $date);
+                    return $carbon->year(2000)->startOfDay();
+                } catch (\Exception $e) {
+                    // Fallback to standard parsing if specific format fails
+                }
             }
-        }
 
-        try {
-            return Carbon::parse($date)->startOfDay();
-        } catch (\Exception $e) {
-            return null;
+            try {
+                // Parse and override year to 2000
+                return Carbon::parse($date)->year(2000)->startOfDay();
+            } catch (\Exception $e) {
+                return null;
+            }
+        } else {
+            // Standard date parsing (e.g. Date of Visit), often DD/MM/YYYY in Excel
+            if (str_contains($date, '/')) {
+                try {
+                    // Try d/m/Y first as it's common in Excel exports in this region
+                    return Carbon::createFromFormat('d/m/Y', $date)->startOfDay();
+                } catch (\Exception $e) {
+                    // Fallback to standard parsing
+                }
+            }
+            try {
+                return Carbon::parse($date)->startOfDay();
+            } catch (\Exception $e) {
+                return null;
+            }
         }
     }
 }

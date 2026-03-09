@@ -106,9 +106,7 @@ class FirstTimerController extends Controller
 
     public function importForm()
     {
-        $groups = \App\Models\ChurchGroup::with('churches')->orderBy('name')->get();
-        $churches = Church::orderBy('name')->get();
-        return view('admin.first-timers.import', compact('groups', 'churches'));
+        return view('admin.first-timers.import');
     }
 
     public function import(ImportFirstTimersRequest $request)

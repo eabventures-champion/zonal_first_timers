@@ -118,18 +118,25 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if this user is also a bringer (via direct user_id link or via RO church assignment).
+     * Check if this user is truly a bringer (has active souls).
      */
     public function isBringer(): bool
     {
-        // Direct link via user_id - check if it's NOT just an RO fallback
+        // Must have a bringer record that isn't just an RO fallback
+        // AND that bringer record must have active souls
         if ($this->bringer && !$this->bringer->is_ro) {
-            return true;
+            return $this->bringer->firstTimers()->exists() || $this->bringer->members()->exists();
         }
 
-        // If they have the explicit role, they are a bringer
+        // If they have the explicit role assigned via UI/Code, we double-check if they have ANY bringer record with souls.
+        // If they have the role but no souls, the role is essentially "stale" or manual, but we shouldn't show them as an *active* bringer.
         if ($this->hasRole('Bringer')) {
-            return true;
+            if ($this->bringer) {
+                return $this->bringer->firstTimers()->exists() || $this->bringer->members()->exists();
+            }
+            // Support edge cases where they were explicitly given the role but lack a Bringer record entirely? 
+            // We'll return false here to align strictly with the sidebar counting logic which requires souls.
+            return false;
         }
 
         return false;

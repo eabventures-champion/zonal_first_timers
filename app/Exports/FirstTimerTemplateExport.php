@@ -18,21 +18,23 @@ class FirstTimerTemplateExport implements FromCollection, WithHeadings
     public function headings(): array
     {
         return [
+            'Date of Visit',
+            'Group Church',
+            'Church',
             'Full Name',
             'Primary Contact',
-            'Email',
             'Gender',
-            'Residential Address',
-            'Date of Visit',
-            'Alternate Contact',
-            'Date of Birth',
+            'Birthday',
             'Occupation',
             'Marital Status',
+            'Church Event',
+            'Residential Address',
             'Bringer Name',
             'Bringer Contact',
             'Born Again',
             'Water Baptism',
-            'Church Event',
+            'Email',
+            'Alternate Contact',
             'Prayer Requests'
         ];
     }

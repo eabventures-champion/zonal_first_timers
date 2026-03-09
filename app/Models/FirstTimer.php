@@ -20,6 +20,36 @@ class FirstTimer extends Model
             $firstTimer->foundationAttendances()->each(fn($a) => $a->delete());
         });
 
+        $cleanupBringer = function ($firstTimer) {
+            if (!$firstTimer->bringer_id)
+                return;
+
+            $bringer = \App\Models\Bringer::find($firstTimer->bringer_id);
+            if ($bringer && !$bringer->is_ro) {
+                // If there are no other active FirstTimers or Members linked to this Bringer
+                if ($bringer->firstTimers()->count() === 0 && $bringer->members()->count() === 0) {
+                    $bringerUserId = $bringer->user_id;
+                    $bringer->delete(); // Delete the bringer record
+
+                    if ($bringerUserId) {
+                        $user = \App\Models\User::find($bringerUserId);
+                        if ($user && !$user->isAdminStaff()) {
+                            $user->removeRole('Bringer');
+
+                            $roles = $user->roles->pluck('name')->toArray();
+                            // If they have no other roles, delete their user account entirely
+                            if (empty($roles)) {
+                                $user->delete();
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        static::deleted($cleanupBringer);
+        static::forceDeleted($cleanupBringer);
+
         static::restoring(function ($firstTimer) {
             // Restore attendances that were deleted when the soul was deleted
             $firstTimer->weeklyAttendances()->onlyTrashed()->each(fn($a) => $a->restore());
